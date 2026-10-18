@@ -3,6 +3,23 @@
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
 
+local function validRecord(current)
+	if type(current) ~= "table" or (current.Version ~= 1 and current.Version ~= 2) or type(current.Data) ~= "table" then return false end
+	if current.Receipts ~= nil and type(current.Receipts) ~= "table" then return false end
+	if current.Version == 2 and current.Receipts == nil then return false end
+	for id, productId in pairs(current.Receipts or {}) do
+		if type(id) ~= "string" or #id == 0 or #id > 200 or type(productId) ~= "number"
+			or productId <= 0 or productId >= 2 ^ 53 or productId ~= math.floor(productId) then return false end
+	end
+	return true
+end
+
+local function receiptsCopy(receipts)
+	local result = {}
+	for id, productId in pairs(receipts or {}) do result[id] = productId end
+	return result
+end
+
 function ProfileStore.new(store, options)
 	return setmetatable({
 		store = store,
@@ -30,7 +47,7 @@ function ProfileStore:Load(userId, token)
 	local ok, result = self:_update(key, function(current)
 		reason = nil
 		if current ~= nil then
-			if type(current) ~= "table" or current.Version ~= 1 or type(current.Data) ~= "table" then
+			if not validRecord(current) then
 				reason = "unsupported"
 				return nil
 			end
@@ -47,8 +64,9 @@ function ProfileStore:Load(userId, token)
 			end
 		end
 		return {
-			Version = 1,
+			Version = 2,
 			Data = self.copy(current and current.Data),
+			Receipts = receiptsCopy(current and current.Receipts),
 			Session = { Id = token, ExpiresAt = self.clock() + self.lease },
 			UpdatedAt = self.clock(),
 		}
@@ -57,6 +75,7 @@ function ProfileStore:Load(userId, token)
 	if not result or reason then return nil, reason or "unavailable" end
 	return {
 		key = key, token = token, data = self.copy(result.Data),
+		receipts = receiptsCopy(result.Receipts), transacting = false,
 		expiresAt = result.Session.ExpiresAt, saving = false, closing = false, closed = false, lost = false,
 	}
 end
@@ -70,15 +89,18 @@ function ProfileStore:Save(profile, release)
 	elseif profile.saving or profile.closing then
 		return false, "busy"
 	end
+	-- An ambiguous receipt write may already have committed. Never overwrite its
+	-- reward with the old local snapshot, including during departure/shutdown.
+	if profile.transacting then return false, "receipt_pending" end
 	profile.saving = true
 	-- Snapshot after waiting, so a final release includes the newest gameplay state.
 	local snapshot = self.copy(profile.data)
 	local ok, result = self:_update(profile.key, function(current)
-		if type(current) ~= "table" or type(current.Session) ~= "table" or current.Session.Id ~= profile.token then
+		if not validRecord(current) or type(current.Session) ~= "table" or current.Session.Id ~= profile.token then
 			return nil
 		end
 		return {
-			Version = 1, Data = snapshot,
+			Version = 2, Data = snapshot, Receipts = receiptsCopy(current.Receipts),
 			Session = if release then nil else { Id = profile.token, ExpiresAt = self.clock() + self.lease },
 			UpdatedAt = self.clock(),
 		}
@@ -91,6 +113,76 @@ function ProfileStore:Save(profile, release)
 	end
 	if release then profile.closed = true else profile.expiresAt = result.Session.ExpiresAt end
 	return true
+end
+
+function ProfileStore:GrantReceipt(profile, receiptId, productId, grant)
+	if type(receiptId) ~= "string" or #receiptId == 0 or #receiptId > 200
+		or type(productId) ~= "number" or productId <= 0 or productId >= 2 ^ 53 or productId ~= math.floor(productId) then
+		return false, "invalid"
+	end
+	if profile.receipts and profile.receipts[receiptId] then
+		return profile.receipts[receiptId] == productId, "duplicate"
+	end
+	if profile.closed or profile.closing or profile.lost or profile.sessionOnly then return false, "unavailable_profile" end
+	if profile.saving then return false, "busy" end
+	if profile.pendingReceipt and (profile.pendingReceipt.Id ~= receiptId or profile.pendingReceipt.ProductId ~= productId) then
+		return false, "busy"
+	end
+	if not profile.pendingReceipt then
+		profile.pendingReceipt = { Id = receiptId, ProductId = productId, Snapshot = self.copy(profile.data) }
+	end
+	profile.transacting = true
+	profile.saving = true
+	local reason
+	local ok, result = self:_update(profile.key, function(current)
+		reason = nil
+		if not validRecord(current) or type(current.Session) ~= "table" or current.Session.Id ~= profile.token then
+			reason = "lost"
+			return nil
+		end
+		local ledger = receiptsCopy(current.Receipts)
+		local data
+		if ledger[receiptId] then
+			if ledger[receiptId] ~= productId then
+				reason = "conflict"
+				return nil
+			end
+			data = current.Data -- A prior attempt may have committed despite a network error.
+		else
+			-- UpdateAsync can call this transform multiple times. Always start from
+			-- the same frozen snapshot, never from a previously rewarded copy.
+			data = self.copy(profile.pendingReceipt.Snapshot)
+			local granted, failure = grant(data)
+			if not granted then
+				reason = failure or "invalid_reward"
+				return nil
+			end
+			ledger[receiptId] = productId
+		end
+		return {
+			Version = 2, Data = data, Receipts = ledger,
+			Session = { Id = profile.token, ExpiresAt = self.clock() + self.lease }, UpdatedAt = self.clock(),
+		}
+	end)
+	profile.saving = false
+	if not ok then
+		-- Keep the economy frozen until retry/rejoin reconciles the uncertain write.
+		return false, "unavailable", result
+	end
+	if not result then
+		profile.pendingReceipt = nil
+		profile.transacting = false
+		if reason == "lost" then profile.lost = true end
+		return false, reason or "unavailable"
+	end
+	-- Preserve the table identity used by the running tycoon state.
+	table.clear(profile.data)
+	for key, value in pairs(self.copy(result.Data)) do profile.data[key] = value end
+	profile.receipts = receiptsCopy(result.Receipts)
+	profile.expiresAt = result.Session.ExpiresAt
+	profile.pendingReceipt = nil
+	profile.transacting = false
+	return true, "granted"
 end
 
 return ProfileStore

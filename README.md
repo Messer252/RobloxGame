@@ -6,6 +6,8 @@ The lineup grows from chocolate chip and oatmeal raisin through peanut butter, s
 
 The game includes an original **free asset pack**: 30 cookie models, 20 bakery props, and 42 seamless PNG textures. Models already power the generated bakeries and animated cookies, using native Roblox materials. See [asset previews and import instructions](assets/README.md); the original assets are CC0, including for monetized games. Optional PNG image IDs are configured in `src/server/AssetTextures.luau` after uploading the images to Roblox.
 
+The **Robux Shop** includes permanent 2× income and 2× baking-speed passes plus repeatable $10K/$100K/$1M cash bundles. Sales are disabled until you create the Roblox offers and enter their IDs. Follow the [step-by-step monetization setup](MONETIZATION.md). Roblox supplies live prices and confirmation prompts; the server verifies ownership and saves product rewards with their receipt IDs before acknowledging them.
+
 ## Open in Roblox Studio
 
 With Rojo **7.7.1** installed:
@@ -23,6 +25,8 @@ ReplicatedStorage
   CookieTycoon (Folder)
     Recipes (ModuleScript)          <- src/shared/Recipes.luau
     Progression (ModuleScript)      <- src/shared/Progression.luau
+    ShopCatalog (ModuleScript)      <- src/shared/ShopCatalog.luau
+    PurchaseRewards (ModuleScript)  <- src/shared/PurchaseRewards.luau
 ServerStorage
   CookieCornerAssets (Model)        <- insert assets/models/CookieCornerAssets.rbxmx
 ServerScriptService
@@ -32,6 +36,7 @@ ServerScriptService
     World (ModuleScript)            <- src/server/World.luau
     AssetLibrary (ModuleScript)     <- src/server/AssetLibrary.luau
     AssetTextures (ModuleScript)    <- src/server/AssetTextures.luau
+    CommerceServer (ModuleScript)   <- src/server/CommerceServer.luau
 StarterPlayer
   StarterPlayerScripts
     TycoonUI (LocalScript)          <- src/client/init.client.luau
@@ -70,7 +75,7 @@ Rebirth requires confirmation and resets wallet cash, banked earnings, recipe un
 | Golden Flame | +8% baking speed per level | 10 | `4 + 3l` Golden Chips |
 | Golden Nest Egg | Start each rebirth with `$500 x level²` | 10 | `2 + 2l` Golden Chips |
 
-Batter and rebirth income factors multiply. Oven upgrades and Golden Flame speed factors multiply, with a minimum 0.4-second production interval. Nest Egg applies when rebirthing; purchasing it does not immediately grant cash. Currency, costs, ownership, upgrade caps, and rebirth eligibility are enforced on the server.
+Batter and rebirth income factors multiply. Oven upgrades and Golden Flame speed factors multiply, with a minimum ordinary 0.4-second production interval; the optional speed pass halves that interval further. Nest Egg applies when rebirthing; purchasing it does not immediately grant cash. Currency, costs, ownership, upgrade caps, and rebirth eligibility are enforced on the server.
 
 The first-run simulation reaches rebirth in about 49 minutes of production with the tested recipe/speed purchase strategy. This excludes travel and collection delays; it is a balance estimate, not an engine playtest.
 
@@ -80,10 +85,10 @@ With the official Luau CLI installed, run from this directory:
 
 ```sh
 luau tests/run.luau
-luau-analyze src/shared/Recipes.luau src/shared/Progression.luau src/server/ProfileStore.luau tests/run.luau
+find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, and progression pacing. They do not contact Roblox's live DataStore service.
+The 40 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, and lost purchase-save responses. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 
@@ -95,5 +100,6 @@ Complete these engine checks in Studio:
 - In a private test experience, reach rebirth requirements. Review then cancel a rebirth and confirm nothing changes. Confirm a rebirth and verify the reset, 5-chip reward, and 15% income bonus. Buy a permanent upgrade, leave, rejoin, and verify the reward and upgrade persist together.
 - Stop/rejoin with both wallet cash and uncollected earnings, plus unlocked cookies and oven upgrades. Verify all saved fields restore after claiming a different plot. Check server output for save errors.
 - Check the scrolling menu, rebirth confirmation, and proximity prompts with Studio's mobile emulator and a controller.
+- Before enabling sales, complete the [purchase checks](MONETIZATION.md#verify-before-enabling-live-offers) using offers belonging to a separate published test experience.
 
 Roblox Studio/Roblox servers are required for engine, multiplayer, UI, and live persistence validation; the Linux cloud environment runs the deterministic tests, static analysis, compilation, and Rojo packaging.

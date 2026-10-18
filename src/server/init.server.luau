@@ -8,6 +8,7 @@ local Progression = require(shared.Progression)
 local ProfileStore = require(script.ProfileStore)
 local Settings = require(script.Settings)
 local World = require(script.World)
+local CommerceServer = require(script.CommerceServer)
 
 local remotes = Instance.new("Folder")
 remotes.Name = "Remotes"
@@ -18,6 +19,12 @@ requestAction.Parent = remotes
 local openShop = Instance.new("RemoteEvent")
 openShop.Name = "OpenShop"
 openShop.Parent = remotes
+local requestPurchase = Instance.new("RemoteEvent")
+requestPurchase.Name = "RequestPurchase"
+requestPurchase.Parent = remotes
+local refreshPasses = Instance.new("RemoteEvent")
+refreshPasses.Name = "RefreshPasses"
+refreshPasses.Parent = remotes
 
 local storeOk, store = pcall(function() return DataStoreService:GetDataStore(Settings.DataStoreName) end)
 if not storeOk then
@@ -52,17 +59,19 @@ end
 local function usable(player)
 	local state = sessions[player]
 	if not state or state.closing or state.profile.lost or state.profile.closed then return nil end
+	if state.profile.transacting or (state.receiptWorkers or 0) > 0 then return nil end
 	if not state.profile.sessionOnly and os.time() >= state.profile.expiresAt then return nil end
 	return state
 end
 
 local function saveState(player, state, release)
 	if state.profile.sessionOnly then return true end
-	if not release and (state.profile.saving or state.profile.closing) then return false end
+	if not release and (state.profile.saving or state.profile.closing or state.profile.transacting or (state.receiptWorkers or 0) > 0) then return false end
 	if not state.closing then player:SetAttribute("DataStatus", "Saving") end
 	local ok, reason, detail = profiles:Save(state.profile, release)
 	if not state.closing then
-		player:SetAttribute("DataStatus", ok and "Saved" or "SaveFailed")
+		local purchasePending = state.profile.transacting or (state.receiptWorkers or 0) > 0
+		player:SetAttribute("DataStatus", purchasePending and "PurchasePending" or ok and "Saved" or "SaveFailed")
 		state.nextSave = os.clock() + (ok and Settings.AutosaveSeconds or 10)
 	end
 	if not ok and reason ~= "busy" then
@@ -74,6 +83,19 @@ local function saveState(player, state, release)
 	end
 	return ok
 end
+
+local commerce = CommerceServer.start({
+	Profiles = profiles,
+	AutosaveSeconds = Settings.AutosaveSeconds,
+	GetState = function(player) return sessions[player] end,
+	IsLoading = function(player) return pendingLoads[player] == true end,
+	IsClosing = function() return shuttingDown end,
+	Notify = notify,
+	Refresh = function(player, state)
+		sync(player, state)
+		if state.plot then World.refresh(state.plot, state.data) end
+	end,
+}, requestPurchase, refreshPasses)
 
 local allowedActions = { Collect = true, BuyRecipe = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true }
 local function onAction(player, action, argument, sourcePlot)
@@ -102,10 +124,10 @@ local function onAction(player, action, argument, sourcePlot)
 		-- A confirmation for an old rebirth count cannot submit a newer rebirth.
 		if argument ~= data.rebirths then return end
 		success, message = Progression.rebirth(data)
-		if success then state.nextBake = now + Progression.interval(data) end
+		if success then state.nextBake = now + Progression.interval(data, state.perks) end
 	end
 	if success then
-		state.nextBake = math.min(state.nextBake, now + Progression.interval(data))
+		state.nextBake = math.min(state.nextBake, now + Progression.interval(data, state.perks))
 		sync(player, state)
 		if action == "Collect" then World.updateBank(state.plot, data) else World.refresh(state.plot, data) end
 		if action == "Rebirth" or action == "UpgradePermanent" then
@@ -126,7 +148,7 @@ World.create(function(player, plot)
 	if plot.owner then return end
 	plot.owner = player
 	state.plot = plot
-	state.nextBake = os.clock() + Progression.interval(state.data)
+	state.nextBake = os.clock() + Progression.interval(state.data, state.perks)
 	player:SetAttribute("HasBakery", true)
 	World.refresh(plot, state.data)
 	notify(player, "Bakery claimed! Your saved recipes and upgrades are restored.")
@@ -177,6 +199,7 @@ local function addPlayer(player)
 	end
 	local state = {
 		profile = profile, data = profile.data, plot = nil, closing = false,
+		perks = { DoubleIncome = false, DoubleSpeed = false }, receiptWorkers = 0,
 		nextBake = 0, nextVisual = 0, lastAction = -math.huge,
 		nextSave = os.clock() + Settings.AutosaveSeconds + math.random() * 5,
 	}
@@ -185,6 +208,7 @@ local function addPlayer(player)
 	sync(player, state)
 	player:SetAttribute("DataStatus", profile.sessionOnly and "SessionOnly" or "Saved")
 	player:SetAttribute("DataReady", true)
+	commerce:StartPlayer(player)
 	notify(player, profile.sessionOnly and "STUDIO SESSION ONLY: progress will not save." or "Progress loaded. Claim any free bakery to continue!")
 end
 
@@ -212,10 +236,10 @@ task.spawn(function()
 		local now = os.clock()
 		for player, state in pairs(sessions) do
 			if usable(player) and state.plot and now >= state.nextBake then
-				local interval = Progression.interval(state.data)
+				local interval = Progression.interval(state.data, state.perks)
 				local batches = math.min(5, math.floor((now - state.nextBake) / interval) + 1)
 				state.nextBake = now + interval
-				state.data.bank = math.min(Progression.MAX_CASH, state.data.bank + Progression.batchValue(state.data) * batches)
+				state.data.bank = math.min(Progression.MAX_CASH, state.data.bank + Progression.batchValue(state.data, state.perks) * batches)
 				World.updateBank(state.plot, state.data)
 				sync(player, state)
 				if now >= state.nextVisual then
@@ -235,7 +259,7 @@ task.spawn(function()
 				if os.time() >= state.profile.expiresAt then
 					player:SetAttribute("DataReady", false)
 					player:Kick("Saving could not reconnect safely. Please rejoin to load your last saved bakery.")
-				elseif os.clock() >= state.nextSave and not state.profile.saving then
+				elseif os.clock() >= state.nextSave and not state.profile.saving and not state.profile.transacting and state.receiptWorkers == 0 then
 					state.nextSave = os.clock() + Settings.AutosaveSeconds
 					task.spawn(saveState, player, state, false)
 				end

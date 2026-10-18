@@ -49,18 +49,20 @@ function Progression.format(value)
 	return tostring(math.floor(value))
 end
 
-function Progression.multiplier(data)
+function Progression.multiplier(data, perks)
 	return (1 + data.permanent.Yield * 0.25) * (1 + data.rebirths * 0.15)
+		* (perks and perks.DoubleIncome and 2 or 1)
 end
 
-function Progression.interval(data)
-	return math.max(0.4, 3 / ((1 + (data.level - 1) * 0.25) * (1 + data.permanent.Speed * 0.08)))
+function Progression.interval(data, perks)
+	local normalInterval = math.max(0.4, 3 / ((1 + (data.level - 1) * 0.25) * (1 + data.permanent.Speed * 0.08)))
+	return normalInterval / (perks and perks.DoubleSpeed and 2 or 1)
 end
 
-function Progression.batchValue(data)
+function Progression.batchValue(data, perks)
 	local total = 0
 	for index = 1, data.unlocked do total += Recipes[index].Value end
-	return math.floor(total * Progression.multiplier(data))
+	return math.floor(total * Progression.multiplier(data, perks))
 end
 
 function Progression.ovenCost(data)

@@ -1,12 +1,16 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Recipes = require(shared:WaitForChild("Recipes"))
 local Progression = require(shared:WaitForChild("Progression"))
+local Catalog = require(shared:WaitForChild("ShopCatalog"))
 local remotes = shared:WaitForChild("Remotes")
 local requestAction = remotes:WaitForChild("RequestAction")
 local openShop = remotes:WaitForChild("OpenShop")
+local requestPurchase = remotes:WaitForChild("RequestPurchase")
+local refreshPasses = remotes:WaitForChild("RefreshPasses")
 
 local cream = Color3.fromRGB(255, 236, 209)
 local gold = Color3.fromRGB(255, 208, 92)
@@ -94,14 +98,20 @@ local close = button(menu, "X")
 close.Size = UDim2.fromOffset(38, 38)
 close.Position = UDim2.new(1, -50, 0, 10)
 close.Activated:Connect(function() menu.Visible = false end)
-local toggle = button(hud, "Bakery  •  Upgrades & Rebirth", Color3.fromRGB(130, 87, 49))
+local toggle = button(hud, "Bakery & Robux Shop", Color3.fromRGB(130, 87, 49))
 toggle.Position = UDim2.fromOffset(14, 115)
 toggle.Size = UDim2.new(1, -28, 0, 30)
 toggle.Activated:Connect(function() menu.Visible = not menu.Visible end)
+local bakeryTab = button(menu, "Bakery", Color3.fromRGB(130, 87, 49))
+bakeryTab.Position = UDim2.fromOffset(14, 82)
+bakeryTab.Size = UDim2.new(0.5, -18, 0, 32)
+local robuxTab = button(menu, "Robux Shop", Color3.fromRGB(92, 66, 48))
+robuxTab.Position = UDim2.new(0.5, 4, 0, 82)
+robuxTab.Size = UDim2.new(0.5, -18, 0, 32)
 
 local scroll = Instance.new("ScrollingFrame")
-scroll.Position = UDim2.fromOffset(14, 84)
-scroll.Size = UDim2.new(1, -28, 1, -98)
+scroll.Position = UDim2.fromOffset(14, 124)
+scroll.Size = UDim2.new(1, -28, 1, -138)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.ScrollBarThickness = 5
@@ -121,6 +131,18 @@ local function list(parent)
 	layout.Parent = parent
 end
 list(scroll)
+local shopScroll = scroll:Clone()
+shopScroll.Name = "RobuxShop"
+shopScroll.Visible = false
+shopScroll.Parent = menu
+local function showTab(shop)
+	scroll.Visible = not shop
+	shopScroll.Visible = shop
+	bakeryTab.BackgroundColor3 = shop and Color3.fromRGB(92, 66, 48) or Color3.fromRGB(130, 87, 49)
+	robuxTab.BackgroundColor3 = shop and Color3.fromRGB(130, 87, 49) or Color3.fromRGB(92, 66, 48)
+end
+bakeryTab.Activated:Connect(function() showTab(false) end)
+robuxTab.Activated:Connect(function() showTab(true) end)
 local order = 0
 local function ordered(object)
 	order += 1
@@ -176,6 +198,27 @@ for _, key in ipairs(Progression.PermanentOrder) do
 	upgradeButton.Activated:Connect(function() requestAction:FireServer("UpgradePermanent", key) end)
 end
 
+ordered(text(shopScroll, "ROBUX SHOP", 20, gold))
+ordered(text(shopScroll, "Optional upgrades. Roblox shows the final price and asks you to confirm every purchase. You can keep playing without buying anything."))
+local shopStatus = ordered(text(shopScroll, "Loading shop...", 15, gold))
+ordered(text(shopScroll, "PERMANENT PASSES", 18, gold))
+ordered(text(shopScroll, "Buy once. Pass benefits stay when you leave or rebirth."))
+local shopRows = {}
+local priceMetadata = {}
+local pricesLoading = false
+local function shopRow(kind, key, entry)
+	local purchaseButton = ordered(button(shopScroll, entry.Name, Color3.fromRGB(101, 113, 65)))
+	purchaseButton.Size = UDim2.new(1, 0, 0, kind == "Pass" and 112 or 94)
+	table.insert(shopRows, { Kind = kind, Key = key, Entry = entry, Button = purchaseButton })
+	purchaseButton.Activated:Connect(function() requestPurchase:FireServer(kind, key) end)
+end
+for _, key in ipairs(Catalog.PassOrder) do shopRow("Pass", key, Catalog.Passes[key]) end
+ordered(text(shopScroll, "COOKIE CASH BUNDLES", 18, gold))
+ordered(text(shopScroll, "Repeatable purchases add the exact cash shown. This cash is spent like earned cash and resets on rebirth; it does not award Golden Chips directly."))
+for _, key in ipairs(Catalog.ProductOrder) do shopRow("Product", key, Catalog.Products[key]) end
+local refreshShopButton = ordered(button(shopScroll, "Refresh shop", Color3.fromRGB(109, 75, 59)))
+refreshShopButton.Size = UDim2.new(1, 0, 0, 42)
+
 local toast = Instance.new("TextLabel")
 toast.AnchorPoint = Vector2.new(0.5, 1)
 toast.Position = UDim2.new(0.5, 0, 1, -12)
@@ -204,6 +247,10 @@ local function currentData()
 			Speed = player:GetAttribute("SpeedLevel") or 0,
 			Starter = player:GetAttribute("StarterLevel") or 0,
 		},
+		perks = {
+			DoubleIncome = player:GetAttribute("DoubleIncomeOwned") == true,
+			DoubleSpeed = player:GetAttribute("DoubleSpeedOwned") == true,
+		},
 	}
 end
 local function enable(target, enabled)
@@ -220,11 +267,14 @@ local saveMessages = {
 	Saving = "Saving progress...",
 	SaveFailed = "Save delayed • Reconnecting automatically...",
 	SessionOnly = "STUDIO SESSION ONLY • Progress will not save",
+	PurchasePending = "Saving your purchase • Please wait...",
 }
 local function render()
 	local data = currentData()
 	local ready = player:GetAttribute("DataReady") == true
 	local ownsBakery = ready and player:GetAttribute("HasBakery") == true
+	local purchasePending = player:GetAttribute("PurchasePending") == true
+	local canManage = ownsBakery and not purchasePending
 	local format = Progression.format
 	wallet.Text = "Cash $" .. format(data.cash) .. "  |  Ready $" .. format(data.bank)
 	progress.Text = data.unlocked .. "/" .. #Recipes .. " cookies  •  " .. data.rebirths .. " rebirths  •  " .. data.chips .. " Golden Chips"
@@ -234,23 +284,25 @@ local function render()
 	saveStatus.TextColor3 = (status == "SaveFailed" or status == "SessionOnly") and gold or cream
 	if not ready then
 		bakeryInfo.Text = "Loading your saved bakery before you can play..."
+	elseif purchasePending then
+		bakeryInfo.Text = "Saving your purchase. Bakery controls will resume automatically when it is confirmed."
 	elseif not ownsBakery then
 		bakeryInfo.Text = "Claim any free bakery on a green pad. Your saved recipes and upgrades come with you. If all four are taken, wait for a plot to open."
 	else
 		bakeryInfo.Text = string.format("%d/%d recipes • Oven level %d/%d\n$%s per batch every %.2fs • %.2fx income\nUse this menu anywhere, or the pads at your bakery.",
-			data.unlocked, #Recipes, data.level, Progression.MAX_OVEN_LEVEL, format(Progression.batchValue(data)), Progression.interval(data), Progression.multiplier(data))
+			data.unlocked, #Recipes, data.level, Progression.MAX_OVEN_LEVEL, format(Progression.batchValue(data, data.perks)), Progression.interval(data, data.perks), Progression.multiplier(data, data.perks))
 	end
 	collectButton.Text = "Collect $" .. format(data.bank)
-	enable(collectButton, ownsBakery and data.bank > 0 and data.cash < Progression.MAX_CASH)
+	enable(collectButton, canManage and data.bank > 0 and data.cash < Progression.MAX_CASH)
 	local nextRecipe = Recipes[data.unlocked + 1]
 	recipeButton.Text = nextRecipe and ("Unlock " .. nextRecipe.Name .. "\n$" .. format(nextRecipe.Cost)) or "All 30 cookies unlocked!"
-	enable(recipeButton, ownsBakery and nextRecipe ~= nil and data.cash >= (nextRecipe and nextRecipe.Cost or 0))
+	enable(recipeButton, canManage and nextRecipe ~= nil and data.cash >= (nextRecipe and nextRecipe.Cost or 0))
 	local ovenMax = data.level >= Progression.MAX_OVEN_LEVEL
 	ovenButton.Text = ovenMax and "Ovens MAXED!" or ("Upgrade all ovens to level " .. (data.level + 1) .. "\n$" .. format(Progression.ovenCost(data)))
-	enable(ovenButton, ownsBakery and not ovenMax and data.cash >= Progression.ovenCost(data))
+	enable(ovenButton, canManage and not ovenMax and data.cash >= Progression.ovenCost(data))
 	local requirement = Progression.rebirthRequirement(data)
 	local rebirthMax = data.rebirths >= Progression.MAX_REBIRTHS
-	local canRebirth = ownsBakery and not rebirthMax and data.unlocked >= requirement.Recipes and data.cash + data.bank >= requirement.Cash
+	local canRebirth = canManage and not rebirthMax and data.unlocked >= requirement.Recipes and data.cash + data.bank >= requirement.Cash
 	rebirthInfo.Text = rebirthMax and "You completed all 50 rebirths! Keep building your ultimate bakery."
 		or string.format("Rebirth #%d earns %d Golden Chips.\nRecipes: %d/%d required\nCash + bank: $%s / $%s\nReset cash, uncollected earnings, recipes, and oven levels. Keep Golden Chips and permanent upgrades.",
 			data.rebirths + 1, requirement.Reward, data.unlocked, requirement.Recipes, format(data.cash + data.bank), format(requirement.Cash))
@@ -266,9 +318,73 @@ local function render()
 		local cost = Progression.permanentCost(data, key)
 		upgradeButton.Text = upgrade.Name .. "  " .. data.permanent[key] .. "/" .. upgrade.Max .. "\n"
 			.. (cost and cost .. " Golden Chips" or "MAXED") .. " • " .. upgrade.Description
-		enable(upgradeButton, ownsBakery and cost ~= nil and data.chips >= (cost or math.huge))
+		enable(upgradeButton, canManage and cost ~= nil and data.chips >= (cost or math.huge))
 	end
+	local commerceReady = ready and player:GetAttribute("CommerceReady") == true
+	local promptOpen = player:GetAttribute("ShopPromptOpen") == true
+	local configured = false
+	for _, row in ipairs(shopRows) do
+		local offer = Catalog.offer(row.Kind, row.Key)
+		configured = configured or offer ~= nil
+		local metadata = priceMetadata[row.Kind .. ":" .. row.Key]
+		local owned = row.Kind == "Pass" and player:GetAttribute(row.Key .. "Owned") == true
+		local priceLine
+		if owned then priceLine = "Owned • Permanent"
+		elseif not offer then priceLine = "Coming soon"
+		elseif not metadata or metadata.State == "Loading" then priceLine = "Checking price..."
+		elseif metadata.State ~= "Ready" then priceLine = "Currently unavailable"
+		else priceLine = "R$ " .. metadata.Price .. (row.Kind == "Pass" and " • Buy once" or " • Repeatable") end
+		if row.Kind == "Pass" then
+			row.Button.Text = row.Entry.Name .. "\n" .. priceLine .. "\n" .. row.Entry.Description
+		else
+			row.Button.Text = row.Entry.Name .. " • $" .. format(row.Entry.Cash) .. "\n" .. priceLine .. "\nCash resets on rebirth."
+		end
+		local ownershipReady = row.Kind ~= "Pass" or player:GetAttribute("PassesReady") == true
+		enable(row.Button, commerceReady and not purchasePending and not promptOpen and not owned and offer ~= nil
+			and ownershipReady and metadata ~= nil and metadata.State == "Ready")
+	end
+	if purchasePending then shopStatus.Text = "Saving your purchase. Please wait; rewards are being confirmed."
+	elseif not configured then shopStatus.Text = "The Robux shop is coming soon. Keep baking for free!"
+	elseif not ready then shopStatus.Text = "Loading your bakery..."
+	elseif not commerceReady then shopStatus.Text = "Purchases are unavailable in this play session."
+	elseif promptOpen then shopStatus.Text = "Finish or cancel the Roblox purchase window to continue."
+	else
+		shopStatus.Text = "Passes: " .. (data.perks.DoubleIncome and "2x income active" or "standard income")
+			.. " • " .. (data.perks.DoubleSpeed and "2x baking speed active" or "standard baking speed")
+	end
+	enable(refreshShopButton, not pricesLoading and not purchasePending and not promptOpen)
 end
+
+local lastPriceRefresh = -math.huge
+local function refreshPrices()
+	if pricesLoading or os.clock() - lastPriceRefresh < 5 then return end
+	lastPriceRefresh = os.clock()
+	pricesLoading = true
+	refreshPasses:FireServer()
+	for _, row in ipairs(shopRows) do priceMetadata[row.Kind .. ":" .. row.Key] = { State = "Loading" } end
+	render()
+	task.spawn(function()
+		for _, row in ipairs(shopRows) do
+			local offer = Catalog.offer(row.Kind, row.Key)
+			local metadata = { State = "Unavailable" }
+			if offer then
+				-- Fetch on this client so Roblox's current personalized/regional
+				-- PriceInRobux is shown. The native prompt remains the final price.
+				local ok, info = pcall(function()
+					return MarketplaceService:GetProductInfoAsync(offer.Id, row.Kind == "Pass" and Enum.InfoType.GamePass or Enum.InfoType.Product)
+				end)
+				if ok and info.IsForSale == true and type(info.PriceInRobux) == "number" and info.PriceInRobux >= 0 and info.PriceInRobux < 2 ^ 53 then
+					metadata = { State = "Ready", Price = math.floor(info.PriceInRobux) }
+				end
+			end
+			priceMetadata[row.Kind .. ":" .. row.Key] = metadata
+			render()
+		end
+		pricesLoading = false
+		render()
+	end)
+end
+refreshShopButton.Activated:Connect(refreshPrices)
 
 collectButton.Activated:Connect(function() requestAction:FireServer("Collect") end)
 recipeButton.Activated:Connect(function() requestAction:FireServer("BuyRecipe") end)
@@ -310,3 +426,4 @@ player.AttributeChanged:Connect(scheduleRender)
 player:GetAttributeChangedSignal("NoticeId"):Connect(showNotice)
 render()
 showNotice()
+refreshPrices()
