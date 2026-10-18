@@ -1,0 +1,78 @@
+{
+  "license": "CC0-1.0",
+  "title": "Cookie Corner Caf\u00e9",
+  "bpm": 90,
+  "beats": 64,
+  "files": [
+    {
+      "file": "CookieCornerCafe.wav",
+      "seconds": 42.66665625,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "a54e23c4a1711eededd256cee979324d88d66a3da99c3ace3167cab1f3a49dff"
+    },
+    {
+      "file": "Click.wav",
+      "seconds": 0.24,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "777bda9c0292fee1bbbeb0c6d66247ca4fe4ea91fa28feff2186dc582c1d6dd7"
+    },
+    {
+      "file": "Claim.wav",
+      "seconds": 1.07,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "03237a0bd31d2d2e4ba2d84d97bb534e6807d49fd71b3ed24af13d020d0caae2"
+    },
+    {
+      "file": "Collect.wav",
+      "seconds": 0.7,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "252e3786ada098b3f134ab3ab7776033ce6847c26045f01a332931e80d0615c8"
+    },
+    {
+      "file": "BuyRecipe.wav",
+      "seconds": 1.17,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "d9a6f2611f03e46d16a16db30e475e3efb559df34a749c787db81754c156cde5"
+    },
+    {
+      "file": "UpgradeOven.wav",
+      "seconds": 0.93,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "72eedc14fab09bb2cc369045f09049e3ddd4deed9b81fd05c4a8776e89b1f904"
+    },
+    {
+      "file": "BuyModifier.wav",
+      "seconds": 0.86,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "463776165705a7d60d0a70add647eb5e6b28d1b696c780d10f83709e625c1b39"
+    },
+    {
+      "file": "UpgradePermanent.wav",
+      "seconds": 1.17,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "c2d0f30bf2f15115881a7c38e4210fbb2265cdf9594ffff3ad0d30f33f2be20f"
+    },
+    {
+      "file": "Rebirth.wav",
+      "seconds": 1.68,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "83ebdb7f2c38b17a46eca6ced7a626909b49619aaedb88896dcc4f4620b153bf"
+    },
+    {
+      "file": "Error.wav",
+      "seconds": 0.51,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "2fd7f77979fb6cda5893a82f5ea56efab5f1521b4ee88c1c76426d93ae13d0ce"
+    }
+  ]
+}

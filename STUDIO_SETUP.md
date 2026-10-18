@@ -143,6 +143,8 @@ You can do these checks in the temporary preview, the published Studio test copy
 10. Open Robux Shop. **Coming soon** is correct while the five offer IDs are still `0`.
 11. Check **Output** for script errors and save warnings.
 
+Below the Bakery button, **Music: ON/OFF** and **SFX: ON/OFF** control your audio independently. Try both, then verify their choices return after a persistent rejoin. See [graphics and audio setup](AUDIO.md) to use the included full café recording and WAV effects; the default build plays a lighter chime arrangement without requiring your own audio IDs.
+
 For a longer progression test, the first rebirth needs **18 recipes** and **$5 million in wallet cash plus uncollected earnings**. Cancel the confirmation once to check that nothing resets. On a confirmed rebirth, expect **5 Golden Chips**, reset cash/recipes/ovens/toppings, and preserved permanent Golden Chip upgrades. Owned passes also survive rebirth.
 
 ## 7. Verify that leaving and rejoining restores progress
@@ -291,6 +293,6 @@ For live source editing, use `rojo serve default.project.json` with the Studio R
 - [ ] The chosen audience can join through the Roblox game-page link.
 - [ ] Purchases remain disabled, or the configured offers have passed the monetization checks.
 
-The packaged place has been checked against all 13 source scripts and includes the asset pack. Roblox Studio and live-server gameplay, device, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
+The packaged place has been checked against all 17 source scripts and includes the model pack and built-in music score. The optional WAV recordings are supplied separately in the repository and free-assets ZIP; upload them and configure AudioConfig to use those recordings in Roblox. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
 
 Official references: [Studio installation](https://create.roblox.com/docs/studio/setup), [publishing and audience requirements](https://create.roblox.com/docs/production/publishing/publish-games-and-places), [Studio DataStore access](https://create.roblox.com/docs/cloud-services/data-stores#enable-studio-access), [testing modes](https://create.roblox.com/docs/studio/testing-modes), and [server updates](https://create.roblox.com/docs/projects/update-games). Roblox's menu labels and release requirements can change; follow the current prompts if your layout differs.

@@ -27,6 +27,9 @@ requestPurchase.Parent = remotes
 local refreshPasses = Instance.new("RemoteEvent")
 refreshPasses.Name = "RefreshPasses"
 refreshPasses.Parent = remotes
+local feedback = Instance.new("RemoteEvent")
+feedback.Name = "Feedback"
+feedback.Parent = remotes
 
 local storeOk, store = pcall(function() return DataStoreService:GetDataStore(Settings.DataStoreName) end)
 if not storeOk then
@@ -55,6 +58,8 @@ local function sync(player, state)
 	player:SetAttribute("OvenLevel", data.level)
 	player:SetAttribute("Rebirths", data.rebirths)
 	player:SetAttribute("GoldenChips", data.chips)
+	player:SetAttribute("MusicEnabled", data.audio.music)
+	player:SetAttribute("EffectsEnabled", data.audio.effects)
 	for key, level in pairs(data.permanent) do player:SetAttribute(key .. "Level", level) end
 	for index = 1, #Recipes do
 		player:SetAttribute("RecipeModifiers_" .. index, Crafting.encode(data.modifiers[tostring(index)]))
@@ -102,11 +107,24 @@ local commerce = CommerceServer.start({
 	end,
 }, requestPurchase, refreshPasses)
 
-local allowedActions = { Collect = true, BuyRecipe = true, BuyModifier = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true }
+local allowedActions = { Collect = true, BuyRecipe = true, BuyModifier = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true, SetAudioPreferences = true }
 local function onAction(player, action, argument, sourcePlot)
 	if type(action) ~= "string" or not allowedActions[action] then return end
 	local state = usable(player)
-	if not state or not state.plot or state.plot.owner ~= player then return end
+	if not state then return end
+	if action == "SetAudioPreferences" then
+		if type(argument) ~= "table" or type(argument.music) ~= "boolean" or type(argument.effects) ~= "boolean" then return end
+		local now = os.clock()
+		if now - (state.lastAudioPreference or -math.huge) < 0.2 then return end
+		state.lastAudioPreference = now
+		state.data.audio.music, state.data.audio.effects = argument.music, argument.effects
+		player:SetAttribute("MusicEnabled", argument.music)
+		player:SetAttribute("EffectsEnabled", argument.effects)
+		-- Debounce settings changes; they are included in normal/final saves too.
+		state.nextSave = math.min(state.nextSave, now + 5)
+		return
+	end
+	if not state.plot or state.plot.owner ~= player then return end
 	-- Prompts carry their source plot; menu actions intentionally work anywhere.
 	if sourcePlot and sourcePlot ~= state.plot then return end
 	local now = os.clock()
@@ -135,6 +153,7 @@ local function onAction(player, action, argument, sourcePlot)
 		if success then state.nextBake = now + Progression.interval(data, state.perks) end
 	end
 	if success then
+		feedback:FireClient(player, action)
 		state.nextBake = math.min(state.nextBake, now + Progression.interval(data, state.perks))
 		sync(player, state)
 		if action == "Collect" then World.updateBank(state.plot, data) else World.refresh(state.plot, data, state.perks) end
@@ -143,6 +162,7 @@ local function onAction(player, action, argument, sourcePlot)
 			state.nextSave = math.min(state.nextSave, now + 2)
 		end
 	end
+	if not success and message then feedback:FireClient(player, "Error") end
 	if message then notify(player, message) end
 end
 
@@ -159,6 +179,7 @@ World.create(function(player, plot)
 	state.nextBake = os.clock() + Progression.interval(state.data, state.perks)
 	player:SetAttribute("HasBakery", true)
 	World.refresh(plot, state.data, state.perks)
+	feedback:FireClient(player, "Claim")
 	notify(player, "Bakery claimed! Your saved recipes and upgrades are restored.")
 end, onAction, function(player, plot)
 	local state = usable(player)

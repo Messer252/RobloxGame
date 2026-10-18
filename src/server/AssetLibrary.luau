@@ -142,6 +142,21 @@ function AssetLibrary.cookie(index, parent, pivot, flags)
 		end
 	end
 	object.Parent = parent
+	if parent and (rarity.Name == "Legendary" or rarity.Name == "Mythic") then
+		local sparkle = Instance.new("ParticleEmitter")
+		sparkle.Name = "Rare Cookie Sparkle"
+		sparkle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		sparkle.Color = ColorSequence.new(Color3.fromRGB(table.unpack(rarity.Color)))
+		sparkle.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0) })
+		sparkle.Transparency = NumberSequence.new(0.1, 1)
+		sparkle.Lifetime = NumberRange.new(0.4, 0.7)
+		sparkle.Speed = NumberRange.new(0.5, 1.5)
+		sparkle.SpreadAngle = Vector2.new(120, 120)
+		sparkle.LightEmission = 0.5
+		sparkle.Rate = 2
+		sparkle.Parent = object.PrimaryPart
+		sparkle:Emit(3)
+	end
 	return object
 end
 

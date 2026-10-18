@@ -22,7 +22,7 @@ local function integer(value, default, minimum, maximum)
 end
 
 function Progression.newData()
-	return { cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0, permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {} }
+	return { cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0, permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {}, audio = { music = true, effects = true } }
 end
 
 -- Returns a fresh, serializable copy. Runtime fields and unknown keys never enter a save.
@@ -35,6 +35,11 @@ function Progression.normalize(raw)
 	data.level = integer(raw.level, 1, 1, Progression.MAX_OVEN_LEVEL)
 	data.rebirths = integer(raw.rebirths, 0, 0, Progression.MAX_REBIRTHS)
 	data.chips = integer(raw.chips, 0, 0, Progression.MAX_CHIPS)
+	if type(raw.audio) == "table" then
+		for key in pairs(data.audio) do
+			if type(raw.audio[key]) == "boolean" then data.audio[key] = raw.audio[key] end
+		end
+	end
 	if type(raw.permanent) == "table" then
 		for key, upgrade in pairs(Progression.Permanent) do
 			data.permanent[key] = integer(raw.permanent[key], 0, 0, upgrade.Max)

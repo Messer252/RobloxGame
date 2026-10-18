@@ -5,6 +5,7 @@ local Recipes = require(ReplicatedStorage.CookieTycoon.Recipes)
 local Progression = require(ReplicatedStorage.CookieTycoon.Progression)
 local Crafting = require(ReplicatedStorage.CookieTycoon.CookieCrafting)
 local Assets = require(script.Parent.AssetLibrary)
+local Presentation = require(script.Parent.Presentation)
 local World = {}
 
 local function color(rgb) return Color3.fromRGB(rgb[1], rgb[2], rgb[3]) end
@@ -27,16 +28,27 @@ local function label(target, text, distance)
 	gui.Size = UDim2.fromOffset(200, 58)
 	gui.StudsOffset = Vector3.new(0, 4, 0)
 	gui.MaxDistance = distance or 48
+	gui.LightInfluence = 0
 	gui.Parent = target
 	local textLabel = Instance.new("TextLabel")
 	textLabel.Size = UDim2.fromScale(1, 1)
-	textLabel.BackgroundTransparency = 1
+	textLabel.BackgroundColor3 = Color3.fromRGB(64, 44, 39)
+	textLabel.BackgroundTransparency = 0.12
 	textLabel.Text = text
 	textLabel.TextColor3 = Color3.new(1, 1, 1)
-	textLabel.TextStrokeTransparency = 0.15
+	textLabel.TextStrokeTransparency = 1
 	textLabel.TextScaled = true
 	textLabel.Font = Enum.Font.GothamBold
 	textLabel.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = textLabel
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 7)
+	padding.PaddingRight = UDim.new(0, 7)
+	padding.PaddingTop = UDim.new(0, 4)
+	padding.PaddingBottom = UDim.new(0, 4)
+	padding.Parent = textLabel
 	return textLabel
 end
 
@@ -72,17 +84,26 @@ end
 function World.refresh(plot, data, perks)
 	plot.sign.Text = plot.owner and (plot.owner.DisplayName .. "'s Bakery") or "Unclaimed Bakery"
 	plot.claimPrompt.Enabled = plot.owner == nil
+	plot.claimSurface.Color = plot.owner and plot.theme or Color3.fromRGB(129, 219, 175)
+	plot.claimSurface.Material = plot.owner and Enum.Material.SmoothPlastic or Enum.Material.Neon
 	World.updateBank(plot, data)
 	plot.upgradePrompt.Enabled = data ~= nil and data.level < Progression.MAX_OVEN_LEVEL
 	plot.upgradeText.Text = not data and "Upgrade ovens" or data.level == Progression.MAX_OVEN_LEVEL and "Ovens MAXED!"
 		or "Oven level " .. data.level .. "\n$" .. Progression.format(Progression.ovenCost(data))
 	plot.shopPrompt.Enabled = data ~= nil
 	plot.workshopPrompt.Enabled = data ~= nil
+	local nextStation = data and plot.stations[data.unlocked + 1]
+	plot.nextMarker.Adornee = nextStation and nextStation.purchaseModel or nil
+	plot.nextMarker.Enabled = nextStation ~= nil
 	for index, station in ipairs(plot.stations) do
 		local unlocked = data ~= nil and index <= data.unlocked
 		local rarity = Crafting.rarity(Recipes[index])
-		station.purchase.Enabled = data ~= nil and index == data.unlocked + 1
-		station.text.Text = index .. ". " .. Recipes[index].Name .. "\n" .. rarity.Name .. " x" .. rarity.Multiplier
+		local nextRecipe = data ~= nil and index == data.unlocked + 1
+		station.purchase.Enabled = nextRecipe
+		station.pad.Color = unlocked and plot.theme or nextRecipe and Color3.fromRGB(255, 214, 139) or Color3.fromRGB(132, 125, 120)
+		station.pad.Material = nextRecipe and Enum.Material.Neon or Enum.Material.SmoothPlastic
+		if station.steam then station.steam.Enabled = unlocked end
+		station.text.Text = (nextRecipe and "NEXT • " or index .. ". ") .. Recipes[index].Name .. "\n" .. rarity.Name .. " x" .. rarity.Multiplier
 			.. (unlocked and " • $" .. Progression.format(Progression.recipeValue(data, index, perks)) .. " / cookie" or "\nUnlock $" .. Progression.format(Recipes[index].Cost))
 		station.text.TextColor3 = unlocked and color(rarity.Color) or Color3.fromRGB(210, 210, 210)
 		station.oven.Color = unlocked and color(rarity.Color) or Color3.fromRGB(90, 96, 107)
@@ -92,6 +113,7 @@ function World.refresh(plot, data, perks)
 end
 
 function World.create(onClaim, onAction, onShop, onWorkshop)
+	Presentation.lighting()
 	local world = Instance.new("Folder")
 	world.Name = "CookieTycoonWorld"
 	world.Parent = workspace
@@ -113,11 +135,18 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 			Assets.prop("Lamppost", world, CFrame.new(x, 0.15, z))
 		end
 	end
+	Presentation.world(world)
+	local sculpture = Assets.cookie(1, world, CFrame.new(0, 7.6, 19) * CFrame.Angles(math.rad(75), 0, 0))
+	sculpture.Name = "Cookie Corner Monument"
+	sculpture:ScaleTo(2.9)
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Size = Vector3.new(12, 1, 12)
 	spawn.Position = Vector3.new(0, 1, 0)
 	spawn.Anchored = true
 	spawn.Neutral = true
+	spawn.Transparency = 1
+	spawn.CanCollide = false
+	spawn.Duration = 0
 	spawn.Parent = world
 	label(spawn, "COOKIE CORNER\nClaim a bakery! Your progress follows you.", 95)
 	for slot = 1, 4 do
@@ -129,6 +158,15 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 			origin = Vector3.new(slot % 2 == 0 and 98 or -98, 0, slot <= 2 and -144 or 144),
 			direction = slot <= 2 and 1 or -1,
 		}
+		local marker = Instance.new("Highlight")
+		marker.Name = "Next Recipe"
+		marker.DepthMode = Enum.HighlightDepthMode.Occluded
+		marker.FillColor = Color3.fromRGB(255, 211, 129)
+		marker.FillTransparency = 0.85
+		marker.OutlineColor = Color3.fromRGB(255, 228, 168)
+		marker.Enabled = false
+		marker.Parent = model
+		plot.nextMarker = marker
 		table.insert(plots, plot)
 		prop(plot, "BakeryFloor", 0, 0, 0)
 		prop(plot, "BakeryShell", 0, 0, 0)
@@ -147,6 +185,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		local sign = prop(plot, "BakerySign", 0, 120)
 		plot.sign = label(Assets.anchor(sign), "Unclaimed Bakery", 100)
 		local claim = prop(plot, "ClaimPad", -63, 109)
+		plot.claimSurface = claim:FindFirstChild("Claim Surface")
 		plot.claimPrompt = prompt(Assets.anchor(claim), "Claim free bakery", function(player) onClaim(player, plot) end, "Cookie Bakery")
 		label(Assets.anchor(claim), "Claim bakery", 65)
 		local collect = prop(plot, "CollectionRegister", -21, 109)
@@ -170,10 +209,14 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 			buyModel:ScaleTo(0.7)
 			local buy = buyModel:FindFirstChild("Claim Surface")
 			buy.Color = color(recipe.Color)
-			local station = { oven = oven, window = ovenModel:FindFirstChild("Window"), x = x, z = z, text = label(oven, recipe.Name) }
+			local station = {
+				oven = oven, window = ovenModel:FindFirstChild("Window"), x = x, z = z,
+				text = label(oven, recipe.Name), pad = buy, purchaseModel = buyModel, steam = Presentation.oven(ovenModel),
+			}
 			station.purchase = prompt(buy, "Unlock recipe", function(player) onAction(player, "BuyRecipe", index, plot) end, recipe.Name)
 			table.insert(plot.stations, station)
 		end
+		Presentation.plot(plot, slot)
 		World.refresh(plot, nil)
 	end
 	return plots

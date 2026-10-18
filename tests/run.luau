@@ -5,6 +5,8 @@ local ProfileStore = require("../src/server/ProfileStore")
 local Catalog = require("../src/shared/ShopCatalog")
 local Rewards = require("../src/shared/PurchaseRewards")
 local Crafting = require("../src/shared/CookieCrafting")
+local Score = require("../src/shared/MusicScore")
+local AudioConfig = require("../src/shared/AudioConfig")
 local passed, failed = 0, 0
 
 local function equal(actual, expected)
@@ -894,6 +896,82 @@ test("fully decorated bakery income matches the sum of the displayed individual 
 	end
 	equal(Progression.batchValue(data, perks), total)
 	assert(total > 0)
+end)
+
+test("old saves get audio defaults and only explicit boolean choices are accepted", function()
+	local legacy = Progression.normalize({ cash = 123 })
+	equal(legacy.audio.music, true)
+	equal(legacy.audio.effects, true)
+	local raw = { audio = { music = false, effects = true, volume = 1e9 } }
+	local normalized = Progression.normalize(raw)
+	equal(normalized.audio.music, false)
+	equal(normalized.audio.effects, true)
+	equal(normalized.audio.volume, nil)
+	raw.audio.music = true
+	equal(normalized.audio.music, false)
+	local malformed = Progression.normalize({ audio = { music = 0, effects = "false" } })
+	equal(malformed.audio.music, true)
+	equal(malformed.audio.effects, true)
+end)
+
+test("audio choices persist through save, rejoin, and rebirth without changing progress", function()
+	local store = fakeStore()
+	local manager = harness(store)
+	local profile = assert(manager:Load(818, "audio-first"))
+	profile.data.audio.music, profile.data.audio.effects = false, false
+	profile.data.cash = 5000000
+	profile.data.unlocked = 18
+	assert(Progression.rebirth(profile.data))
+	equal(profile.data.audio.music, false)
+	equal(profile.data.audio.effects, false)
+	assert(manager:Save(profile, true))
+	local reopened = assert(manager:Load(818, "audio-second"))
+	equal(reopened.data.audio.music, false)
+	equal(reopened.data.audio.effects, false)
+	equal(reopened.data.rebirths, 1)
+	equal(reopened.data.chips, 5)
+end)
+
+test("a paid cash transaction retains saved audio choices and its receipt", function()
+	local store = fakeStore()
+	local manager = harness(store)
+	local profile = assert(manager:Load(819, "audio-purchase"))
+	profile.data.audio.music = false
+	assert(manager:GrantReceipt(profile, "audio-receipt", 12345, function(data)
+		data.cash += 10000
+		return data
+	end))
+	equal(profile.data.audio.music, false)
+	assert(manager:Save(profile, true))
+	local reopened = assert(manager:Load(819, "audio-rejoin"))
+	equal(reopened.data.audio.music, false)
+	equal(reopened.data.audio.effects, true)
+	equal(reopened.data.cash, 10000)
+	equal(reopened.receipts["audio-receipt"], 12345)
+end)
+
+test("music and action cues have bounded pitches, levels, and ordered timing", function()
+	assert(Score.BPM >= 60 and Score.BPM <= 140)
+	equal(Score.Beats, 64)
+	assert(#Score.Notes > 100)
+	local last = -1
+	for _, note in ipairs(Score.Notes) do
+		assert(note[1] >= last and note[1] < Score.Beats)
+		assert(note[2] >= 36 and note[2] <= 96)
+		assert(note[3] > 0 and note[3] <= 4)
+		assert(note[4] > 0 and note[4] <= 1)
+		last = note[1]
+	end
+	for name in pairs(AudioConfig.Effects) do
+		local cue = assert(Score.Cues[name])
+		last = -1
+		for _, note in ipairs(cue) do
+			assert(note[1] >= last and note[1] < 3)
+			assert(note[2] >= 36 and note[2] <= 96 and note[3] > 0 and note[3] <= 1)
+			assert(note[4] > 0 and note[4] <= 1)
+			last = note[1]
+		end
+	end
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

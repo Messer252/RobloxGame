@@ -2,6 +2,8 @@
 
 A four-player Roblox cookie tycoon with 30 recipes, 15 oven levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Claim any free bakery, bake automatically, collect earnings, and unlock recipes in order. The Bakery menu lets you collect and purchase from anywhere after claiming a plot; physical pads also work.
 
+The refreshed presentation adds warm afternoon lighting, pastel bakeries, tiled floors, string lights, windows, oven steam, a cookie monument, clearer labels, and animated menu/reward feedback. **Music** and **SFX** buttons independently control each player's audio and save their choices. An original café melody and action cues play using a bundled-chime arrangement by default; the included full music recording and nine WAV cues can be uploaded for richer playback. See [graphics and audio setup](AUDIO.md).
+
 Recipes now have **six rarity tiers**, from Common (1×) to Mythic (6×). In the **Cookie Workshop**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible toppings. See [rarity, modifier, and workshop details](CRAFTING.md).
 
 The lineup grows from chocolate chip and oatmeal raisin through peanut butter, snickerdoodle, red velvet, s'mores, matcha, birthday cake, galaxy brownie, and Golden Chocolate Chip. Each bakery has five rows of six ovens. Cookie animations are capped independently of production to keep late-game part creation bounded.
@@ -32,6 +34,8 @@ ReplicatedStorage
     ShopCatalog (ModuleScript)      <- src/shared/ShopCatalog.luau
     PurchaseRewards (ModuleScript)  <- src/shared/PurchaseRewards.luau
     CookieCrafting (ModuleScript)   <- src/shared/CookieCrafting.luau
+    AudioConfig (ModuleScript)      <- src/shared/AudioConfig.luau
+    MusicScore (ModuleScript)       <- src/shared/MusicScore.luau
 ServerStorage
   CookieCornerAssets (Model)        <- insert assets/models/CookieCornerAssets.rbxmx
 ServerScriptService
@@ -39,12 +43,14 @@ ServerScriptService
     ProfileStore (ModuleScript)     <- src/server/ProfileStore.luau
     Settings (ModuleScript)         <- src/server/Settings.luau
     World (ModuleScript)            <- src/server/World.luau
+    Presentation (ModuleScript)     <- src/server/Presentation.luau
     AssetLibrary (ModuleScript)     <- src/server/AssetLibrary.luau
     AssetTextures (ModuleScript)    <- src/server/AssetTextures.luau
     CommerceServer (ModuleScript)   <- src/server/CommerceServer.luau
 StarterPlayer
   StarterPlayerScripts
     TycoonUI (LocalScript)          <- src/client/init.client.luau
+      AudioController (ModuleScript) <- src/client/AudioController.luau
 ```
 
 The server generates the map and remotes. Set the experience's maximum player count to **4**, matching the number of bakeries. If more players join, they must wait for a plot to become available. Use proximity prompts with a keyboard, controller, or touch; the menu also supports touch and scrolling.
@@ -93,9 +99,11 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 54 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, and save migration. They do not contact Roblox's live DataStore or payment services.
+The 58 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, and music/cue bounds. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
+
+Run `python tools/build_audio.py` to regenerate the original audio and its shared Luau score. Four audio checks (`python -m unittest discover -s tests -p 'test_audio.py'`) verify WAV integrity, upload constraints, levels, silence-free bars, cue fade-outs, and loop continuity.
 
 Complete these engine checks in Studio:
 
@@ -107,5 +115,6 @@ Complete these engine checks in Studio:
 - Check the scrolling menu, rebirth confirmation, and proximity prompts with Studio's mobile emulator and a controller.
 - Before enabling sales, complete the [purchase checks](MONETIZATION.md#verify-before-enabling-live-offers) using offers belonging to a separate published test experience.
 - Complete the [Cookie Workshop checks](CRAFTING.md#studio-checks) for topping visuals, per-recipe restoration, rarity labels, and the rebirth reset.
+- Complete the [graphics and audio checks](AUDIO.md#check-in-studio-and-roblox), including independent mute buttons, saved settings, two-client isolation, respawn, and uploaded-audio permissions if configured.
 
 Roblox Studio/Roblox servers are required for engine, multiplayer, UI, and live persistence validation; the Linux cloud environment runs the deterministic tests, static analysis, compilation, and Rojo packaging.

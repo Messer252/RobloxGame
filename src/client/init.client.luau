@@ -1,6 +1,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketplaceService = game:GetService("MarketplaceService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+local AudioController = require(script:WaitForChild("AudioController"))
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Recipes = require(shared:WaitForChild("Recipes"))
@@ -12,6 +15,8 @@ local requestAction = remotes:WaitForChild("RequestAction")
 local openShop = remotes:WaitForChild("OpenShop")
 local requestPurchase = remotes:WaitForChild("RequestPurchase")
 local refreshPasses = remotes:WaitForChild("RefreshPasses")
+local feedback = remotes:WaitForChild("Feedback")
+local audio = AudioController.start(player, requestAction)
 
 local cream = Color3.fromRGB(255, 236, 209)
 local gold = Color3.fromRGB(255, 208, 92)
@@ -25,6 +30,21 @@ local function round(object, radius)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, radius or 12)
 	corner.Parent = object
+end
+
+local function finish(object, borderColor)
+	object.BorderSizePixel = 0
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Color = borderColor or Color3.fromRGB(225, 184, 138)
+	stroke.Transparency = 0.65
+	stroke.Thickness = 1
+	stroke.Parent = object
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(210, 201, 198))
+	gradient.Rotation = 90
+	gradient.Parent = object
+	return stroke
 end
 
 local function fixedLabel(parent, y, height, size, tint)
@@ -42,17 +62,44 @@ local function fixedLabel(parent, y, height, size, tint)
 end
 
 local hud = Instance.new("Frame")
-hud.Size = UDim2.new(0.94, 0, 0, 156)
+hud.Size = UDim2.new(0.94, 0, 0, 198)
 hud.Position = UDim2.fromOffset(12, 12)
 hud.BackgroundColor3 = Color3.fromRGB(53, 36, 32)
 hud.BackgroundTransparency = 0.06
 hud.Parent = gui
 round(hud, 16)
+local hudStroke = finish(hud, gold)
 local hudLimit = Instance.new("UISizeConstraint")
-hudLimit.MaxSize = Vector2.new(500, 156)
+hudLimit.MaxSize = Vector2.new(500, 198)
 hudLimit.Parent = hud
-fixedLabel(hud, 8, 30, 23, gold).Text = "COOKIE CORNER"
+local cookieIcon = Instance.new("Frame")
+cookieIcon.Position = UDim2.fromOffset(15, 9)
+cookieIcon.Size = UDim2.fromOffset(30, 30)
+cookieIcon.BackgroundColor3 = Color3.fromRGB(232, 183, 113)
+cookieIcon.BorderSizePixel = 0
+cookieIcon.Rotation = -12
+cookieIcon.Parent = hud
+round(cookieIcon, 30)
+for _, point in ipairs({ Vector2.new(7, 6), Vector2.new(20, 9), Vector2.new(11, 21), Vector2.new(22, 23) }) do
+	local chip = Instance.new("Frame")
+	chip.Size = UDim2.fromOffset(5, 5)
+	chip.Position = UDim2.fromOffset(point.X, point.Y)
+	chip.BackgroundColor3 = Color3.fromRGB(92, 53, 39)
+	chip.BorderSizePixel = 0
+	chip.Parent = cookieIcon
+	round(chip, 2)
+end
+local brand = fixedLabel(hud, 8, 30, 23, gold)
+brand.Position = UDim2.fromOffset(58, 8)
+brand.Size = UDim2.new(1, -72, 0, 30)
+brand.Text = "COOKIE CORNER"
 local wallet = fixedLabel(hud, 40, 22, 17)
+wallet.TextScaled = true
+wallet.TextWrapped = false
+local walletTextSize = Instance.new("UITextSizeConstraint")
+walletTextSize.MinTextSize = 10
+walletTextSize.MaxTextSize = 17
+walletTextSize.Parent = wallet
 local progress = fixedLabel(hud, 65, 22, 15)
 progress.TextScaled = true
 progress.TextWrapped = false
@@ -73,6 +120,28 @@ menu.Visible = false
 menu.ZIndex = 5
 menu.Parent = gui
 round(menu, 16)
+finish(menu, gold)
+local menuScale = Instance.new("UIScale")
+menuScale.Parent = menu
+local backdrop = Instance.new("TextButton")
+backdrop.Name = "MenuBackdrop"
+backdrop.Size = UDim2.fromScale(1, 1)
+backdrop.BackgroundColor3 = Color3.fromRGB(28, 20, 28)
+backdrop.BackgroundTransparency = 0.4
+backdrop.Text = ""
+backdrop.AutoButtonColor = false
+backdrop.Selectable = false
+backdrop.Visible = false
+backdrop.ZIndex = 4
+backdrop.Parent = gui
+backdrop.Activated:Connect(function() menu.Visible = false end)
+menu:GetPropertyChangedSignal("Visible"):Connect(function()
+	backdrop.Visible = menu.Visible
+	if menu.Visible then
+		menuScale.Scale = 0.96
+		TweenService:Create(menuScale, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	end
+end)
 local menuLimit = Instance.new("UISizeConstraint")
 menuLimit.MaxSize = Vector2.new(520, 680)
 menuLimit.Parent = menu
@@ -92,6 +161,20 @@ local function button(parent, text, tint)
 	result.Font = Enum.Font.GothamBold
 	result.Parent = parent
 	round(result, 10)
+	local stroke = finish(result)
+	local scale = Instance.new("UIScale")
+	scale.Parent = result
+	local function focus(active)
+		TweenService:Create(stroke, TweenInfo.new(0.12), { Transparency = active and 0.15 or 0.65 }):Play()
+		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = active and result.Interactable and 1.012 or 1 }):Play()
+	end
+	result.MouseEnter:Connect(function() focus(true) end)
+	result.MouseLeave:Connect(function() focus(false) end)
+	result.SelectionGained:Connect(function() focus(true) end)
+	result.SelectionLost:Connect(function() focus(false) end)
+	result.Activated:Connect(function()
+		if result.Active and result.Interactable then audio:PlayCue("Click") end
+	end)
 	return result
 end
 
@@ -103,6 +186,26 @@ local toggle = button(hud, "Bakery • Workshop • Robux Shop", Color3.fromRGB(
 toggle.Position = UDim2.fromOffset(14, 115)
 toggle.Size = UDim2.new(1, -28, 0, 30)
 toggle.Activated:Connect(function() menu.Visible = not menu.Visible end)
+local musicToggle = button(hud, "Music: ON", Color3.fromRGB(66, 114, 100))
+musicToggle.Name = "MusicToggle"
+musicToggle.Position = UDim2.fromOffset(14, 154)
+musicToggle.Size = UDim2.new(0.5, -18, 0, 30)
+musicToggle.TextSize = 14
+local effectsToggle = button(hud, "SFX: ON", Color3.fromRGB(66, 114, 100))
+effectsToggle.Name = "EffectsToggle"
+effectsToggle.Position = UDim2.new(0.5, 4, 0, 154)
+effectsToggle.Size = UDim2.new(0.5, -18, 0, 30)
+effectsToggle.TextSize = 14
+local function renderAudio()
+	musicToggle.Text = audio.music and "Music: ON" or "Music: OFF"
+	effectsToggle.Text = audio.effects and "SFX: ON" or "SFX: OFF"
+	musicToggle.BackgroundColor3 = audio.music and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)
+	effectsToggle.BackgroundColor3 = audio.effects and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)
+end
+musicToggle.Activated:Connect(function() audio:SetMusicEnabled(not audio.music) end)
+effectsToggle.Activated:Connect(function() audio:SetEffectsEnabled(not audio.effects) end)
+audio.Changed.Event:Connect(renderAudio)
+renderAudio()
 local bakeryTab = button(menu, "Bakery", Color3.fromRGB(130, 87, 49))
 local robuxTab = button(menu, "Robux Shop", Color3.fromRGB(92, 66, 48))
 local workshopTab = button(menu, "Workshop", Color3.fromRGB(92, 66, 48))
@@ -290,9 +393,44 @@ toast.Visible = false
 toast.ZIndex = 10
 toast.Parent = gui
 round(toast)
+local toastStroke = finish(toast, gold)
 local toastLimit = Instance.new("UISizeConstraint")
 toastLimit.MaxSize = Vector2.new(650, 72)
 toastLimit.Parent = toast
+
+local feedbackConnection = feedback.OnClientEvent:Connect(function(cue)
+	audio:PlayCue(cue)
+	if cue == "Error" or cue == "Click" then return end
+	hudStroke.Color = gold
+	hudStroke.Transparency = 0.05
+	hudStroke.Thickness = 2
+	TweenService:Create(hudStroke, TweenInfo.new(0.65), { Transparency = 0.65, Thickness = 1 }):Play()
+	toastStroke.Color = cue == "Rebirth" and gold or Color3.fromRGB(151, 218, 182)
+	local count = cue == "Rebirth" and 20 or cue == "BuyRecipe" and 12 or 7
+	for index = 1, count do
+		local spark = Instance.new("Frame")
+		spark.AnchorPoint = Vector2.new(0.5, 0.5)
+		spark.Size = UDim2.fromOffset(index % 2 == 0 and 7 or 4, 7)
+		spark.Position = UDim2.fromScale(0.5, 0.42)
+		spark.BackgroundColor3 = index % 3 == 0 and Color3.fromRGB(159, 222, 197) or gold
+		spark.BorderSizePixel = 0
+		spark.ZIndex = 12
+		spark.Rotation = index * 47
+		spark.Parent = gui
+		round(spark, 2)
+		local angle = index / count * math.pi * 2
+		local radius = cue == "Rebirth" and 150 or 75
+		TweenService:Create(spark, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0.5, math.cos(angle) * radius, 0.42, math.sin(angle) * radius + 25),
+			BackgroundTransparency = 1, Rotation = spark.Rotation + 80,
+		}):Play()
+		Debris:AddItem(spark, 0.75)
+	end
+end)
+gui.Destroying:Connect(function()
+	feedbackConnection:Disconnect()
+	audio:Destroy()
+end)
 
 local cash = player:WaitForChild("leaderstats"):WaitForChild("Cash")
 local function currentData()
@@ -510,6 +648,10 @@ local function showNotice()
 	local version = noticeVersion
 	toast.Text = message
 	toast.Visible = true
+	toast.Position = UDim2.new(0.5, 0, 1, 4)
+	TweenService:Create(toast, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Position = UDim2.new(0.5, 0, 1, -12),
+	}):Play()
 	task.delay(6, function() if noticeVersion == version then toast.Visible = false end end)
 end
 
