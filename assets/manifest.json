@@ -1,0 +1,817 @@
+{
+  "name": "Cookie Corner Original Assets",
+  "license": "CC0-1.0",
+  "version": 1,
+  "models": [
+    {
+      "name": "Chocolate Chip",
+      "category": "Cookies",
+      "parts": 15,
+      "textureKeys": [
+        "Cookie01"
+      ]
+    },
+    {
+      "name": "Oatmeal Raisin",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie02"
+      ]
+    },
+    {
+      "name": "Sugar Cookie",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie03"
+      ]
+    },
+    {
+      "name": "Double Chocolate",
+      "category": "Cookies",
+      "parts": 15,
+      "textureKeys": [
+        "Cookie04"
+      ]
+    },
+    {
+      "name": "Rainbow Sprinkle",
+      "category": "Cookies",
+      "parts": 17,
+      "textureKeys": [
+        "Cookie05"
+      ]
+    },
+    {
+      "name": "Peanut Butter",
+      "category": "Cookies",
+      "parts": 13,
+      "textureKeys": [
+        "Cookie06"
+      ]
+    },
+    {
+      "name": "Snickerdoodle",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie07"
+      ]
+    },
+    {
+      "name": "White Chocolate Macadamia",
+      "category": "Cookies",
+      "parts": 14,
+      "textureKeys": [
+        "Cookie08"
+      ]
+    },
+    {
+      "name": "Gingerbread",
+      "category": "Cookies",
+      "parts": 14,
+      "textureKeys": [
+        "Cookie09"
+      ]
+    },
+    {
+      "name": "Lemon Crinkle",
+      "category": "Cookies",
+      "parts": 14,
+      "textureKeys": [
+        "Cookie10"
+      ]
+    },
+    {
+      "name": "Red Velvet",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie11"
+      ]
+    },
+    {
+      "name": "Mint Chocolate",
+      "category": "Cookies",
+      "parts": 14,
+      "textureKeys": [
+        "Cookie12"
+      ]
+    },
+    {
+      "name": "Salted Caramel",
+      "category": "Cookies",
+      "parts": 15,
+      "textureKeys": [
+        "Cookie13"
+      ]
+    },
+    {
+      "name": "Coconut Crunch",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie14"
+      ]
+    },
+    {
+      "name": "Strawberry Shortcake",
+      "category": "Cookies",
+      "parts": 15,
+      "textureKeys": [
+        "Cookie15"
+      ]
+    },
+    {
+      "name": "S'mores",
+      "category": "Cookies",
+      "parts": 12,
+      "textureKeys": [
+        "Cookie16"
+      ]
+    },
+    {
+      "name": "Cookies & Cream",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie17"
+      ]
+    },
+    {
+      "name": "Matcha White Chocolate",
+      "category": "Cookies",
+      "parts": 14,
+      "textureKeys": [
+        "Cookie18"
+      ]
+    },
+    {
+      "name": "Blueberry Cheesecake",
+      "category": "Cookies",
+      "parts": 15,
+      "textureKeys": [
+        "Cookie19"
+      ]
+    },
+    {
+      "name": "Espresso Fudge",
+      "category": "Cookies",
+      "parts": 14,
+      "textureKeys": [
+        "Cookie20"
+      ]
+    },
+    {
+      "name": "Pumpkin Spice",
+      "category": "Cookies",
+      "parts": 18,
+      "textureKeys": [
+        "Cookie21"
+      ]
+    },
+    {
+      "name": "Pistachio Rose",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie22"
+      ]
+    },
+    {
+      "name": "Birthday Cake",
+      "category": "Cookies",
+      "parts": 18,
+      "textureKeys": [
+        "Cookie23"
+      ]
+    },
+    {
+      "name": "Churro Swirl",
+      "category": "Cookies",
+      "parts": 19,
+      "textureKeys": [
+        "Cookie24"
+      ]
+    },
+    {
+      "name": "Raspberry Truffle",
+      "category": "Cookies",
+      "parts": 16,
+      "textureKeys": [
+        "Cookie25"
+      ]
+    },
+    {
+      "name": "Maple Pecan",
+      "category": "Cookies",
+      "parts": 15,
+      "textureKeys": [
+        "Cookie26"
+      ]
+    },
+    {
+      "name": "Galaxy Brownie",
+      "category": "Cookies",
+      "parts": 20,
+      "textureKeys": [
+        "Cookie27"
+      ]
+    },
+    {
+      "name": "Toasted Marshmallow",
+      "category": "Cookies",
+      "parts": 17,
+      "textureKeys": [
+        "Cookie28"
+      ]
+    },
+    {
+      "name": "Diamond Vanilla",
+      "category": "Cookies",
+      "parts": 15,
+      "textureKeys": [
+        "Cookie29"
+      ]
+    },
+    {
+      "name": "Golden Chocolate Chip",
+      "category": "Cookies",
+      "parts": 19,
+      "textureKeys": [
+        "Cookie30"
+      ]
+    },
+    {
+      "name": "Oven",
+      "category": "Props",
+      "parts": 12,
+      "textureKeys": [
+        "BrushedMetal",
+        "OvenBrick"
+      ]
+    },
+    {
+      "name": "Conveyor",
+      "category": "Props",
+      "parts": 13,
+      "textureKeys": [
+        "ConveyorRubber"
+      ]
+    },
+    {
+      "name": "CollectionRegister",
+      "category": "Props",
+      "parts": 8,
+      "textureKeys": [
+        "CounterMarble",
+        "WoodWarm"
+      ]
+    },
+    {
+      "name": "UpgradeConsole",
+      "category": "Props",
+      "parts": 8,
+      "textureKeys": []
+    },
+    {
+      "name": "RebirthPedestal",
+      "category": "Props",
+      "parts": 10,
+      "textureKeys": [
+        "GoldenChip"
+      ]
+    },
+    {
+      "name": "ClaimPad",
+      "category": "Props",
+      "parts": 4,
+      "textureKeys": []
+    },
+    {
+      "name": "BakerySign",
+      "category": "Props",
+      "parts": 6,
+      "textureKeys": [
+        "WoodWarm"
+      ]
+    },
+    {
+      "name": "BakeryFloor",
+      "category": "Props",
+      "parts": 4,
+      "textureKeys": [
+        "BakeryFloor"
+      ]
+    },
+    {
+      "name": "BakeryShell",
+      "category": "Props",
+      "parts": 7,
+      "textureKeys": [
+        "WallTile"
+      ]
+    },
+    {
+      "name": "BakeryAwning",
+      "category": "Props",
+      "parts": 17,
+      "textureKeys": [
+        "AwningStripe"
+      ]
+    },
+    {
+      "name": "IngredientBins",
+      "category": "Props",
+      "parts": 10,
+      "textureKeys": []
+    },
+    {
+      "name": "DoughMixer",
+      "category": "Props",
+      "parts": 7,
+      "textureKeys": []
+    },
+    {
+      "name": "CoolingRack",
+      "category": "Props",
+      "parts": 17,
+      "textureKeys": [
+        "Parchment"
+      ]
+    },
+    {
+      "name": "PrepCounter",
+      "category": "Props",
+      "parts": 5,
+      "textureKeys": [
+        "CounterMarble",
+        "Parchment",
+        "WoodWarm"
+      ]
+    },
+    {
+      "name": "WoodenFence",
+      "category": "Props",
+      "parts": 5,
+      "textureKeys": []
+    },
+    {
+      "name": "Lamppost",
+      "category": "Props",
+      "parts": 5,
+      "textureKeys": []
+    },
+    {
+      "name": "CookieTree",
+      "category": "Props",
+      "parts": 8,
+      "textureKeys": []
+    },
+    {
+      "name": "Planter",
+      "category": "Props",
+      "parts": 8,
+      "textureKeys": []
+    },
+    {
+      "name": "SpawnPlaza",
+      "category": "Props",
+      "parts": 11,
+      "textureKeys": [
+        "PathPavers"
+      ]
+    },
+    {
+      "name": "PathSegment",
+      "category": "Props",
+      "parts": 2,
+      "textureKeys": [
+        "PathPavers"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "key": "Cookie01",
+      "file": "textures/Cookie01.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "a6015933e3ef4105c5919f00a42fbd35825d7084f00575a232b0326ccb332bf4"
+    },
+    {
+      "key": "Cookie02",
+      "file": "textures/Cookie02.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "465f5a79646154eefdd72a737ff550a16347059b9a174148be9e7b2560614433"
+    },
+    {
+      "key": "Cookie03",
+      "file": "textures/Cookie03.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "43892c58b4bd4e353151c24034f6a4e109a23c9e6fe82a256bfbcdccc24dfef5"
+    },
+    {
+      "key": "Cookie04",
+      "file": "textures/Cookie04.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "a39221c321417b5466b326db98a480905cbe782f09eeb6e9177a1b0cb605caa2"
+    },
+    {
+      "key": "Cookie05",
+      "file": "textures/Cookie05.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "d7c555da7e99cbaabbca0eb113f57434c3580ec9b773cc67243aadc4e3333385"
+    },
+    {
+      "key": "Cookie06",
+      "file": "textures/Cookie06.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "80f688c0cc98f9d63c96d6ff72a0fbb0401c4480bdaaae7b62232da3195b2fa4"
+    },
+    {
+      "key": "Cookie07",
+      "file": "textures/Cookie07.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "d1bfab25a9916cb643fd3fc8e49f5705d3a43cc8bae09ed0e8530c940e915fcf"
+    },
+    {
+      "key": "Cookie08",
+      "file": "textures/Cookie08.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "91904f5cb61d8c3f485084ea50abd8b012ca8667c2879bbe49d8a316a707c71d"
+    },
+    {
+      "key": "Cookie09",
+      "file": "textures/Cookie09.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "da31c4c1643c870fcf876c21d1aedc56b3a38191ec7b87dd0355bc3e225bc346"
+    },
+    {
+      "key": "Cookie10",
+      "file": "textures/Cookie10.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "e520ee02cc7be589f177fb746470b6eef5403d2f5cb1d831a6a149f8f26aaf5d"
+    },
+    {
+      "key": "Cookie11",
+      "file": "textures/Cookie11.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "4309e2a35805ddd3662af41631f26a64b8b732a61406f9a4e64baa559c48785c"
+    },
+    {
+      "key": "Cookie12",
+      "file": "textures/Cookie12.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "c9abf8b38c73945491d9e74e53eb033745f62b1654460e4a3041c946311ad557"
+    },
+    {
+      "key": "Cookie13",
+      "file": "textures/Cookie13.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "8a8ff3183a60e11bd2a55e6785af5f528ca0c35c652116a95d0b10a4446c0188"
+    },
+    {
+      "key": "Cookie14",
+      "file": "textures/Cookie14.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "dd18de2e89c12f2c0231bacfef95c50344d09fb736404de309a38b07a294a066"
+    },
+    {
+      "key": "Cookie15",
+      "file": "textures/Cookie15.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "c4c11c168535a1bba58ae69bce46578724d1580fd6d412bbf4cf49f6d0283b6b"
+    },
+    {
+      "key": "Cookie16",
+      "file": "textures/Cookie16.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "191fe83879b29626e50b2bd3006061da97c4c6534940ad9dd76a8faadd4ecf0f"
+    },
+    {
+      "key": "Cookie17",
+      "file": "textures/Cookie17.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "a5f75d938c92d24334303c340098afa750d74c2410451de54aec05a157b65ff7"
+    },
+    {
+      "key": "Cookie18",
+      "file": "textures/Cookie18.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "467dd02546ebbe64b7d83019675101e3e206dcac0e94c13bc2c9737f090f4dad"
+    },
+    {
+      "key": "Cookie19",
+      "file": "textures/Cookie19.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "6faa9f8df14d54287004a174319692a453f356c2df82f352cb656dcc6b39ffba"
+    },
+    {
+      "key": "Cookie20",
+      "file": "textures/Cookie20.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "a80200e98c275894511edd21065c19df215d290b8410294a843316ed03c9933c"
+    },
+    {
+      "key": "Cookie21",
+      "file": "textures/Cookie21.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "8a3b442df6b9b3d9bfdcc427c29ad2400a873d8f845a83e49d08ae5f29ea1d3e"
+    },
+    {
+      "key": "Cookie22",
+      "file": "textures/Cookie22.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "bf36c81c4acab9eea3518ac380e28ba331bdbc7c13decd0837487b1068c50649"
+    },
+    {
+      "key": "Cookie23",
+      "file": "textures/Cookie23.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "9780c827763928c6db1c08a268a9434778c0b29c49f40520be896fd20dd78424"
+    },
+    {
+      "key": "Cookie24",
+      "file": "textures/Cookie24.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "1caa7af451484018c08c68f0c0cb377836c6593c101b287eeaba894ab33c1de4"
+    },
+    {
+      "key": "Cookie25",
+      "file": "textures/Cookie25.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "a637fb9a82acc6b7ca8106f18df127de61bb839e60e721ea046be9ffd054ae72"
+    },
+    {
+      "key": "Cookie26",
+      "file": "textures/Cookie26.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "bec1b28d53295479467739c492fb4b2e1dd715315be85545b828347426a970b3"
+    },
+    {
+      "key": "Cookie27",
+      "file": "textures/Cookie27.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "76911b0f1cd3f47a128562edf324a8b335bc71e516d61039148b0a95d3d7b524"
+    },
+    {
+      "key": "Cookie28",
+      "file": "textures/Cookie28.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "a7029675ab4cae1fa597d65ba2b0692031f0f0b89c198635bd26822df3852c80"
+    },
+    {
+      "key": "Cookie29",
+      "file": "textures/Cookie29.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "c5845997d854345cfac7dbe0c9431357fea3fd5b945673202d403ed99e476a05"
+    },
+    {
+      "key": "Cookie30",
+      "file": "textures/Cookie30.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "2f51b6af448c3981183e37998e3b754c2513c0250c311741f07fa5f2254531a3"
+    },
+    {
+      "key": "BakeryFloor",
+      "file": "textures/BakeryFloor.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "3ead5df3311a22ed2406628f472d41232ae6b94b8cc5f02f67e4bef2c399a83e"
+    },
+    {
+      "key": "WallTile",
+      "file": "textures/WallTile.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "b7460a9ff9ded9af761c8eb819395d6c20817ec9310465eb6b06366ad38e2f3d"
+    },
+    {
+      "key": "WoodWarm",
+      "file": "textures/WoodWarm.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "7f1705b52e028cd4f6114a905d84989f46686257f5930348c45bb7dc965e59a6"
+    },
+    {
+      "key": "BrushedMetal",
+      "file": "textures/BrushedMetal.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "06c0f6f0752e8d4c2db37a20762954903f7f74aff60205fe2552a47815b16b60"
+    },
+    {
+      "key": "ConveyorRubber",
+      "file": "textures/ConveyorRubber.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "dde2daa897b113907d4ec6d73f9c49a5f6444ef9883a976b71122874f8b975fc"
+    },
+    {
+      "key": "OvenBrick",
+      "file": "textures/OvenBrick.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "71e988dee4bf307577216b6c14ac024736822356ca19f183b1e3317914a315ce"
+    },
+    {
+      "key": "Parchment",
+      "file": "textures/Parchment.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "f18b9c202a01ce200e82fb6a5a844429be4eb8e586da7062386d47d58213cbf5"
+    },
+    {
+      "key": "GoldenChip",
+      "file": "textures/GoldenChip.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "f7e409730e152caedfcf54318dfc8a3ef2e8e09cd13ee1ede6bb2551d2f699c9"
+    },
+    {
+      "key": "AwningStripe",
+      "file": "textures/AwningStripe.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "3e87cc1535fc08a329678c4701dc6bf5161f23ab98ec68338370a9d00065311d"
+    },
+    {
+      "key": "CounterMarble",
+      "file": "textures/CounterMarble.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "d81a69ab7e6aeb788ef7e0293c1c19eb1b8d61ef1cde8088f35f4cad32e266b0"
+    },
+    {
+      "key": "MeadowGrass",
+      "file": "textures/MeadowGrass.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "bba04dcc7c5a00950eedef6258f71c3679c16b1490cff2858c8880f9020afce9"
+    },
+    {
+      "key": "PathPavers",
+      "file": "textures/PathPavers.png",
+      "size": [
+        512,
+        512
+      ],
+      "tileable": true,
+      "sha256": "be0a485445834c1e99aca9221bfe30afe8ecb803d319ef496f0d8715ae10929a"
+    }
+  ]
+}

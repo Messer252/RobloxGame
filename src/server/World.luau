@@ -1,0 +1,196 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+local Recipes = require(ReplicatedStorage.CookieTycoon.Recipes)
+local Progression = require(ReplicatedStorage.CookieTycoon.Progression)
+local Assets = require(script.Parent.AssetLibrary)
+local World = {}
+
+local function color(rgb) return Color3.fromRGB(rgb[1], rgb[2], rgb[3]) end
+
+local function part(name, size, position, tint, parent)
+	local object = Instance.new("Part")
+	object.Name = name
+	object.Size = size
+	object.Position = position
+	object.Color = tint
+	object.Anchored = true
+	object.TopSurface = Enum.SurfaceType.Smooth
+	object.BottomSurface = Enum.SurfaceType.Smooth
+	object.Parent = parent
+	return object
+end
+
+local function label(target, text, distance)
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromOffset(200, 58)
+	gui.StudsOffset = Vector3.new(0, 4, 0)
+	gui.MaxDistance = distance or 48
+	gui.Parent = target
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Size = UDim2.fromScale(1, 1)
+	textLabel.BackgroundTransparency = 1
+	textLabel.Text = text
+	textLabel.TextColor3 = Color3.new(1, 1, 1)
+	textLabel.TextStrokeTransparency = 0.15
+	textLabel.TextScaled = true
+	textLabel.Font = Enum.Font.GothamBold
+	textLabel.Parent = gui
+	return textLabel
+end
+
+local function prompt(target, action, callback, objectText)
+	local interaction = Instance.new("ProximityPrompt")
+	interaction.ActionText = action
+	interaction.ObjectText = objectText or target.Name
+	interaction.HoldDuration = 0.2
+	interaction.MaxActivationDistance = 12
+	interaction.RequiresLineOfSight = false
+	interaction.Parent = target
+	interaction.Triggered:Connect(function(player)
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root and (root.Position - target.Position).Magnitude <= 16 then callback(player) end
+	end)
+	return interaction
+end
+
+local function position(plot, x, y, z)
+	return plot.origin + Vector3.new(x, y, z * plot.direction)
+end
+
+local function prop(plot, name, x, z, y)
+	local pivot = CFrame.new(position(plot, x, y or 0.5, z))
+		* CFrame.Angles(0, plot.direction == 1 and 0 or math.pi, 0)
+	return Assets.prop(name, plot.model, pivot)
+end
+
+function World.updateBank(plot, data)
+	plot.bankText.Text = "Collect earnings\n$" .. Progression.format(data and data.bank or 0)
+end
+
+function World.refresh(plot, data)
+	plot.sign.Text = plot.owner and (plot.owner.DisplayName .. "'s Bakery") or "Unclaimed Bakery"
+	plot.claimPrompt.Enabled = plot.owner == nil
+	World.updateBank(plot, data)
+	plot.upgradePrompt.Enabled = data ~= nil and data.level < Progression.MAX_OVEN_LEVEL
+	plot.upgradeText.Text = not data and "Upgrade ovens" or data.level == Progression.MAX_OVEN_LEVEL and "Ovens MAXED!"
+		or "Oven level " .. data.level .. "\n$" .. Progression.format(Progression.ovenCost(data))
+	plot.shopPrompt.Enabled = data ~= nil
+	for index, station in ipairs(plot.stations) do
+		local unlocked = data ~= nil and index <= data.unlocked
+		station.purchase.Enabled = data ~= nil and index == data.unlocked + 1
+		station.text.Text = index .. ". " .. Recipes[index].Name .. (unlocked and "\nBAKING!" or "\n$" .. Progression.format(Recipes[index].Cost))
+		station.oven.Color = unlocked and color(Recipes[index].Color) or Color3.fromRGB(90, 96, 107)
+		station.window.Color = unlocked and Color3.fromRGB(246, 151, 61) or Color3.fromRGB(48, 59, 66)
+		station.window.Material = unlocked and Enum.Material.Neon or Enum.Material.Glass
+	end
+end
+
+function World.create(onClaim, onAction, onShop)
+	local world = Instance.new("Folder")
+	world.Name = "CookieTycoonWorld"
+	world.Parent = workspace
+	local plots = {}
+	local meadow = part("Meadow", Vector3.new(410, 1, 590), Vector3.new(0, -1, 0), Color3.fromRGB(111, 166, 111), world)
+	meadow.Material = Enum.Material.Grass
+	Assets.texture(meadow, "MeadowGrass")
+	for segment = -6, 6 do
+		Assets.prop("PathSegment", world, CFrame.new(0, 0, segment * 40))
+	end
+	Assets.prop("SpawnPlaza", world, CFrame.new(0, 0.2, 0))
+	for _, x in ipairs({ -191, 191 }) do
+		for _, z in ipairs({ -225, -85, 85, 225 }) do
+			Assets.prop("CookieTree", world, CFrame.new(x, 0, z))
+		end
+	end
+	for _, x in ipairs({ -10, 10 }) do
+		for _, z in ipairs({ -220, -70, 70, 220 }) do
+			Assets.prop("Lamppost", world, CFrame.new(x, 0.15, z))
+		end
+	end
+	local spawn = Instance.new("SpawnLocation")
+	spawn.Size = Vector3.new(12, 1, 12)
+	spawn.Position = Vector3.new(0, 1, 0)
+	spawn.Anchored = true
+	spawn.Neutral = true
+	spawn.Parent = world
+	label(spawn, "COOKIE CORNER\nClaim a bakery! Your progress follows you.", 95)
+	for slot = 1, 4 do
+		local model = Instance.new("Model")
+		model.Name = "Bakery" .. slot
+		model.Parent = world
+		local plot = {
+			model = model, stations = {}, owner = nil, visualCursor = 0,
+			origin = Vector3.new(slot % 2 == 0 and 98 or -98, 0, slot <= 2 and -144 or 144),
+			direction = slot <= 2 and 1 or -1,
+		}
+		table.insert(plots, plot)
+		prop(plot, "BakeryFloor", 0, 0, 0)
+		prop(plot, "BakeryShell", 0, 0, 0)
+		prop(plot, "BakeryAwning", 0, 113)
+		prop(plot, "PrepCounter", 0, -116)
+		prop(plot, "IngredientBins", -24, -116)
+		prop(plot, "DoughMixer", 14, -116)
+		prop(plot, "CoolingRack", 28, -116)
+		prop(plot, "Planter", -75, 102)
+		prop(plot, "Planter", 75, 102)
+		prop(plot, "WoodenFence", -64, 120)
+		prop(plot, "WoodenFence", 64, 120)
+		local sign = prop(plot, "BakerySign", 0, 120)
+		plot.sign = label(Assets.anchor(sign), "Unclaimed Bakery", 100)
+		local claim = prop(plot, "ClaimPad", -63, 109)
+		plot.claimPrompt = prompt(Assets.anchor(claim), "Claim free bakery", function(player) onClaim(player, plot) end, "Cookie Bakery")
+		label(Assets.anchor(claim), "Claim bakery", 65)
+		local collect = prop(plot, "CollectionRegister", -21, 109)
+		plot.bankText = label(Assets.anchor(collect), "Collect earnings\n$0", 65)
+		prompt(Assets.anchor(collect), "Collect cash", function(player) onAction(player, "Collect", nil, plot) end, "Bakery Register")
+		local upgrade = prop(plot, "UpgradeConsole", 21, 109)
+		plot.upgradeText = label(Assets.anchor(upgrade), "Upgrade ovens", 65)
+		plot.upgradePrompt = prompt(Assets.anchor(upgrade), "Upgrade speed", function(player) onAction(player, "UpgradeOven", nil, plot) end, "Oven Upgrades")
+		local shop = prop(plot, "RebirthPedestal", 63, 109)
+		label(Assets.anchor(shop), "Golden Chips\nRebirth & permanent upgrades", 65)
+		plot.shopPrompt = prompt(Assets.anchor(shop), "Open bakery menu", function(player) onShop(player, plot) end, "Golden Chip Shop")
+		for index, recipe in ipairs(Recipes) do
+			local column = (index - 1) % 6
+			local row = math.floor((index - 1) / 6)
+			local x, z = -60 + column * 24, -100 + row * 40
+			local ovenModel = prop(plot, "Oven", x, z)
+			local oven = ovenModel:FindFirstChild("RecipeBadge")
+			prop(plot, "Conveyor", x, z + 19)
+			local buyModel = prop(plot, "ClaimPad", x, z + 29, 1.4)
+			buyModel.Name = "Unlock " .. recipe.Name
+			buyModel:ScaleTo(0.7)
+			local buy = buyModel:FindFirstChild("Claim Surface")
+			buy.Color = color(recipe.Color)
+			local station = { oven = oven, window = ovenModel:FindFirstChild("Window"), x = x, z = z, text = label(oven, recipe.Name) }
+			station.purchase = prompt(buy, "Unlock recipe", function(player) onAction(player, "BuyRecipe", index, plot) end, recipe.Name)
+			table.insert(plot.stations, station)
+		end
+		World.refresh(plot, nil)
+	end
+	return plots
+end
+
+function World.animate(plot, data)
+	-- Show at most four detailed cookies per visual batch. Income includes every oven.
+	-- Keeping animations independent of oven speed bounds replicated part creation.
+	for _ = 1, math.min(4, data.unlocked) do
+		plot.visualCursor = plot.visualCursor % data.unlocked + 1
+		local index = plot.visualCursor
+		local station = plot.stations[index]
+		local start = position(plot, station.x, 2.1, station.z + 9)
+		local model = Assets.cookie(index, plot.model, CFrame.new(start))
+		for _, object in ipairs(model:GetDescendants()) do
+			if not object:IsA("BasePart") then continue end
+			object.CanCollide = false
+			object.CanTouch = false
+			object.CanQuery = false
+			TweenService:Create(object, TweenInfo.new(1.3, Enum.EasingStyle.Linear), {
+				Position = object.Position + Vector3.new(0, 0, 17 * plot.direction),
+			}):Play()
+		end
+		Debris:AddItem(model, 1.4)
+	end
+end
+
+return World

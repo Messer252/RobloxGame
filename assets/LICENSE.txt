@@ -1,0 +1,15 @@
+Cookie Corner Original Asset Pack — CC0 1.0 Universal
+
+To the extent possible under law, the creators of these original Cookie Corner
+models, PNG textures, manifests, and preview images waive all copyright and
+related or neighboring rights under CC0 1.0 Universal.
+
+You may use, modify, redistribute, and sell these assets, including in Roblox
+games that earn revenue. No attribution or payment is required.
+
+CC0 legal terms: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+This dedication applies to the original files in this assets directory. It does
+not grant ownership of Roblox software, Roblox's built-in materials, third-party
+tools, or fonts used to render preview labels. No third-party meshes or texture
+images are included in the models or PNG texture set.

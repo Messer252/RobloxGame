@@ -1,0 +1,13 @@
+{
+  "name": "CookieFactoryTycoon",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": { "CookieTycoon": { "$path": "src/shared" } },
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "CookieCornerAssets": { "$path": "assets/models/CookieCornerAssets.rbxmx" }
+    },
+    "ServerScriptService": { "Tycoon": { "$path": "src/server" } },
+    "StarterPlayer": { "StarterPlayerScripts": { "TycoonUI": { "$path": "src/client" } } }
+  }
+}
