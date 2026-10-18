@@ -12,6 +12,8 @@ The **Robux Shop** includes permanent 2× income and 2× baking-speed passes plu
 
 ## Open in Roblox Studio
 
+**New to Studio? Follow the [full upload, saving, testing, and publishing guide](STUDIO_SETUP.md).** If you have the ready-made `CookieCorner.rbxlx` supplied in the chat, open it directly in Studio; no terminal or plugins are needed. The steps below are for building or assembling the GitHub source.
+
 With Rojo **7.7.1** installed:
 
 ```sh

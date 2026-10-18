@@ -54,7 +54,7 @@ If you edit the files through Rojo/GitHub, sync them into Studio with Rojo or re
 ## 3. Publish and check the shop
 
 1. Publish the updated place to **the same experience that owns the offers**. Restart old servers when rolling out this version.
-2. Join the game, open **Bakery & Robux Shop**, then select **Robux Shop**. Configured offers should show prices fetched from Roblox. Unconfigured offers stay **Coming soon**.
+2. Join the game, open **Bakery • Workshop • Robux Shop**, then select **Robux Shop**. Configured offers should show prices fetched from Roblox. Unconfigured offers stay **Coming soon**.
 3. The game fetches prices on each player's client, supporting Roblox's regional/personalized pricing. The native Roblox purchase window shows the final price and asks for confirmation. Set and change Robux prices in Creator Dashboard; there are no hardcoded Robux prices in the scripts.
 4. In a separate published test experience, configure test offers belonging to that experience and check the native purchase flow before enabling production sales. Purchases in the live Roblox client can spend real Robux. Use Roblox's available testing tools/modes when checking prompts in Studio; do not treat a closed prompt as proof that a receipt or live entitlement was delivered.
 
