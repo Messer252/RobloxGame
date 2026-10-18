@@ -4,9 +4,9 @@ local ProfileStore = {}
 ProfileStore.__index = ProfileStore
 
 local function validRecord(current)
-	if type(current) ~= "table" or (current.Version ~= 1 and current.Version ~= 2) or type(current.Data) ~= "table" then return false end
+	if type(current) ~= "table" or (current.Version ~= 1 and current.Version ~= 2 and current.Version ~= 3) or type(current.Data) ~= "table" then return false end
 	if current.Receipts ~= nil and type(current.Receipts) ~= "table" then return false end
-	if current.Version == 2 and current.Receipts == nil then return false end
+	if current.Version >= 2 and current.Receipts == nil then return false end
 	for id, productId in pairs(current.Receipts or {}) do
 		if type(id) ~= "string" or #id == 0 or #id > 200 or type(productId) ~= "number"
 			or productId <= 0 or productId >= 2 ^ 53 or productId ~= math.floor(productId) then return false end
@@ -64,7 +64,7 @@ function ProfileStore:Load(userId, token)
 			end
 		end
 		return {
-			Version = 2,
+			Version = 3,
 			Data = self.copy(current and current.Data),
 			Receipts = receiptsCopy(current and current.Receipts),
 			Session = { Id = token, ExpiresAt = self.clock() + self.lease },
@@ -100,7 +100,7 @@ function ProfileStore:Save(profile, release)
 			return nil
 		end
 		return {
-			Version = 2, Data = snapshot, Receipts = receiptsCopy(current.Receipts),
+			Version = 3, Data = snapshot, Receipts = receiptsCopy(current.Receipts),
 			Session = if release then nil else { Id = profile.token, ExpiresAt = self.clock() + self.lease },
 			UpdatedAt = self.clock(),
 		}
@@ -160,7 +160,7 @@ function ProfileStore:GrantReceipt(profile, receiptId, productId, grant)
 			ledger[receiptId] = productId
 		end
 		return {
-			Version = 2, Data = data, Receipts = ledger,
+			Version = 3, Data = data, Receipts = ledger,
 			Session = { Id = profile.token, ExpiresAt = self.clock() + self.lease }, UpdatedAt = self.clock(),
 		}
 	end)

@@ -2,6 +2,8 @@
 
 A four-player Roblox cookie tycoon with 30 recipes, 15 oven levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Claim any free bakery, bake automatically, collect earnings, and unlock recipes in order. The Bakery menu lets you collect and purchase from anywhere after claiming a plot; physical pads also work.
 
+Recipes now have **six rarity tiers**, from Common (1×) to Mythic (6×). In the **Cookie Workshop**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible toppings. See [rarity, modifier, and workshop details](CRAFTING.md).
+
 The lineup grows from chocolate chip and oatmeal raisin through peanut butter, snickerdoodle, red velvet, s'mores, matcha, birthday cake, galaxy brownie, and Golden Chocolate Chip. Each bakery has five rows of six ovens. Cookie animations are capped independently of production to keep late-game part creation bounded.
 
 The game includes an original **free asset pack**: 30 cookie models, 20 bakery props, and 42 seamless PNG textures. Models already power the generated bakeries and animated cookies, using native Roblox materials. See [asset previews and import instructions](assets/README.md); the original assets are CC0, including for monetized games. Optional PNG image IDs are configured in `src/server/AssetTextures.luau` after uploading the images to Roblox.
@@ -27,6 +29,7 @@ ReplicatedStorage
     Progression (ModuleScript)      <- src/shared/Progression.luau
     ShopCatalog (ModuleScript)      <- src/shared/ShopCatalog.luau
     PurchaseRewards (ModuleScript)  <- src/shared/PurchaseRewards.luau
+    CookieCrafting (ModuleScript)   <- src/shared/CookieCrafting.luau
 ServerStorage
   CookieCornerAssets (Model)        <- insert assets/models/CookieCornerAssets.rbxmx
 ServerScriptService
@@ -48,11 +51,11 @@ The server generates the map and remotes. Set the experience's maximum player co
 
 1. Publish the place to a Roblox experience. Live servers use Roblox DataStoreService automatically; no external account keys are needed.
 2. For Studio persistence checks, use a **separate published test experience** and enable **Studio Access to API Services** in its security settings. Studio can access that experience's real player data.
-3. Press Play, earn money and unlock a recipe, then stop and rejoin. Claim any free plot: your saved cash, uncollected earnings, recipes, ovens, rebirths, Golden Chips, and permanent upgrades should return.
+3. Press Play, earn money and unlock a recipe, then stop and rejoin. Claim any free plot: your saved cash, uncollected earnings, recipes, toppings, ovens, rebirths, Golden Chips, and permanent upgrades should return.
 
 `src/server/Settings.luau` selects `CookieCorner_PlayerData_v1`. Keep the same DataStore name to retain saves. Changing it starts a separate save namespace.
 
-Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after rebirth/permanent purchases, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
+Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after rebirth, permanent upgrades, and modifier purchases, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
 
 For offline Studio development only, explicitly set `AllowStudioSessionOnly = true` in Settings. If DataStore access is unavailable, Studio then starts a clearly labeled temporary session that **does not save**. This fallback never writes temporary data into a saved profile and is ignored on live servers. Locked or incompatible saves do not fall back.
 
@@ -67,7 +70,7 @@ The first rebirth requires **18 unlocked recipes** and **$5 million in cash + un
 - Golden Chip reward: `5 + 2r`.
 - Each rebirth adds another 15% to the rebirth income bonus. There are 50 rebirths available.
 
-Rebirth requires confirmation and resets wallet cash, banked earnings, recipe unlocks, and oven levels. It preserves rebirths, Golden Chips, and these permanent upgrades:
+Rebirth requires confirmation and resets wallet cash, banked earnings, recipe unlocks, oven levels, and topping modifiers. It preserves rebirths, Golden Chips, owned passes, and these permanent upgrades:
 
 | Upgrade | Effect | Levels | Next level cost at current level `l` |
 | --- | --- | --- | --- |
@@ -77,7 +80,7 @@ Rebirth requires confirmation and resets wallet cash, banked earnings, recipe un
 
 Batter and rebirth income factors multiply. Oven upgrades and Golden Flame speed factors multiply, with a minimum ordinary 0.4-second production interval; the optional speed pass halves that interval further. Nest Egg applies when rebirthing; purchasing it does not immediately grant cash. Currency, costs, ownership, upgrade caps, and rebirth eligibility are enforced on the server.
 
-The first-run simulation reaches rebirth in about 49 minutes of production with the tested recipe/speed purchase strategy. This excludes travel and collection delays; it is a balance estimate, not an engine playtest.
+With the rarity bonuses, the first-run simulation reaches rebirth in about 38 minutes of production with the tested recipe/speed purchase strategy, without buying toppings. This excludes travel and collection delays; it is a balance estimate, not an engine playtest.
 
 ## Validation
 
@@ -88,7 +91,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 40 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, and lost purchase-save responses. They do not contact Roblox's live DataStore or payment services.
+The 54 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, and save migration. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 
@@ -101,5 +104,6 @@ Complete these engine checks in Studio:
 - Stop/rejoin with both wallet cash and uncollected earnings, plus unlocked cookies and oven upgrades. Verify all saved fields restore after claiming a different plot. Check server output for save errors.
 - Check the scrolling menu, rebirth confirmation, and proximity prompts with Studio's mobile emulator and a controller.
 - Before enabling sales, complete the [purchase checks](MONETIZATION.md#verify-before-enabling-live-offers) using offers belonging to a separate published test experience.
+- Complete the [Cookie Workshop checks](CRAFTING.md#studio-checks) for topping visuals, per-recipe restoration, rarity labels, and the rebirth reset.
 
 Roblox Studio/Roblox servers are required for engine, multiplayer, UI, and live persistence validation; the Linux cloud environment runs the deterministic tests, static analysis, compilation, and Rojo packaging.

@@ -25,6 +25,10 @@ The style uses simple shapes and colored toppings rather than photorealistic mes
 The updated game already contains this pack in ServerStorage and creates the
 bakery and cookie animations from it. Open `CookieCorner.rbxlx` to use that setup.
 
+The game's Cookie Workshop adds purchased toppings and rarity outlines at runtime.
+The reusable templates in this pack are the base recipe models; player-specific
+upgrades come from the saved game data and rendering scripts.
+
 The 20 props are Oven, Conveyor, CollectionRegister, UpgradeConsole,
 RebirthPedestal, ClaimPad, BakerySign, BakeryFloor, BakeryShell, BakeryAwning,
 IngredientBins, DoughMixer, CoolingRack, PrepCounter, WoodenFence, Lamppost,

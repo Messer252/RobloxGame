@@ -10,7 +10,7 @@ Under **Monetization → Passes**, create these two passes and put them on sale 
 
 | Pass | What the player receives | Code entry |
 | --- | --- | --- |
-| 2x Cookie Income | Permanent 2× cookie production earnings; stacks with Golden Batter and rebirth bonuses | `Passes.DoubleIncome.Id` |
+| 2x Cookie Income | Permanent 2× cookie production earnings; stacks with rarity, toppings, Golden Batter, and rebirth bonuses | `Passes.DoubleIncome.Id` |
 | 2x Baking Speed | Permanent 2× oven production speed; works even with fully upgraded ovens | `Passes.DoubleSpeed.Id` |
 
 These are one-time purchases. The speed pass affects **cookie baking**, not walking speed. Neither pass doubles purchased cash bundles or Golden Chip rewards. Both stay owned through rebirth and rejoin.
@@ -79,7 +79,7 @@ These engine/transaction checks require Roblox. Cloud validation uses the in-mem
 
 `ProfileStore` saves the cash grant and purchase ID **together in one `UpdateAsync`**. Only a durable grant is acknowledged to Roblox. Receipts are deduplicated across retries, rebirths, and reconnects. Session tokens protect against an old server overwriting a newer session. If a write's result is uncertain, the purchase callback retries locally and freezes ordinary economy changes/saves until it reconciles. On departure, it leaves an uncertain record intact instead of replacing it with pre-purchase cash. A server crash may require a rejoin after the existing session lease expires.
 
-The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Existing version-1 records migrate to the **version-2 save envelope**, adding a receipt ledger and preserving progression. Earlier game versions cannot open version-2 records; keep the new ProfileStore when updating the game. Do not roll back to the original save code after enabling purchases.
+The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Existing version-1 and version-2 records migrate to the **version-3 save envelope**, retaining receipt history and adding per-recipe topping data while preserving progression. Earlier game versions cannot open version-3 records; keep the new ProfileStore when updating the game. Do not roll back to the original save code after enabling purchases.
 
 Passes use Roblox's verified server ownership APIs and purchase events. Ownership is checked on join and retried after failures; **Refresh shop** requests another check. A pass purchased outside the running server may need Roblox's cache to update or a rejoin before it appears.
 

@@ -71,6 +71,8 @@ class AssetPackTests(unittest.TestCase):
         self.assertIn("Window", {name(item) for item in oven.findall("Item")})
         claim = next(item for item in self.folders["Props"].findall("Item") if name(item) == "ClaimPad")
         self.assertIn("Claim Surface", {name(item) for item in claim.findall("Item")})
+        counter = next(item for item in self.folders["Props"].findall("Item") if name(item) == "PrepCounter")
+        self.assertIn("Texture_CounterMarble", {name(item) for item in counter.findall("Item")})
 
     def test_png_sizes_hashes_and_opposite_edges_match(self):
         records = self.manifest["textures"]

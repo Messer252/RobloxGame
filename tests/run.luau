@@ -4,6 +4,7 @@ local Progression = require("../src/shared/Progression")
 local ProfileStore = require("../src/server/ProfileStore")
 local Catalog = require("../src/shared/ShopCatalog")
 local Rewards = require("../src/shared/PurchaseRewards")
+local Crafting = require("../src/shared/CookieCrafting")
 local passed, failed = 0, 0
 
 local function equal(actual, expected)
@@ -248,7 +249,7 @@ test("leave/rejoin restores cash, uncollected earnings, recipes, rebirths, and u
 	local manager = harness(store)
 	local profile = assert(manager:Load(99, "session-A"))
 	profile.data = { cash = 123456, bank = 789, unlocked = 21, level = 8, rebirths = 3, chips = 17, permanent = { Yield = 4, Speed = 3, Starter = 2 } }
-	local expected = copy(profile.data)
+	local expected = Progression.normalize(profile.data)
 	assert(manager:Save(profile, true))
 	equal(store.records.Player_99.Session, nil)
 	assert(profile.closed)
@@ -503,7 +504,7 @@ test("legacy saves migrate without losing cash or progress and acquire an empty 
 	local profile = assert(manager:Load(20, "server-A"))
 	same(profile.data, data)
 	same(profile.receipts, {})
-	equal(store.records.Player_20.Version, 2)
+	equal(store.records.Player_20.Version, 3)
 end)
 
 test("one atomic receipt write saves the reward and purchase ID before success", function()
@@ -694,6 +695,205 @@ test("malformed receipts and conflicting product identities cannot grant cash", 
 	assert(manager:GrantReceipt(profile, "purchase-A", 123, grantCash))
 	assert(not manager:GrantReceipt(profile, "purchase-A", 456, grantCash))
 	equal(profile.data.cash, 10000)
+end)
+
+test("all 30 recipes have known fixed rarities with increasing value multipliers", function()
+	local counts = {}
+	local last = 0
+	for _, key in ipairs(Crafting.RarityOrder) do
+		local tier = Crafting.Rarities[key]
+		assert(tier.Multiplier > last)
+		equal(#tier.Color, 3)
+		last = tier.Multiplier
+		counts[key] = 0
+	end
+	for _, recipe in ipairs(Recipes) do
+		assert(Crafting.Rarities[recipe.Rarity], recipe.Name)
+		counts[recipe.Rarity] += 1
+	end
+	for _, count in pairs(counts) do equal(count, 5) end
+end)
+
+test("rarity increases each recipe's actual production value", function()
+	local data = Progression.newData()
+	data.unlocked = 30
+	equal(Progression.recipeValue(data, 1), 5)
+	equal(Progression.recipeValue(data, 6), 162)
+	equal(Progression.recipeValue(data, 11), 2012)
+	equal(Progression.recipeValue(data, 16), 19750)
+	equal(Progression.recipeValue(data, 21), 198000)
+	equal(Progression.recipeValue(data, 26), 1794000)
+end)
+
+test("glaze needs wallet funds, charges once, and increases future cookie value", function()
+	local data = Progression.newData()
+	data.bank = 100
+	assert(not Progression.buyModifier(data, 1, "Glaze"))
+	equal(next(data.modifiers), nil)
+	Progression.collect(data)
+	assert(Progression.buyModifier(data, 1, "Glaze"))
+	equal(data.cash, 0)
+	equal(data.modifiers["1"].Glaze, true)
+	equal(Progression.recipeValue(data, 1), 6)
+	data.cash = 100
+	assert(not Progression.buyModifier(data, 1, "Glaze"))
+	equal(data.cash, 100)
+end)
+
+test("toppings apply only to the selected recipe and batch income sums the final values", function()
+	local data = Progression.newData()
+	data.cash, data.unlocked = 10000, 2
+	assert(Progression.buyModifier(data, 1, "Glaze"))
+	equal(Progression.recipeValue(data, 1), 6)
+	equal(Progression.recipeValue(data, 2), 12)
+	equal(Progression.batchValue(data), 18)
+	assert(Progression.buyModifier(data, 2, "Sprinkles"))
+	equal(Progression.recipeValue(data, 1), 6)
+	equal(Progression.recipeValue(data, 2), 16)
+	equal(Progression.batchValue(data), 22)
+	equal(data.modifiers["1"].Sprinkles, nil)
+end)
+
+test("all five modifiers add to 4x value and multiply with rarity and global bonuses", function()
+	local data = Progression.newData()
+	data.cash, data.unlocked = 100000000, 11
+	for _, key in ipairs(Crafting.ModifierOrder) do assert(Progression.buyModifier(data, 11, key)) end
+	near(Crafting.multiplier(data.modifiers["11"]), 4)
+	equal(Progression.recipeValue(data, 11), 8050)
+	data.permanent.Yield = 4
+	data.rebirths = 1
+	equal(Progression.recipeValue(data, 11, { DoubleIncome = true }), 37030)
+	equal(Progression.interval(data), 3) -- Toppings alter value, not baking speed.
+end)
+
+test("modifier prices scale with the selected recipe and respect early-game minimums", function()
+	equal(Crafting.cost(Recipes[1], "Glaze"), 100)
+	equal(Crafting.cost(Recipes[1], "Sprinkles"), 350)
+	equal(Crafting.cost(Recipes[1], "GoldLeaf"), 12500)
+	equal(Crafting.cost(Recipes[30], "Glaze"), 140000000)
+	equal(Crafting.cost(Recipes[30], "GoldLeaf"), 1680000000)
+	equal(Crafting.cost(Recipes[1], "NotAnIngredient"), nil)
+end)
+
+test("invalid, locked, and forged modifier requests leave all money and upgrades unchanged", function()
+	local data = Progression.newData()
+	data.cash = 100000
+	local before = copy(data)
+	for _, index in ipairs({ -1, 0, 1.5, 2, 31, math.huge, 0 / 0 }) do
+		assert(not Progression.buyModifier(data, index, "Glaze"))
+		same(data, before)
+	end
+	assert(not Progression.buyModifier(data, "1", "Glaze"))
+	assert(not Progression.buyModifier(data, 1, "FreeGoldenCash"))
+	assert(not Progression.buyModifier(data, 1, {}))
+	same(data, before)
+end)
+
+test("modifier validation preserves known booleans on unlocked recipes without aliasing input", function()
+	local raw = Progression.newData()
+	raw.unlocked = 2
+	raw.modifiers = {
+		["1"] = { Glaze = true, Sprinkles = "yes", GoldLeaf = false, Exploit = true },
+		["2"] = { ChocolateDrizzle = true },
+		["3"] = { GoldLeaf = true },
+		["9999"] = { Glaze = true },
+	}
+	local data = Progression.normalize(raw)
+	same(data.modifiers, { ["1"] = { Glaze = true }, ["2"] = { ChocolateDrizzle = true } })
+	data.modifiers["1"].Glaze = false
+	equal(raw.modifiers["1"].Glaze, true)
+end)
+
+test("all 32 modifier combinations survive the server-to-client attribute encoding", function()
+	for mask = 0, 31 do
+		local flags = Crafting.decode(mask)
+		equal(Crafting.encode(flags), mask)
+		for _, value in pairs(flags) do equal(value, true) end
+	end
+	same(Crafting.decode(-5), {})
+	same(Crafting.decode(math.huge), {})
+	same(Crafting.decode(0 / 0), {})
+	equal(Crafting.summary({ Sprinkles = true, Glaze = true }), "Glaze + Sprinkles")
+end)
+
+test("per-recipe topping purchases and their increased values restore after leaving", function()
+	local store = fakeStore()
+	local manager = harness(store)
+	local profile = assert(manager:Load(40, "server-A"))
+	profile.data.cash, profile.data.unlocked = 1000000, 11
+	assert(Progression.buyModifier(profile.data, 1, "Glaze"))
+	assert(Progression.buyModifier(profile.data, 11, "Sprinkles"))
+	local value = Progression.recipeValue(profile.data, 11)
+	assert(manager:Save(profile, true))
+	local restored = assert(manager:Load(40, "server-B"))
+	equal(restored.data.modifiers["1"].Glaze, true)
+	equal(restored.data.modifiers["11"].Sprinkles, true)
+	equal(restored.data.modifiers["1"].Sprinkles, nil)
+	equal(Progression.recipeValue(restored.data, 11), value)
+	equal(store.records.Player_40.Version, 3)
+end)
+
+test("rebirth clears recipe modifiers but preserves Golden Chips, upgrades, and verified perks", function()
+	local data = Progression.newData()
+	data.cash, data.unlocked, data.bank = 10000, 18, 5000000
+	assert(Progression.buyModifier(data, 1, "Glaze"))
+	assert(Progression.buyModifier(data, 1, "Sprinkles"))
+	data.permanent.Yield = 2
+	local perks = { DoubleIncome = true }
+	assert(Progression.rebirth(data))
+	same(data.modifiers, {})
+	equal(data.chips, 5)
+	equal(data.permanent.Yield, 2)
+	equal(perks.DoubleIncome, true)
+	equal(Progression.recipeValue(data, 1, perks), 17)
+end)
+
+test("version-2 purchase saves migrate to version 3 with receipt history intact", function()
+	local store = fakeStore()
+	local data = Progression.newData()
+	data.cash, data.unlocked, data.modifiers = 4567, 7, nil
+	store.records.Player_41 = { Version = 2, Data = data, Receipts = { ["old-paid-bundle"] = 123 } }
+	local manager = harness(store)
+	local profile = assert(manager:Load(41, "server-A"))
+	equal(profile.data.cash, 4567)
+	equal(profile.data.unlocked, 7)
+	same(profile.data.modifiers, {})
+	assert(manager:GrantReceipt(profile, "old-paid-bundle", 123, grantCash))
+	equal(profile.data.cash, 4567)
+	equal(store.records.Player_41.Version, 3)
+end)
+
+test("uncertain paid cash commits preserve crafted recipes when reconciled and rejoined", function()
+	local store = fakeStore()
+	local manager = harness(store)
+	local profile = assert(manager:Load(42, "server-A"))
+	profile.data.cash, profile.data.unlocked = 1000000, 11
+	assert(Progression.buyModifier(profile.data, 1, "Glaze"))
+	assert(Progression.buyModifier(profile.data, 11, "Sprinkles"))
+	local modifiers, cashBefore = copy(profile.data.modifiers), profile.data.cash
+	store.commitErrorsRemaining = 3
+	assert(not manager:GrantReceipt(profile, "paid-with-toppings", 123, grantCash))
+	assert(manager:GrantReceipt(profile, "paid-with-toppings", 123, grantCash))
+	same(profile.data.modifiers, modifiers)
+	equal(profile.data.cash, cashBefore + 10000)
+	assert(manager:Save(profile, true))
+	local restored = assert(manager:Load(42, "server-B"))
+	same(restored.data.modifiers, modifiers)
+	equal(restored.receipts["paid-with-toppings"], 123)
+end)
+
+test("fully decorated bakery income matches the sum of the displayed individual cookie values", function()
+	local data = Progression.newData()
+	data.cash, data.unlocked = Progression.MAX_CASH, 30
+	data.permanent.Yield, data.rebirths = 3, 4
+	local perks = { DoubleIncome = true }
+	local total = 0
+	for index = 1, #Recipes do
+		for _, key in ipairs(Crafting.ModifierOrder) do assert(Progression.buyModifier(data, index, key)) end
+		total += Progression.recipeValue(data, index, perks)
+	end
+	equal(Progression.batchValue(data, perks), total)
+	assert(total > 0)
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

@@ -3,6 +3,7 @@ local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Recipes = require(ReplicatedStorage.CookieTycoon.Recipes)
 local Progression = require(ReplicatedStorage.CookieTycoon.Progression)
+local Crafting = require(ReplicatedStorage.CookieTycoon.CookieCrafting)
 local Assets = require(script.Parent.AssetLibrary)
 local World = {}
 
@@ -68,7 +69,7 @@ function World.updateBank(plot, data)
 	plot.bankText.Text = "Collect earnings\n$" .. Progression.format(data and data.bank or 0)
 end
 
-function World.refresh(plot, data)
+function World.refresh(plot, data, perks)
 	plot.sign.Text = plot.owner and (plot.owner.DisplayName .. "'s Bakery") or "Unclaimed Bakery"
 	plot.claimPrompt.Enabled = plot.owner == nil
 	World.updateBank(plot, data)
@@ -76,17 +77,21 @@ function World.refresh(plot, data)
 	plot.upgradeText.Text = not data and "Upgrade ovens" or data.level == Progression.MAX_OVEN_LEVEL and "Ovens MAXED!"
 		or "Oven level " .. data.level .. "\n$" .. Progression.format(Progression.ovenCost(data))
 	plot.shopPrompt.Enabled = data ~= nil
+	plot.workshopPrompt.Enabled = data ~= nil
 	for index, station in ipairs(plot.stations) do
 		local unlocked = data ~= nil and index <= data.unlocked
+		local rarity = Crafting.rarity(Recipes[index])
 		station.purchase.Enabled = data ~= nil and index == data.unlocked + 1
-		station.text.Text = index .. ". " .. Recipes[index].Name .. (unlocked and "\nBAKING!" or "\n$" .. Progression.format(Recipes[index].Cost))
-		station.oven.Color = unlocked and color(Recipes[index].Color) or Color3.fromRGB(90, 96, 107)
+		station.text.Text = index .. ". " .. Recipes[index].Name .. "\n" .. rarity.Name .. " x" .. rarity.Multiplier
+			.. (unlocked and " • $" .. Progression.format(Progression.recipeValue(data, index, perks)) .. " / cookie" or "\nUnlock $" .. Progression.format(Recipes[index].Cost))
+		station.text.TextColor3 = unlocked and color(rarity.Color) or Color3.fromRGB(210, 210, 210)
+		station.oven.Color = unlocked and color(rarity.Color) or Color3.fromRGB(90, 96, 107)
 		station.window.Color = unlocked and Color3.fromRGB(246, 151, 61) or Color3.fromRGB(48, 59, 66)
 		station.window.Material = unlocked and Enum.Material.Neon or Enum.Material.Glass
 	end
 end
 
-function World.create(onClaim, onAction, onShop)
+function World.create(onClaim, onAction, onShop, onWorkshop)
 	local world = Instance.new("Folder")
 	world.Name = "CookieTycoonWorld"
 	world.Parent = workspace
@@ -128,7 +133,10 @@ function World.create(onClaim, onAction, onShop)
 		prop(plot, "BakeryFloor", 0, 0, 0)
 		prop(plot, "BakeryShell", 0, 0, 0)
 		prop(plot, "BakeryAwning", 0, 113)
-		prop(plot, "PrepCounter", 0, -116)
+		local counter = prop(plot, "PrepCounter", 0, -116)
+		local worktop = counter:FindFirstChild("Texture_CounterMarble")
+		label(worktop, "Cookie Workshop\nRarities & toppings", 65)
+		plot.workshopPrompt = prompt(worktop, "Open workshop", function(player) onWorkshop(player, plot) end, "Cookie Workshop")
 		prop(plot, "IngredientBins", -24, -116)
 		prop(plot, "DoughMixer", 14, -116)
 		prop(plot, "CoolingRack", 28, -116)
@@ -171,7 +179,7 @@ function World.create(onClaim, onAction, onShop)
 	return plots
 end
 
-function World.animate(plot, data)
+function World.animate(plot, data, perks)
 	-- Show at most four detailed cookies per visual batch. Income includes every oven.
 	-- Keeping animations independent of oven speed bounds replicated part creation.
 	for _ = 1, math.min(4, data.unlocked) do
@@ -179,7 +187,18 @@ function World.animate(plot, data)
 		local index = plot.visualCursor
 		local station = plot.stations[index]
 		local start = position(plot, station.x, 2.1, station.z + 9)
-		local model = Assets.cookie(index, plot.model, CFrame.new(start))
+		local flags = data.modifiers[tostring(index)]
+		local model = Assets.cookie(index, plot.model, CFrame.new(start), flags)
+		local rarity = Crafting.rarity(Recipes[index])
+		local value = Progression.recipeValue(data, index, perks)
+		model:SetAttribute("CashValue", value)
+		local toppingCount = 0
+		for _, key in ipairs(Crafting.ModifierOrder) do if flags and flags[key] then toppingCount += 1 end end
+		local badge = label(model.PrimaryPart, rarity.Name .. " • $" .. Progression.format(value)
+			.. "\n" .. (toppingCount > 0 and toppingCount .. " topping upgrades" or Recipes[index].Name), 28)
+		badge.TextColor3 = color(rarity.Color)
+		badge.Parent.Size = UDim2.fromOffset(165, 44)
+		badge.Parent.StudsOffset = Vector3.new(0, 1.7, 0)
 		for _, object in ipairs(model:GetDescendants()) do
 			if not object:IsA("BasePart") then continue end
 			object.CanCollide = false

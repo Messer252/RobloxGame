@@ -1,4 +1,5 @@
 local Recipes = if script then require(script.Parent.Recipes) else require("./Recipes")
+local Crafting = if script then require(script.Parent.CookieCrafting) else require("./CookieCrafting")
 
 local Progression = {}
 Progression.MAX_CASH = 1e15 -- Keep all currency integers below double precision limits.
@@ -21,7 +22,7 @@ local function integer(value, default, minimum, maximum)
 end
 
 function Progression.newData()
-	return { cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0, permanent = { Yield = 0, Speed = 0, Starter = 0 } }
+	return { cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0, permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {} }
 end
 
 -- Returns a fresh, serializable copy. Runtime fields and unknown keys never enter a save.
@@ -37,6 +38,19 @@ function Progression.normalize(raw)
 	if type(raw.permanent) == "table" then
 		for key, upgrade in pairs(Progression.Permanent) do
 			data.permanent[key] = integer(raw.permanent[key], 0, 0, upgrade.Max)
+		end
+	end
+	if type(raw.modifiers) == "table" then
+		for index = 1, data.unlocked do
+			local recipeKey = tostring(index)
+			local source = raw.modifiers[recipeKey]
+			if type(source) == "table" then
+				local flags = {}
+				for _, key in ipairs(Crafting.ModifierOrder) do
+					if source[key] == true then flags[key] = true end
+				end
+				if next(flags) then data.modifiers[recipeKey] = flags end
+			end
 		end
 	end
 	return data
@@ -59,10 +73,36 @@ function Progression.interval(data, perks)
 	return normalInterval / (perks and perks.DoubleSpeed and 2 or 1)
 end
 
+function Progression.recipeValue(data, index, perks)
+	local flags = data.modifiers and data.modifiers[tostring(index)]
+	return math.floor(Recipes[index].Value * Crafting.rarity(Recipes[index]).Multiplier
+		* Crafting.multiplier(flags) * Progression.multiplier(data, perks))
+end
+
 function Progression.batchValue(data, perks)
 	local total = 0
-	for index = 1, data.unlocked do total += Recipes[index].Value end
-	return math.floor(total * Progression.multiplier(data, perks))
+	for index = 1, data.unlocked do total += Progression.recipeValue(data, index, perks) end
+	return total
+end
+
+function Progression.buyModifier(data, index, key)
+	if type(index) ~= "number" or index ~= math.floor(index) or index < 1 or index > data.unlocked then
+		return false, "Unlock that cookie recipe before decorating it."
+	end
+	if type(key) ~= "string" or not Crafting.Modifiers[key] then return false, "Unknown cookie modifier." end
+	local recipeKey = tostring(index)
+	local flags = data.modifiers and data.modifiers[recipeKey]
+	if flags and flags[key] then return false, "This recipe already has " .. Crafting.Modifiers[key].Name .. "." end
+	local cost = Crafting.cost(Recipes[index], key)
+	if data.cash < cost then return false, "You need $" .. Progression.format(cost) .. " in your wallet for this modifier." end
+	data.cash -= cost
+	if not data.modifiers then data.modifiers = {} end
+	if not flags then
+		flags = {}
+		data.modifiers[recipeKey] = flags
+	end
+	flags[key] = true
+	return true, Crafting.Modifiers[key].Name .. " added to " .. Recipes[index].Name .. "!"
 end
 
 function Progression.ovenCost(data)
@@ -130,7 +170,8 @@ function Progression.rebirth(data)
 	data.bank = 0
 	data.unlocked = 1
 	data.level = 1
-	return true, "Reborn! +" .. requirement.Reward .. " Golden Chips. Permanent upgrades are kept."
+	data.modifiers = {}
+	return true, "Reborn! +" .. requirement.Reward .. " Golden Chips. Permanent upgrades are kept; recipe modifiers reset."
 end
 
 return Progression

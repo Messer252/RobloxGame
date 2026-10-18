@@ -5,6 +5,7 @@ local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Recipes = require(shared:WaitForChild("Recipes"))
 local Progression = require(shared:WaitForChild("Progression"))
+local Crafting = require(shared:WaitForChild("CookieCrafting"))
 local Catalog = require(shared:WaitForChild("ShopCatalog"))
 local remotes = shared:WaitForChild("Remotes")
 local requestAction = remotes:WaitForChild("RequestAction")
@@ -98,16 +99,29 @@ local close = button(menu, "X")
 close.Size = UDim2.fromOffset(38, 38)
 close.Position = UDim2.new(1, -50, 0, 10)
 close.Activated:Connect(function() menu.Visible = false end)
-local toggle = button(hud, "Bakery & Robux Shop", Color3.fromRGB(130, 87, 49))
+local toggle = button(hud, "Bakery • Workshop • Robux Shop", Color3.fromRGB(130, 87, 49))
 toggle.Position = UDim2.fromOffset(14, 115)
 toggle.Size = UDim2.new(1, -28, 0, 30)
 toggle.Activated:Connect(function() menu.Visible = not menu.Visible end)
 local bakeryTab = button(menu, "Bakery", Color3.fromRGB(130, 87, 49))
-bakeryTab.Position = UDim2.fromOffset(14, 82)
-bakeryTab.Size = UDim2.new(0.5, -18, 0, 32)
 local robuxTab = button(menu, "Robux Shop", Color3.fromRGB(92, 66, 48))
-robuxTab.Position = UDim2.new(0.5, 4, 0, 82)
-robuxTab.Size = UDim2.new(0.5, -18, 0, 32)
+local workshopTab = button(menu, "Workshop", Color3.fromRGB(92, 66, 48))
+local tabBar = Instance.new("Frame")
+tabBar.Position = UDim2.fromOffset(14, 82)
+tabBar.Size = UDim2.new(1, -28, 0, 32)
+tabBar.BackgroundTransparency = 1
+tabBar.Parent = menu
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabLayout.Padding = UDim.new(0, 8)
+tabLayout.Parent = tabBar
+for index, tab in ipairs({ bakeryTab, workshopTab, robuxTab }) do
+	tab.Parent = tabBar
+	tab.LayoutOrder = index
+	tab.Size = UDim2.new(1 / 3, -6, 1, 0)
+	tab.TextSize = 14
+end
 
 local scroll = Instance.new("ScrollingFrame")
 scroll.Position = UDim2.fromOffset(14, 124)
@@ -135,14 +149,21 @@ local shopScroll = scroll:Clone()
 shopScroll.Name = "RobuxShop"
 shopScroll.Visible = false
 shopScroll.Parent = menu
-local function showTab(shop)
-	scroll.Visible = not shop
-	shopScroll.Visible = shop
-	bakeryTab.BackgroundColor3 = shop and Color3.fromRGB(92, 66, 48) or Color3.fromRGB(130, 87, 49)
-	robuxTab.BackgroundColor3 = shop and Color3.fromRGB(130, 87, 49) or Color3.fromRGB(92, 66, 48)
+local workshopScroll = scroll:Clone()
+workshopScroll.Name = "CookieWorkshop"
+workshopScroll.Visible = false
+workshopScroll.Parent = menu
+local function showTab(tabName)
+	scroll.Visible = tabName == "Bakery"
+	workshopScroll.Visible = tabName == "Workshop"
+	shopScroll.Visible = tabName == "Robux"
+	for tab, name in pairs({ [bakeryTab] = "Bakery", [workshopTab] = "Workshop", [robuxTab] = "Robux" }) do
+		tab.BackgroundColor3 = name == tabName and Color3.fromRGB(130, 87, 49) or Color3.fromRGB(92, 66, 48)
+	end
 end
-bakeryTab.Activated:Connect(function() showTab(false) end)
-robuxTab.Activated:Connect(function() showTab(true) end)
+bakeryTab.Activated:Connect(function() showTab("Bakery") end)
+workshopTab.Activated:Connect(function() showTab("Workshop") end)
+robuxTab.Activated:Connect(function() showTab("Robux") end)
 local order = 0
 local function ordered(object)
 	order += 1
@@ -198,6 +219,43 @@ for _, key in ipairs(Progression.PermanentOrder) do
 	upgradeButton.Activated:Connect(function() requestAction:FireServer("UpgradePermanent", key) end)
 end
 
+ordered(text(workshopScroll, "COOKIE WORKSHOP", 20, gold))
+ordered(text(workshopScroll, "Choose a recipe and add toppings with cookie cash. Each purchase upgrades all future cookies of that recipe. Toppings stack and reset on rebirth."))
+local selectedRecipe = 1
+local lastWorkshopRebirth
+local selector = ordered(Instance.new("Frame"))
+selector.Size = UDim2.new(1, 0, 0, 54)
+selector.BackgroundTransparency = 1
+selector.Parent = workshopScroll
+local previousCookie = button(selector, "<")
+previousCookie.Size = UDim2.fromOffset(42, 48)
+local nextCookie = button(selector, ">")
+nextCookie.Size = UDim2.fromOffset(42, 48)
+nextCookie.Position = UDim2.new(1, -42, 0, 0)
+local recipeTitle = fixedLabel(selector, 0, 50, 17)
+recipeTitle.Position = UDim2.fromOffset(50, 0)
+recipeTitle.Size = UDim2.new(1, -100, 0, 50)
+recipeTitle.TextXAlignment = Enum.TextXAlignment.Center
+local workshopDetails = ordered(text(workshopScroll, "", 16))
+local toppingSummary = ordered(text(workshopScroll, ""))
+local modifierButtons = {}
+for _, key in ipairs(Crafting.ModifierOrder) do
+	local definition = Crafting.Modifiers[key]
+	local rgb = definition.Color
+	local addButton = ordered(button(workshopScroll, definition.Name, Color3.fromRGB(rgb[1] * 0.35, rgb[2] * 0.35, rgb[3] * 0.35)))
+	addButton.Size = UDim2.new(1, 0, 0, 76)
+	modifierButtons[key] = addButton
+	addButton.Activated:Connect(function()
+		requestAction:FireServer("BuyModifier", { Recipe = selectedRecipe, Modifier = key })
+	end)
+end
+ordered(text(workshopScroll, "RARITY TIERS", 18, gold))
+for _, key in ipairs(Crafting.RarityOrder) do
+	local rarity = Crafting.Rarities[key]
+	ordered(text(workshopScroll, rarity.Name .. "  •  x" .. rarity.Multiplier .. " base value", 15, Color3.fromRGB(table.unpack(rarity.Color))))
+end
+ordered(text(workshopScroll, "Each recipe has a fixed rarity. Topping bonuses add together, then multiply with rarity, Golden Batter, rebirth bonuses, and the income pass. Each cookie's final value is rounded down to whole cash."))
+
 ordered(text(shopScroll, "ROBUX SHOP", 20, gold))
 ordered(text(shopScroll, "Optional upgrades. Roblox shows the final price and asks you to confirm every purchase. You can keep playing without buying anything."))
 local shopStatus = ordered(text(shopScroll, "Loading shop...", 15, gold))
@@ -238,7 +296,7 @@ toastLimit.Parent = toast
 
 local cash = player:WaitForChild("leaderstats"):WaitForChild("Cash")
 local function currentData()
-	return {
+	local data = {
 		cash = cash.Value, bank = player:GetAttribute("Bank") or 0,
 		unlocked = player:GetAttribute("RecipeCount") or 1, level = player:GetAttribute("OvenLevel") or 1,
 		rebirths = player:GetAttribute("Rebirths") or 0, chips = player:GetAttribute("GoldenChips") or 0,
@@ -251,7 +309,13 @@ local function currentData()
 			DoubleIncome = player:GetAttribute("DoubleIncomeOwned") == true,
 			DoubleSpeed = player:GetAttribute("DoubleSpeedOwned") == true,
 		},
+		modifiers = {},
 	}
+	for index = 1, #Recipes do
+		local flags = Crafting.decode(player:GetAttribute("RecipeModifiers_" .. index) or 0)
+		if next(flags) then data.modifiers[tostring(index)] = flags end
+	end
+	return data
 end
 local function enable(target, enabled)
 	target.Active = enabled
@@ -276,6 +340,10 @@ local function render()
 	local purchasePending = player:GetAttribute("PurchasePending") == true
 	local canManage = ownsBakery and not purchasePending
 	local format = Progression.format
+	if lastWorkshopRebirth ~= data.rebirths then
+		selectedRecipe = math.min(selectedRecipe, data.unlocked)
+		lastWorkshopRebirth = data.rebirths
+	end
 	wallet.Text = "Cash $" .. format(data.cash) .. "  |  Ready $" .. format(data.bank)
 	progress.Text = data.unlocked .. "/" .. #Recipes .. " cookies  •  " .. data.rebirths .. " rebirths  •  " .. data.chips .. " Golden Chips"
 	menuWallet.Text = "$" .. format(data.cash) .. " wallet  •  $" .. format(data.bank) .. " bank  •  " .. data.chips .. " Golden Chips"
@@ -289,13 +357,13 @@ local function render()
 	elseif not ownsBakery then
 		bakeryInfo.Text = "Claim any free bakery on a green pad. Your saved recipes and upgrades come with you. If all four are taken, wait for a plot to open."
 	else
-		bakeryInfo.Text = string.format("%d/%d recipes • Oven level %d/%d\n$%s per batch every %.2fs • %.2fx income\nUse this menu anywhere, or the pads at your bakery.",
+		bakeryInfo.Text = string.format("%d/%d recipes • Oven level %d/%d\n$%s per batch every %.2fs • %.2fx global income\nUse the Workshop to raise each recipe's value.",
 			data.unlocked, #Recipes, data.level, Progression.MAX_OVEN_LEVEL, format(Progression.batchValue(data, data.perks)), Progression.interval(data, data.perks), Progression.multiplier(data, data.perks))
 	end
 	collectButton.Text = "Collect $" .. format(data.bank)
 	enable(collectButton, canManage and data.bank > 0 and data.cash < Progression.MAX_CASH)
 	local nextRecipe = Recipes[data.unlocked + 1]
-	recipeButton.Text = nextRecipe and ("Unlock " .. nextRecipe.Name .. "\n$" .. format(nextRecipe.Cost)) or "All 30 cookies unlocked!"
+	recipeButton.Text = nextRecipe and ("Unlock " .. nextRecipe.Name .. "\n" .. Crafting.rarity(nextRecipe).Name .. " • $" .. format(nextRecipe.Cost)) or "All 30 cookies unlocked!"
 	enable(recipeButton, canManage and nextRecipe ~= nil and data.cash >= (nextRecipe and nextRecipe.Cost or 0))
 	local ovenMax = data.level >= Progression.MAX_OVEN_LEVEL
 	ovenButton.Text = ovenMax and "Ovens MAXED!" or ("Upgrade all ovens to level " .. (data.level + 1) .. "\n$" .. format(Progression.ovenCost(data)))
@@ -304,13 +372,13 @@ local function render()
 	local rebirthMax = data.rebirths >= Progression.MAX_REBIRTHS
 	local canRebirth = canManage and not rebirthMax and data.unlocked >= requirement.Recipes and data.cash + data.bank >= requirement.Cash
 	rebirthInfo.Text = rebirthMax and "You completed all 50 rebirths! Keep building your ultimate bakery."
-		or string.format("Rebirth #%d earns %d Golden Chips.\nRecipes: %d/%d required\nCash + bank: $%s / $%s\nReset cash, uncollected earnings, recipes, and oven levels. Keep Golden Chips and permanent upgrades.",
+		or string.format("Rebirth #%d earns %d Golden Chips.\nRecipes: %d/%d required\nCash + bank: $%s / $%s\nReset cash, uncollected earnings, recipes, oven levels, and recipe modifiers. Keep Golden Chips and permanent upgrades.",
 			data.rebirths + 1, requirement.Reward, data.unlocked, requirement.Recipes, format(data.cash + data.bank), format(requirement.Cash))
 	rebirthButton.Text = rebirthMax and "Maximum rebirths reached" or "Review rebirth  •  +" .. requirement.Reward .. " Golden Chips"
 	enable(rebirthButton, canRebirth)
 	if confirmation.Visible then
 		if data.rebirths ~= confirmCount or not ownsBakery then confirmation.Visible = false end
-		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips? Your cash, bank, 30-cookie unlock progress, and oven levels will reset. Golden Chips, permanent upgrades, and rebirth bonuses stay."
+		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips? Your cash, bank, recipe unlocks, oven levels, and topping modifiers will reset. Golden Chips, permanent upgrades, rebirth bonuses, and owned passes stay."
 		enable(confirmButton, canRebirth)
 	end
 	for key, upgradeButton in pairs(permanentButtons) do
@@ -319,6 +387,28 @@ local function render()
 		upgradeButton.Text = upgrade.Name .. "  " .. data.permanent[key] .. "/" .. upgrade.Max .. "\n"
 			.. (cost and cost .. " Golden Chips" or "MAXED") .. " • " .. upgrade.Description
 		enable(upgradeButton, canManage and cost ~= nil and data.chips >= (cost or math.huge))
+	end
+	local selected = Recipes[selectedRecipe]
+	local rarity = Crafting.rarity(selected)
+	local flags = data.modifiers[tostring(selectedRecipe)]
+	local unlocked = selectedRecipe <= data.unlocked
+	recipeTitle.Text = selectedRecipe .. "/" .. #Recipes .. " • " .. selected.Name
+	recipeTitle.TextColor3 = Color3.fromRGB(table.unpack(rarity.Color))
+	workshopDetails.Text = rarity.Name .. " rarity • x" .. rarity.Multiplier .. " base value"
+		.. "\nBase $" .. format(selected.Value) .. "  •  Toppings x" .. string.format("%.2f", Crafting.multiplier(flags))
+		.. "  •  Global income x" .. string.format("%.2f", Progression.multiplier(data, data.perks))
+		.. "\n" .. (unlocked and "Value: $" .. format(Progression.recipeValue(data, selectedRecipe, data.perks)) .. " per cookie"
+			or "Locked • Unlock this recipe for $" .. format(selected.Cost))
+	toppingSummary.Text = "Applied: " .. Crafting.summary(flags)
+	enable(previousCookie, selectedRecipe > 1)
+	enable(nextCookie, selectedRecipe < #Recipes)
+	for key, addButton in pairs(modifierButtons) do
+		local definition = Crafting.Modifiers[key]
+		local cost = Crafting.cost(selected, key)
+		local applied = flags and flags[key] == true
+		addButton.Text = definition.Name .. "  +" .. math.floor(definition.Bonus * 100 + 0.5) .. "% value\n"
+			.. (applied and "Applied to this recipe" or "$" .. format(cost) .. (unlocked and " to add" or " • Unlock recipe first"))
+		enable(addButton, canManage and unlocked and not applied and data.cash >= cost)
 	end
 	local commerceReady = ready and player:GetAttribute("CommerceReady") == true
 	local promptOpen = player:GetAttribute("ShopPromptOpen") == true
@@ -399,7 +489,18 @@ confirmButton.Activated:Connect(function()
 	confirmation.Visible = false
 end)
 cancelButton.Activated:Connect(function() confirmation.Visible = false end)
-openShop.OnClientEvent:Connect(function() menu.Visible = true end)
+previousCookie.Activated:Connect(function()
+	selectedRecipe = math.max(1, selectedRecipe - 1)
+	render()
+end)
+nextCookie.Activated:Connect(function()
+	selectedRecipe = math.min(#Recipes, selectedRecipe + 1)
+	render()
+end)
+openShop.OnClientEvent:Connect(function(tabName)
+	if tabName == "Workshop" or tabName == "Bakery" then showTab(tabName) end
+	menu.Visible = true
+end)
 
 local noticeVersion = 0
 local function showNotice()

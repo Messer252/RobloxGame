@@ -5,6 +5,8 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Progression = require(shared.Progression)
+local Recipes = require(shared.Recipes)
+local Crafting = require(shared.CookieCrafting)
 local ProfileStore = require(script.ProfileStore)
 local Settings = require(script.Settings)
 local World = require(script.World)
@@ -54,6 +56,9 @@ local function sync(player, state)
 	player:SetAttribute("Rebirths", data.rebirths)
 	player:SetAttribute("GoldenChips", data.chips)
 	for key, level in pairs(data.permanent) do player:SetAttribute(key .. "Level", level) end
+	for index = 1, #Recipes do
+		player:SetAttribute("RecipeModifiers_" .. index, Crafting.encode(data.modifiers[tostring(index)]))
+	end
 end
 
 local function usable(player)
@@ -93,11 +98,11 @@ local commerce = CommerceServer.start({
 	Notify = notify,
 	Refresh = function(player, state)
 		sync(player, state)
-		if state.plot then World.refresh(state.plot, state.data) end
+		if state.plot then World.refresh(state.plot, state.data, state.perks) end
 	end,
 }, requestPurchase, refreshPasses)
 
-local allowedActions = { Collect = true, BuyRecipe = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true }
+local allowedActions = { Collect = true, BuyRecipe = true, BuyModifier = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true }
 local function onAction(player, action, argument, sourcePlot)
 	if type(action) ~= "string" or not allowedActions[action] then return end
 	local state = usable(player)
@@ -120,6 +125,9 @@ local function onAction(player, action, argument, sourcePlot)
 	elseif action == "UpgradePermanent" then
 		if type(argument) ~= "string" or not Progression.Permanent[argument] then return end
 		success, message = Progression.buyPermanent(data, argument)
+	elseif action == "BuyModifier" then
+		if type(argument) ~= "table" then return end
+		success, message = Progression.buyModifier(data, argument.Recipe, argument.Modifier)
 	elseif action == "Rebirth" then
 		-- A confirmation for an old rebirth count cannot submit a newer rebirth.
 		if argument ~= data.rebirths then return end
@@ -129,8 +137,8 @@ local function onAction(player, action, argument, sourcePlot)
 	if success then
 		state.nextBake = math.min(state.nextBake, now + Progression.interval(data, state.perks))
 		sync(player, state)
-		if action == "Collect" then World.updateBank(state.plot, data) else World.refresh(state.plot, data) end
-		if action == "Rebirth" or action == "UpgradePermanent" then
+		if action == "Collect" then World.updateBank(state.plot, data) else World.refresh(state.plot, data, state.perks) end
+		if action == "Rebirth" or action == "UpgradePermanent" or action == "BuyModifier" then
 			-- Save the entire reset/reward transaction together, without one write per click.
 			state.nextSave = math.min(state.nextSave, now + 2)
 		end
@@ -150,11 +158,14 @@ World.create(function(player, plot)
 	state.plot = plot
 	state.nextBake = os.clock() + Progression.interval(state.data, state.perks)
 	player:SetAttribute("HasBakery", true)
-	World.refresh(plot, state.data)
+	World.refresh(plot, state.data, state.perks)
 	notify(player, "Bakery claimed! Your saved recipes and upgrades are restored.")
 end, onAction, function(player, plot)
 	local state = usable(player)
-	if state and state.plot == plot and plot.owner == player then openShop:FireClient(player) end
+	if state and state.plot == plot and plot.owner == player then openShop:FireClient(player, "Bakery") end
+end, function(player, plot)
+	local state = usable(player)
+	if state and state.plot == plot and plot.owner == player then openShop:FireClient(player, "Workshop") end
 end)
 
 requestAction.OnServerEvent:Connect(function(player, action, argument)
@@ -244,7 +255,7 @@ task.spawn(function()
 				sync(player, state)
 				if now >= state.nextVisual then
 					state.nextVisual = now + 1.6
-					World.animate(state.plot, state.data)
+					World.animate(state.plot, state.data, state.perks)
 				end
 			end
 		end
