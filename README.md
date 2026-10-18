@@ -1,5 +1,9 @@
 # Cookie Corner Tycoon
 
+**[Download the complete game for Roblox Studio](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip)**
+
+Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
+
 A four-player Roblox cookie tycoon with 30 recipes, 15 oven levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Claim any free bakery, bake automatically, collect earnings, and unlock recipes in order. The Bakery menu lets you collect and purchase from anywhere after claiming a plot; physical pads also work.
 
 The refreshed presentation adds warm afternoon lighting, pastel bakeries, tiled floors, string lights, windows, oven steam, a cookie monument, clearer labels, and animated menu/reward feedback. **Music** and **SFX** buttons independently control each player's audio and save their choices. An original café melody and action cues play using a bundled-chime arrangement by default; the included full music recording and nine WAV cues can be uploaded for richer playback. See [graphics and audio setup](AUDIO.md).
@@ -14,7 +18,7 @@ The **Robux Shop** includes permanent 2× income and 2× baking-speed passes plu
 
 ## Open in Roblox Studio
 
-**New to Studio? Follow the [full upload, saving, testing, and publishing guide](STUDIO_SETUP.md).** If you have the ready-made `CookieCorner.rbxlx` supplied in the chat, open it directly in Studio; no terminal or plugins are needed. The steps below are for building or assembling the GitHub source.
+**New to Studio? Use the game download above and follow the [full upload, saving, testing, and publishing guide](STUDIO_SETUP.md).** The steps below are for developers building or assembling the GitHub source.
 
 With Rojo **7.7.1** installed:
 
@@ -23,6 +27,8 @@ rojo build default.project.json -o build/CookieCorner.rbxlx
 ```
 
 Create the `build` directory first if necessary, then open the generated place in Studio. For live editing, run `rojo serve default.project.json` and connect the Studio Rojo plugin.
+
+After changing source scripts or models, run `python tools/package_studio.py` with Rojo on your PATH (or pass `--rojo /path/to/rojo`) and commit both root download files. This rebuilds `CookieCorner.rbxlx` and `CookieCorner_Studio.zip`, checks that every script matches source, and verifies the ZIP.
 
 Without Rojo, create this structure in a new Baseplate place and paste each file into the matching script. The modules under `Tycoon` must be children of that **Script**, not siblings:
 

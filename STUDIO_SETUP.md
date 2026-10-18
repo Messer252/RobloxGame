@@ -6,13 +6,13 @@ The place includes all game scripts, 30 cookie models, 20 bakery props, rarities
 
 ## 1. Download the game and install Studio
 
-1. Download **CookieCorner.rbxlx** from the download link in the chat where this game was supplied. Save it somewhere easy to find, such as Downloads.
+1. [Download CookieCorner_Studio.zip from GitHub](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Extract the ZIP to get **CookieCorner.rbxlx**, the complete game. On Windows, right-click the ZIP and choose **Extract All**; on Mac, double-click the ZIP. You can also open [the place file on GitHub](CookieCorner.rbxlx) and click **Download raw file**.
 2. Install [Roblox Studio](https://create.roblox.com/docs/studio/setup) on a **Windows PC or Mac**. Studio does not run on a phone or tablet.
 3. Open Studio and sign in to the Roblox account that will own the game, or an account with permission to publish for your group.
 
 Use **CookieCorner.rbxlx**, which is the complete place. The free-assets ZIP contains reusable art; opening that alone does not install the game.
 
-If you are starting only from GitHub, note that the repository contains the source and art. Generated files in `build/`, including the ready-made place, are not committed to GitHub. Use the file supplied in the chat, or see [Building a place from GitHub](#building-a-place-from-github).
+The ready-to-open place and game ZIP are available at the **top level of this GitHub repository**. If you use GitHub's **Code → Download ZIP** instead, extract that repository ZIP and find `CookieCorner.rbxlx` inside `RobloxGame-main`. You do not upload the `src` or `assets` folders to Studio. The developer-only `build/` folder remains ignored; see [Building a place from GitHub](#building-a-place-from-github) only if you want to rebuild the source yourself.
 
 ## 2. Open the place file
 
@@ -268,7 +268,7 @@ Edits made only in Studio do not automatically update GitHub. A GitHub push does
 
 ## Building a place from GitHub
 
-Skip this section if you downloaded the ready-made `.rbxlx`. This is the optional source-development route.
+Skip this section if you downloaded the ready-made `.rbxlx` or game ZIP above. This is the optional source-development route.
 
 1. Download/clone this repository.
 2. Install [Rojo 7.7.1](https://github.com/rojo-rbx/rojo/releases/tag/v7.7.1).

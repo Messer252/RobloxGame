@@ -5,3 +5,6 @@
 *.rbxlx.lock
 __pycache__/
 *.py[cod]
+
+# Ready-to-open distribution published alongside the source for Studio users.
+!/CookieCorner.rbxlx
