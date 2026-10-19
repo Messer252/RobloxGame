@@ -55,8 +55,10 @@ function ObbyWorld.create(parent, onComplete, notify)
 		for index = 1, definition.Count do
 			local p = Catalog.platform(definition, index)
 			local step = platform(model, "Checkpoint " .. index, Vector3.new(p.x, p.y, p.z), definition.Width, tint)
+			step.Material = Enum.Material.Slate
+			local trim = platform(model, "Checkpoint Trim", step.Position - Vector3.new(0, 0.35, 0), definition.Width + 0.25, Color3.fromRGB(87, 67, 53))
+			trim.Size, trim.CanCollide, trim.CanQuery = Vector3.new(definition.Width + 0.25, 0.2, definition.Width + 0.25), false, false
 			table.insert(path, step)
-			if index < definition.Count then sign(step, tostring(index)) end
 			if index == definition.Count then
 				sign(step, "FINISH\n" .. definition.Id .. " • Cash boost")
 				local back = Instance.new("ProximityPrompt")
@@ -92,7 +94,7 @@ function ObbyWorld.create(parent, onComplete, notify)
 							run = Progress.start(definition, now)
 							run.character = player.Character
 							runs[player], completed[player] = run, nil
-							notify(player, definition.Id .. " started. Land on each numbered platform.")
+							notify(player, definition.Id .. " started. Land on each platform in order.")
 						elseif run and run.course == definition.Id then
 							if run.stage < definition.Count and surface == course.path[run.stage + 1] then
 								Progress.advance(run, definition, run.stage + 1, now)

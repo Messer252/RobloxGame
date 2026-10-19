@@ -22,15 +22,23 @@ function Valley.create(parent)
 			stripe.CanCollide = false
 		end
 	end
-	for index = 1, 48 do
-		local angle = index / 48 * math.pi * 2
-		local position = Vector3.new(math.cos(angle) * 720, 15, math.sin(angle) * 850)
-		local height = random:NextNumber(150, 290)
-		local mountain = part(folder, "Valley Mountain", Vector3.new(190, height, 180), position + Vector3.new(0, height / 2 - 45, 0), Color3.fromRGB(94, 117, 127), Enum.Material.Rock)
-		mountain.Shape = Enum.PartType.Ball
-		local peak = part(folder, "Snow Peak", Vector3.new(100, height * 0.28, 95), position + Vector3.new(0, height - 65, 0), Color3.fromRGB(230, 239, 235), Enum.Material.Snow)
-		peak.Shape = Enum.PartType.Ball
-		mountain.CanCollide, peak.CanCollide = false, false
+	-- Four angular rock faces form a pointed mountain, with a smaller snow crown.
+	for index = 1, 32 do
+		local angle = index / 32 * math.pi * 2
+		local center = Vector3.new(math.cos(angle) * 740, -8, math.sin(angle) * 890)
+		local height, width = random:NextNumber(170, 310), random:NextNumber(120, 205)
+		for layer = 1, 2 do
+			local size = layer == 1 and Vector3.new(width, height, width) or Vector3.new(width * 0.3, height * 0.3, width * 0.3)
+			local base = center + Vector3.new(0, layer == 1 and 0 or height * 0.7, 0)
+			for face = 0, 3 do
+				local rotation = CFrame.Angles(0, face * math.pi / 2 + angle, 0)
+				local rock = Instance.new("CornerWedgePart")
+				rock.Name, rock.Size = layer == 1 and "Faceted Mountain Face" or "Snowy Summit", Vector3.new(size.X / 2, size.Y, size.Z / 2)
+				rock.CFrame = CFrame.new(base) * rotation * CFrame.new(size.X / 4, size.Y / 2, size.Z / 4)
+				rock.Color = layer == 1 and Color3.fromRGB(91 + face * 6, 108 + face * 6, 115 + face * 7) or Color3.fromRGB(231, 238, 234)
+				rock.Material, rock.Anchored, rock.CanCollide, rock.Parent = layer == 1 and Enum.Material.Rock or Enum.Material.Snow, true, false, folder
+			end
+		end
 	end
 	for index = 1, 175 do
 		local x = (index % 2 == 0 and -1 or 1) * random:NextNumber(225, 425)
@@ -64,21 +72,39 @@ function Valley.create(parent)
 		local rock = part(folder, "Lake Shore", Vector3.new(16, 5, 13), Vector3.new(-285 + math.cos(a) * 72, -1, -370 + math.sin(a) * 57), Color3.fromRGB(128, 138, 131), Enum.Material.Slate)
 		rock.Shape = Enum.PartType.Ball
 	end
-	local cliff = part(folder, "Waterfall Cliff", Vector3.new(40, 45, 45), Vector3.new(-356, 17, -390), Color3.fromRGB(112, 126, 126), Enum.Material.Rock)
-	cliff.Shape = Enum.PartType.Ball
-	local water = part(folder, "Waterfall", Vector3.new(12, 36, 1.8), Vector3.new(-339, 18, -370), Color3.fromRGB(155, 223, 229), Enum.Material.Glass)
-	water.Transparency, water.CanCollide = 0.25, false
-	local source = Instance.new("Attachment")
-	source.Position, source.Parent = Vector3.new(0, 18, 0), water
-	local falling = Instance.new("ParticleEmitter")
-	falling.Texture, falling.EmissionDirection, falling.Rate = "rbxasset://textures/particles/smoke_main.dds", Enum.NormalId.Bottom, 14
-	falling.Lifetime, falling.Speed, falling.Acceleration, falling.SpreadAngle = NumberRange.new(1, 1.5), NumberRange.new(18, 22), Vector3.new(0, -30, 0), Vector2.new(15, 2)
-	falling.Size, falling.Transparency, falling.Color, falling.Parent = NumberSequence.new(2), NumberSequence.new(0.65, 1), ColorSequence.new(Color3.fromRGB(209, 244, 247)), source
+	-- Layered slate cliff, a river lip, and two falling ribbons rather than a sphere.
+	for layer = 0, 3 do
+		local cliff = part(folder, "Waterfall Slate Terrace", Vector3.new(36 - layer * 4, 11, 35 - layer * 3), Vector3.new(-358, 5 + layer * 10, -390), Color3.fromRGB(98 + layer * 6, 114 + layer * 5, 112 + layer * 5), Enum.Material.Slate)
+		cliff.CFrame *= CFrame.Angles(0, (layer % 2 == 0 and 1 or -1) * 0.09, 0)
+	end
+	part(folder, "Waterfall Riverbed", Vector3.new(12, 1, 29), Vector3.new(-351, 42, -400), Color3.fromRGB(109, 121, 113), Enum.Material.Slate)
+	local river = part(folder, "Waterfall Source Stream", Vector3.new(10, 0.4, 27), Vector3.new(-351, 42.7, -400), Color3.fromRGB(115, 203, 214), Enum.Material.Glass)
+	river.CanCollide, river.Transparency = false, 0.35
+	local water = part(folder, "Waterfall Mist Anchor", Vector3.one, Vector3.new(-339, 1, -369), Color3.fromRGB(210, 242, 239))
+	water.Transparency, water.CanCollide = 1, false
+	for strip = 1, 5 do
+		local previous
+		for i, pos in ipairs({ Vector3.new(-351 + (strip - 3) * 1.8, 42.7, -386), Vector3.new(-343 + (strip - 3) * 1.9, 22, -377), Vector3.new(-337 + (strip - 3) * 2, 0.7, -368) }) do
+			local anchor = Instance.new("Attachment")
+			anchor.Position, anchor.Parent = pos - water.Position, water
+			if previous then
+				local beam = Instance.new("Beam")
+				beam.Attachment0, beam.Attachment1, beam.Width0, beam.Width1 = previous, anchor, 2.4, 2.9
+				beam.Color, beam.Transparency, beam.FaceCamera = ColorSequence.new(Color3.fromRGB(177, 231, 236)), NumberSequence.new(0.2), true
+				beam.Texture, beam.TextureSpeed, beam.TextureLength = "rbxasset://textures/particles/smoke_main.dds", 3.5, 7
+				beam.Segments, beam.CurveSize0, beam.CurveSize1, beam.Parent = 12, i == 2 and 7 or 3, 2, water
+			end
+			previous = anchor
+		end
+	end
 	local spray = Instance.new("ParticleEmitter")
-	spray.Texture, spray.Rate, spray.Lifetime, spray.Speed = "rbxasset://textures/particles/smoke_main.dds", 10, NumberRange.new(0.8, 1.5), NumberRange.new(1, 4)
-	spray.Size, spray.Transparency, spray.Color = NumberSequence.new(4), NumberSequence.new(0.7, 1), ColorSequence.new(Color3.fromRGB(212, 245, 246))
-	local foam = part(folder, "Waterfall Foam", Vector3.new(16, 0.2, 7), Vector3.new(-339, 0.2, -370), Color3.fromRGB(224, 247, 245))
-	foam.Transparency, foam.CanCollide, spray.Parent = 0.35, false, foam
+	spray.Texture, spray.Rate, spray.Lifetime, spray.Speed = "rbxasset://textures/particles/smoke_main.dds", 24, NumberRange.new(0.7, 1.8), NumberRange.new(2, 5)
+	spray.Size, spray.Transparency, spray.Color = NumberSequence.new(3, 6), NumberSequence.new(0.65, 1), ColorSequence.new(Color3.fromRGB(221, 247, 247))
+	spray.SpreadAngle, spray.Parent = Vector2.new(65, 65), water
+	for i = 1, 7 do
+		local foam = part(folder, "Waterfall Foam", Vector3.new(0.08, 3 + i * 0.7, 3 + i * 0.7), Vector3.new(-337 + math.sin(i) * 5, 0.35, -366 + math.cos(i) * 3), Color3.fromRGB(224, 247, 245))
+		foam.Shape, foam.CFrame, foam.Transparency, foam.CanCollide = Enum.PartType.Cylinder, foam.CFrame * CFrame.Angles(0, 0, math.pi / 2), 0.45, false
+	end
 	for index = 0, 18 do
 		part(folder, "Lake Footbridge Plank", Vector3.new(7.4, 0.5, 8), Vector3.new(-355 + index * 7.5, 2.5 + math.sin(index / 18 * math.pi) * 3, -337), Color3.fromRGB(137, 99, 64), Enum.Material.WoodPlanks)
 	end

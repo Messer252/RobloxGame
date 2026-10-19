@@ -80,7 +80,7 @@ function AssetLibrary.cookie(index, parent, pivot, flags)
 	outline.DepthMode = Enum.HighlightDepthMode.Occluded
 	outline.FillTransparency = 1
 	outline.OutlineColor = Color3.fromRGB(table.unpack(rarity.Color))
-	outline.OutlineTransparency = rarity.Name == "Common" and 0.45 or 0.1
+	outline.OutlineTransparency = rarity.Name == "Common" and 1 or 0.35
 	outline.Parent = object
 	local surface = object:FindFirstChild("Vanilla Frosting") and 0.41 or 0.295
 	local function topping(name, size, offset, rgb, rotation, shape)

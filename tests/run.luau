@@ -956,12 +956,12 @@ end)
 
 test("music and action cues have bounded pitches, levels, and ordered timing", function()
 	assert(Score.BPM >= 60 and Score.BPM <= 72)
-	equal(Score.Beats, 64)
-	assert(#Score.Notes >= 24 and #Score.Notes <= 64)
+	equal(Score.Beats, 128)
+	assert(#Score.Notes >= 64 and #Score.Notes <= 96)
 	local last = -1
 	for _, note in ipairs(Score.Notes) do
 		assert(note[1] >= last and note[1] < Score.Beats)
-		assert(note[2] >= 36 and note[2] <= 67)
+		assert(note[2] >= 35 and note[2] <= 67)
 		assert(note[3] > 0 and note[3] <= 8)
 		assert(note[4] > 0 and note[4] <= 1)
 		last = note[1]
@@ -1223,6 +1223,8 @@ require("./expansion")(test, equal, near, harness, fakeStore)
 require("./conveyors")(test, equal, near)
 require("./admins")(test, equal, harness, fakeStore)
 require("./bakery_life")(test, equal, near, harness, fakeStore)
+
+require("./polish")(test, equal, near, harness, fakeStore)
 
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then error("Cookie Corner tests failed") end

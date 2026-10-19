@@ -16,8 +16,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "assets/audio"
 RATE = 32000
-BPM = 66
-BEATS = 64
+BPM = 68
+BEATS = 128
 SECONDS_PER_BEAT = 60 / BPM
 
 CUES = {
@@ -34,20 +34,20 @@ CUES = {
 
 
 def score():
-    # Warm C / Am / F / G voicings change only once every eight beats.
-    # No percussion or bright bell ostinato: leave space between gentle phrases.
-    chords = [(48, 55, 64), (45, 52, 60), (41, 48, 57), (43, 50, 59)]
-    melody = [67, 64, 65, 62, 64, 60, 65, 62]
+    # Valley Afterglow: slow Dmaj9 / Gmaj7 / Bm7 / Asus harmony, with room
+    # between phrases. This is a new composition, not the supplied recording.
+    chords = [(38, 57, 61, 64), (43, 54, 59, 62), (35, 54, 57, 62), (45, 55, 59, 62)]
+    melody = [66, 64, 61, 62, 64, 61, 59, 62]
     notes = []
-    for phrase in range(8):
+    for phrase in range(16):
         beat = phrase * 8
-        root, fifth, third = chords[phrase % 4]
-        notes.extend([(beat, root, 6.0, .24, "bass"),
-                      (beat + .14, fifth, 5.7, .18, "keys"),
-                      (beat + .30, third, 5.4, .15, "keys"),
-                      (beat + 3.8, melody[phrase], 1.7, .17, "keys")])
-        if phrase % 2 == 0:
-            notes.append((beat + 6.0, third, 1.3, .12, "keys"))
+        root, fifth, third, ninth = chords[phrase % 4]
+        notes.extend([(beat, root, 7.8, .27, "bass"),
+                      (beat + .20, fifth, 6.6, .16, "keys"),
+                      (beat + .48, third, 6.0, .13, "keys"),
+                      (beat + 1.0, ninth, 4.0, .10, "keys")])
+        if phrase % 2 == 1:
+            notes.append((beat + 4.5, melody[phrase % 8], 2.3, .12, "keys"))
     return sorted(notes)
 
 
@@ -123,7 +123,7 @@ def main():
         module.append(f"\t\t{name} = {{ {entries} }},")
     module.extend(["\t},", "}", ""])
     (ROOT / "src/shared/MusicScore.luau").write_text("\n".join(module))
-    (OUT / "manifest.json").write_text(json.dumps({"license": "CC0-1.0", "title": "Cookie Corner Café",
+    (OUT / "manifest.json").write_text(json.dumps({"license": "CC0-1.0", "title": "Valley Afterglow",
                                                   "bpm": BPM, "beats": BEATS, "files": records}, indent=2) + "\n")
     print(f"Generated an original {BEATS * SECONDS_PER_BEAT:.2f}s music loop and {len(CUES)} sound effects.")
 

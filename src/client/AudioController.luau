@@ -36,7 +36,7 @@ function AudioController.start(player, requestAction)
 	local self = setmetatable({
 		player = player, requestAction = requestAction, music = true, effects = true,
 		musicVolume = Preferences.DefaultMusicVolume, effectsVolume = Preferences.DefaultEffectsVolume,
-		musicStatus = "Unconfigured",
+		musicStatus = Config.FallbackMusicEnabled and "Ready" or "Unconfigured",
 		ready = false, dirty = false, alive = true, revision = 0,
 		musicCursor = 0, effectCursor = 0, noteIndex = 1, epoch = os.clock(),
 		lastCues = {}, connections = {}, voices = {}, samples = {}, effectEpoch = 0,
@@ -126,7 +126,7 @@ function AudioController.start(player, requestAction)
 		if self.alive and (not self.track or not self.track.IsLoaded) and not Config.FallbackMusicEnabled then
 			if self.track then self.musicStatus = "Unavailable" end
 			self.Changed:Fire()
-			warn("Cookie Corner: background music needs the Roblox audio ID for cookiecookieloop1.ogg and experience permission. See AUDIO.md.")
+			warn("Cookie Corner: optional full-mix music needs its Roblox audio ID and experience permission. See AUDIO.md.")
 		end
 	end)
 	return self

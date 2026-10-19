@@ -48,6 +48,7 @@ function Progression.normalize(raw)
 	data.boosts = Boosts.normalize(raw.boosts)
 	data.audio = AudioPreferences.normalize(raw.audio)
 	data.life = Life.normalize(raw.life)
+	if type(raw.life) ~= "table" or raw.life.belt == nil then data.life.belt = 3 end -- Existing bakeries keep their built lines.
 	if type(raw.permanent) == "table" then
 		for key, upgrade in pairs(Progression.Permanent) do
 			data.permanent[key] = integer(raw.permanent[key], 0, 0, upgrade.Max)
@@ -80,7 +81,7 @@ function Progression.multiplier(data, perks)
 	return (1 + data.permanent.Yield * 0.25) * (1 + data.rebirths * 0.15)
 		* (perks and perks.DoubleIncome and 2 or 1)
 		* Boosts.multiplier(data.boosts, perks and perks.Now or os.time())
-		* Life.production(data.life)
+		* Life.production(data.life, perks and perks.Now or os.time())
 end
 
 function Progression.interval(data, perks)

@@ -72,6 +72,9 @@ function Panel.start(player, remotes, gui, openButton)
 	bankButton.LayoutOrder = 10
 	local invisibilityButton = button(content, "My invisibility: OFF")
 	invisibilityButton.LayoutOrder = 11
+	local flyButton = button(content, "My flight: OFF")
+	flyButton.LayoutOrder = 12
+	require(script.Parent.AdminFlightClient).start(player, remotes, gui)
 	local status = label(frame, "Admin actions apply to this server.")
 	status.Position, status.Size, status.AutomaticSize = UDim2.fromOffset(14, 48), UDim2.new(1, -28, 0, 46), Enum.AutomaticSize.None
 	status.TextSize = 13
@@ -107,7 +110,7 @@ function Panel.start(player, remotes, gui, openButton)
 		if frame.Visible then rebuild() end
 	end
 	local function send(action, argument)
-		local targetId = action == "SetInvisible" and player.UserId or selected
+		local targetId = (action == "SetInvisible" or action == "SetFlying") and player.UserId or selected
 		if not targetId or player:GetAttribute("IsAdmin") ~= true then return end
 		if os.clock() - lastSent < 1 then
 			status.Text = "Wait a moment between actions."
@@ -144,6 +147,8 @@ function Panel.start(player, remotes, gui, openButton)
 		resetConfirmation()
 		send("SetInvisible", player:GetAttribute("AdminInvisible") ~= true)
 	end)
+	flyButton.Activated:Connect(function() send("SetFlying", player:GetAttribute("AdminFlying") ~= true) end)
+	table.insert(connections, player:GetAttributeChangedSignal("AdminFlying"):Connect(function() flyButton.Text = player:GetAttribute("AdminFlying") and "My flight: ON" or "My flight: OFF" end))
 	kickButton.Activated:Connect(function()
 		local target = selected and Players:GetPlayerByUserId(selected)
 		if not target then return end

@@ -1,6 +1,6 @@
 local Players, Lighting, RunService = game:GetService("Players"), game:GetService("Lighting"), game:GetService("RunService")
 local Shared = game:GetService("ReplicatedStorage").CookieTycoon
-local Life, Recipes, Progression, Quests = require(Shared.BakeryLife), require(Shared.Recipes), require(Shared.Progression), require(Shared.ChallengeCatalog)
+local Life, Recipes, Progression, Polish = require(Shared.BakeryLife), require(Shared.Recipes), require(Shared.Progression), require(Shared.BakeryPolish)
 local Client = {}
 function Client.start(player, remotes, gui, hud, openButton)
 	local action, stateRemote, open = remotes:WaitForChild("LifeAction"), remotes:WaitForChild("LifeState"), remotes:WaitForChild("OpenLife")
@@ -58,16 +58,18 @@ function Client.start(player, remotes, gui, hud, openButton)
 		if snapshot.busy then row("Saving cookie exchange. Please wait...") end
 		if tab == "Bag" then
 			row(#data.inventory .. "/" .. Life.capacity(data) .. " cookies • Hold a conveyor cookie's pickup prompt to store it.")
-			if snapshot.held then row("Eat held cookie • 90-second speed + cookie skin", function() send("Eat", snapshot.held) end) end
+			if snapshot.held then row("Eat held cookie • recipe buff + cookie skin", function() send("Eat", snapshot.held) end) end
 			if data.oven.id then row("Finishing oven: " .. math.max(0, data.oven.ready - os.time()) .. "s remaining") end
 			for _, cookie in ipairs(data.inventory) do
 				local item = cookie
 				local held = snapshot.held == item.id
-				row(Recipes[item.recipe].Name .. " • $" .. Progression.format(Life.value(item)) .. (item.baked and " • Finished" or "") .. "\n" .. (data.oven.id == item.id and "In finishing oven" or held and "Holding • click/tap tool to eat" or "Tap to hold"), function() send("Equip", item.id) end)
+				local buff = Polish.buff(item.recipe)
+				local entry = row(Recipes[item.recipe].Name .. " • $" .. Progression.format(Life.value(item)) .. (item.baked and " • Finished" or "") .. "\n" .. buff.Name .. ": " .. Polish.describe(item.recipe) .. "\n" .. (data.oven.id == item.id and "In finishing oven" or held and "Holding • click/tap tool to eat" or "Tap to hold"), function() send("Equip", item.id) end)
+				entry.Size = UDim2.new(1, -8, 0, 76)
 			end
 		elseif tab == "Mine" then
 			row("Dough: " .. data.dough .. " • Rolling pin " .. data.pin .. "/5")
-			row("West of the plaza: equip your rolling pin, then hold E on dough ore. Visit the mine workshop to buy upgrades.")
+			row("West of the plaza: enter the cave, equip your rolling pin, then left-click near ore to swing. Visit the mine workshop to buy upgrades.")
 			local cost = Life.PinCosts[data.pin + 1]
 			row(cost and ("Better rolling pin • $" .. Progression.format(cost)) or "Best rolling pin owned", function() send("Pin") end)
 			for _, key in ipairs({ "Mixing", "Flow", "Pockets" }) do
@@ -76,7 +78,13 @@ function Client.start(player, remotes, gui, hud, openButton)
 				row(key .. " " .. level .. "/" .. definition.Max .. " • " .. bonus .. "\n" .. (level == definition.Max and "MAX" or definition.Cost * 2^level .. " dough"), function() send("Dough", key) end)
 			end
 		elseif tab == "Machines" then
-			row("Visit the pads beside your own conveyor to buy or use machines.")
+			row("Visit the pads beside your own conveyor to build, decorate, or install machines.")
+			local beltCost = Polish.BeltCosts[data.belt + 1]
+			row(beltCost and ("Build conveyor line " .. (data.belt + 1) .. " • " .. (beltCost == 0 and "FREE" or "$" .. Progression.format(beltCost))) or "All three conveyor lines built", function() send("BuildBelt") end)
+			for _, key in ipairs({ "Walls", "Windows", "Door", "Plants", "Trees" }) do
+				local definition = Polish.Decorations[key]
+				row(definition.Name .. " • " .. (data.decorations[key] and "Owned" or "$" .. Progression.format(definition.Cost)), function() send("Decoration", key) end)
+			end
 			for _, key in ipairs({ "Packager", "Boxer", "FinishingOven" }) do
 				local owned = data.machines[key]
 				row(key .. " • " .. (owned and "Owned" or "$" .. Progression.format(Life.Machines[key].Cost)) .. "\n" .. ({ Packager = "+25% production and picked-cookie value", Boxer = "+50% production and picked-cookie value", FinishingOven = "20 seconds • finish one inventory cookie for 3x value" })[key], function() send("Machine", key) end)
@@ -85,20 +93,20 @@ function Client.start(player, remotes, gui, hud, openButton)
 		else
 			local trade, bargain = snapshot.trade, snapshot.bargain
 			if trade then
-				row("@" .. trade.from .. " offers " .. trade.giveA .. "\n@" .. trade.to .. " offers " .. trade.giveB)
-				row(trade.confirmed and "You confirmed • waiting for the other player" or "Confirm this exact cookie exchange", function() send("ConfirmTrade", trade.id) end)
+				row("FREE COOKIE GIFT\n@" .. trade.from .. " → @" .. trade.to .. "\n" .. trade.giveA .. "\nNo cash or return cookie is required.")
+				row(trade.confirmed and "You confirmed • waiting for the other player" or (player.Name == trade.from and "Confirm sending gift" or "Accept free cookie"), function() send("ConfirmTrade", trade.id) end)
 				row("Decline / cancel", function() send("CancelTrade") end)
 			elseif bargain then
-				row(bargain.name .. " offers $" .. Progression.format(bargain.price) .. " • " .. bargain.attempts .. " pitches")
+				row(bargain.name .. " • " .. bargain.personality .. "\nFavorite: " .. bargain.favorite .. "\nOffers $" .. Progression.format(bargain.price) .. " • " .. bargain.attempts .. " pitches")
 				row("Sell for $" .. Progression.format(bargain.price), function() send("Sell") end)
 				row("Pitch a higher price • risk annoying them", function() send("Pitch") end)
 				row("Walk away", function() send("WalkAway") end)
-			else row("Hold a cookie and approach a roaming customer to bargain. Too many pitches make them walk away.\n\nHold E on another player to ask 'Want a cookie?'. Both confirm the shown exchange; if they hold no cookie, yours is a gift.") end
+			else row("Hold a cookie and approach a roaming customer to bargain. Too many pitches make them walk away.\n\nHold E on another player to ask 'Want a cookie?'. Both confirm the free gift. The recipient pays nothing and keeps their own cookies.") end
 		end
 	end
 	openButton.Activated:Connect(function() tab, panel.Visible, shade.Visible = "Bag", true, true ; render() end)
 	table.insert(connections, stateRemote.OnClientEvent:Connect(function(data) snapshot = data ; if panel.Visible then render() end end))
-	table.insert(connections, open.OnClientEvent:Connect(function(name) tab = (name == "Mine") and "Mine" or "People" ; panel.Visible, shade.Visible = true, true ; render() end))
+	table.insert(connections, open.OnClientEvent:Connect(function(name) tab = name == "Bag" and "Bag" or (name == "Mine" and "Mine" or "People"); if name == "Gift" then pcall(function() game:GetService("StarterGui"):SetCore("SendNotification", { Title = "Cookie gift", Text = "Someone wants to give you a cookie. Accept or decline here.", Duration = 8 }) end) end; panel.Visible, shade.Visible = true, true ; render() end))
 	table.insert(connections, player:GetAttributeChangedSignal("DataReady"):Connect(function() if player:GetAttribute("DataReady") then send("Snapshot") end end))
 	send("Snapshot")
 	local compass = label(hud, "Cookie valley")
@@ -107,7 +115,7 @@ function Client.start(player, remotes, gui, hud, openButton)
 	local compassSize = Instance.new("UITextSizeConstraint")
 	compassSize.MinTextSize, compassSize.MaxTextSize, compassSize.Parent = 9, 12, compass
 	local skyFolder = Instance.new("Folder")
-	skyFolder.Name, skyFolder.Parent = "Local Cookie Sun and Quest Guide", workspace
+	skyFolder.Name, skyFolder.Parent = "Local Cookie Sun", workspace
 	local sun = Instance.new("Model")
 	sun.Name, sun.Parent = "Cookie Sun", skyFolder
 	local function sunPart(name, size, offset, color)
@@ -122,12 +130,7 @@ function Client.start(player, remotes, gui, hud, openButton)
 		local chip = sunPart("Sun Chocolate Chip", Vector3.new(5, 10, 9), Vector3.new(3, math.sin(i * 2.4) * 34, math.cos(i * 2.4) * 34), Color3.fromRGB(98, 57, 31))
 		chip.Shape = Enum.PartType.Ball
 	end
-	local target = Instance.new("Part")
-	target.Name, target.Size, target.Transparency, target.Anchored, target.CanCollide, target.CanQuery, target.CanTouch, target.Parent = "Quest target", Vector3.one, 1, true, false, false, false, skyFolder
-	local targetAttach, beam = Instance.new("Attachment"), Instance.new("Beam")
-	targetAttach.Parent, beam.Attachment1, beam.FaceCamera, beam.Width0, beam.Width1, beam.Parent = target, targetAttach, true, 0.13, 0.13, target
-	beam.Color, beam.Transparency = ColorSequence.new(Color3.fromRGB(138, 228, 191)), NumberSequence.new(0.2)
-	local rootAttach, lastGuide, elapsed, sunVisible = nil, nil, 0, nil
+	local elapsed, sunVisible, lastGuide = 0, nil, nil
 	table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 		local camera = workspace.CurrentCamera
 		if camera then
@@ -149,27 +152,11 @@ function Client.start(player, remotes, gui, hud, openButton)
 			if prompt then prompt.Enabled = other ~= player and player:GetAttribute("HeldCookieId") ~= nil end
 		end
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if not root or not camera then beam.Enabled = false ; return end
-		if not rootAttach or rootAttach.Parent ~= root then
-			if rootAttach then rootAttach:Destroy() end
-			rootAttach = Instance.new("Attachment") ; rootAttach.Parent = root
-			beam.Attachment0 = rootAttach
-		end
-		local index, found = player:GetAttribute("ChallengeIndex") or 1, player:GetAttribute("ChallengeFound") or 0
-		local quest, item = Quests.Challenges[index], nil
-		if quest and player:GetAttribute("ChallengeActive") then
-			for itemIndex, id in ipairs(quest.Items) do if bit32.band(found, 2^(itemIndex-1)) == 0 then item = Quests.Items[id] ; break end end
-		end
-		local coords, name = item and item.Position or Quests.NPCPosition, item and item.Name or "Baker Biscuit"
-		local destination = Vector3.new(table.unpack(coords)) + Vector3.new(0, 1, 0)
-		target.Position, beam.Enabled = destination, quest ~= nil
-		local delta = destination - root.Position
-		local flat = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
-		local angle = math.atan2(delta:Dot(camera.CFrame.RightVector), delta:Dot(flat))
-		local arrows = { "↑", "↗", "→", "↘", "↓", "↙", "←", "↖" }
-		local direction = arrows[math.floor((angle % (math.pi * 2)) / (math.pi / 4) + 0.5) % 8 + 1]
+		if not root or not camera then return end
+		local flat = camera.CFrame.LookVector
 		local heading = math.floor((math.deg(math.atan2(-flat.X, -flat.Z)) + 360) % 360)
-		compass.Text = quest and (heading .. "° • " .. direction .. " " .. name .. " • " .. math.floor(delta.Magnitude) .. " studs") or "All hunts complete • Explore the cookie valley"
+		local buff = player:GetAttribute("CookieBuffName") or ""
+		compass.Text = heading .. "° • Cookie valley" .. (buff ~= "" and (" • " .. buff) or "")
 		if panel.Visible and tab == "Bag" and snapshot.life.oven.id then
 			local second = os.time()
 			if second ~= lastGuide then lastGuide = second ; render() end
@@ -181,7 +168,6 @@ function Client.start(player, remotes, gui, hud, openButton)
 	for _, object in ipairs(workspace:GetDescendants()) do if object:IsA("ProximityPrompt") and object.Name == "CookieTradePrompt" and object:GetAttribute("TargetUserId") == player.UserId then object.Enabled = false end end
 	gui.Destroying:Connect(function()
 		for _, connection in ipairs(connections) do connection:Disconnect() end
-		if rootAttach then rootAttach:Destroy() end
 		skyFolder:Destroy()
 	end)
 end

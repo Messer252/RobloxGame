@@ -148,9 +148,25 @@ function Conveyor.create(plot, position)
 		end
 	end)
 	plot.conveyor = model
+	plot.conveyorParts = {}
+	for _, p in ipairs(model:GetDescendants()) do
+		if p:IsA("BasePart") then
+			local localPos = p.Position - plot.origin
+			local x, z = localPos.X, localPos.Z * plot.direction
+			local tier = z > 110 and 1 or (x < -9 and 1 or (x > 9 and 3 or 2))
+			table.insert(plot.conveyorParts, { part = p, tier = tier, transparency = p.Transparency, collision = p.CanCollide, query = p.CanQuery })
+		end
+	end
+	plot.deliveryBox = box
 end
 
 function Conveyor.update(plot, interval)
+	local tier = plot.data and plot.data.life.belt or 0
+	for _, item in ipairs(plot.conveyorParts or {}) do
+		local visible = tier >= item.tier
+		item.part.Transparency, item.part.CanCollide, item.part.CanQuery = visible and item.transparency or 1, visible and item.collision or false, visible and item.query or false
+	end
+	if plot.deliveryBox then plot.deliveryBox.Parent = tier > 0 and plot.model or nil end
 	plot.beltSpeed = Layout.speed(interval)
 	for _, surface in ipairs(plot.beltSurfaces) do
 		surface.AssemblyLinearVelocity = surface:GetAttribute("Direction") * plot.beltSpeed
@@ -222,6 +238,7 @@ RunService.Heartbeat:Connect(function(dt)
 				continue
 			end
 			local p = hull.Position - plot.origin
+			if Conveyor.OnProcess then Conveyor.OnProcess(plot, model, p.Z * plot.direction) end
 			if p.Y < Layout.BeltTop - 0.1 or p.Y > Layout.BeltTop + 1.1 then continue end
 			local drive = Routing.drive(paths[state.lane], p.X * (plot.mirrorX or 1), p.Z * plot.direction, state.progress, plot.beltSpeed)
 			if drive then

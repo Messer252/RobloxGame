@@ -1,5 +1,6 @@
 local Life = require(game:GetService("ReplicatedStorage").CookieTycoon.BakeryLife)
 local Recipes = require(game:GetService("ReplicatedStorage").CookieTycoon.Recipes)
+local Polish = require(game:GetService("ReplicatedStorage").CookieTycoon.BakeryPolish)
 local Appearance = {}
 function Appearance.clear(state)
 	for part, color in pairs(state.foodColors or {}) do if part.Parent then part.Color = color end end
@@ -40,6 +41,14 @@ function Appearance.step(player, state)
 			end
 		end
 	end
+	local effect = Polish.active(state.data.life, os.time())
+	if state.buffHumanoid ~= hum then
+		state.buffHumanoid, state.originalJumpHeight, state.originalJumpPower = hum, hum.JumpHeight, hum.JumpPower
+	end
+	hum.JumpHeight, hum.JumpPower = state.originalJumpHeight + effect.Jump, state.originalJumpPower + effect.Jump * 3
+	if active and hum.Health > 0 then hum.Health = math.min(hum.MaxHealth, hum.Health + effect.Regen * math.min(0.5, os.clock() - (state.regenAt or os.clock()))) end
+	state.regenAt = os.clock()
+	player:SetAttribute("CookieBuffName", active and effect.Name or "")
 	local road = math.abs(root.Position.X) < 13 and math.abs(root.Position.Z) < 575 and root.Position.Y < 8
 	hum.WalkSpeed = (road and 34 or 16) + Life.speed(state.data.life, os.time())
 	player:SetAttribute("OnFastRoad", road)

@@ -77,7 +77,7 @@ local function createNPC(parent, onTalk)
 		gui.Parent = npcRoot
 		local label = Instance.new("TextLabel")
 		label.Size, label.BackgroundTransparency = UDim2.fromScale(1, 1), 1
-		label.Text, label.Font, label.TextSize = Catalog.NPCName .. "\nTreasure hunts", Enum.Font.GothamBold, 16
+		label.Text, label.Font, label.TextSize = Catalog.NPCName .. "\nBakery jobs", Enum.Font.GothamBold, 16
 		label.TextColor3, label.TextStrokeTransparency = cream, 0.25
 		label.Parent = gui
 		if current then current:Destroy() end

@@ -1,7 +1,7 @@
 local Assets = require(script.Parent.AssetLibrary)
 local Packaging = require(script.Parent.CookiePackaging)
 local Tools = {}
-function Tools.pin(player, level)
+function Tools.pin(player, level, onSwing)
 	local tool = Instance.new("Tool")
 	tool.Name, tool.CanBeDropped = "Rolling Pin " .. level, false
 	local handle = Instance.new("Part")
@@ -15,6 +15,35 @@ function Tools.pin(player, level)
 		weld.Part0, weld.Part1, weld.Parent = handle, grip, grip
 	end
 	tool.Grip = CFrame.Angles(0, 0, math.pi / 2)
+	local idle, swinging = tool.Grip, false
+	tool.Activated:Connect(function()
+		if swinging or tool.Parent ~= player.Character then return end
+		swinging = true
+		local tween = game:GetService("TweenService")
+		tween:Create(tool, TweenInfo.new(0.1), { Grip = idle * CFrame.Angles(-1.1, 0, 0) }):Play()
+		task.delay(0.1, function()
+			if tool.Parent == player.Character then
+				tween:Create(tool, TweenInfo.new(0.12), { Grip = idle * CFrame.Angles(0.9, 0, 0) }):Play()
+				onSwing()
+			end
+		end)
+		task.delay(0.3, function() if tool.Parent then tween:Create(tool, TweenInfo.new(0.12), { Grip = idle }):Play() end end)
+		task.delay(0.5, function() swinging = false end)
+	end)
+	tool.Parent = player:FindFirstChildOfClass("Backpack")
+	return tool
+end
+function Tools.bag(player, onOpen)
+	local tool = Instance.new("Tool")
+	tool.Name, tool.ToolTip, tool.RequiresHandle, tool.CanBeDropped = "Cookie Bag", "Open your cookie inventory", false, false
+	tool:SetAttribute("CookieBag", true)
+	tool.Equipped:Connect(function()
+		onOpen()
+		task.defer(function()
+			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+			if hum and tool.Parent == player.Character then hum:UnequipTools() end
+		end)
+	end)
 	tool.Parent = player:FindFirstChildOfClass("Backpack")
 	return tool
 end

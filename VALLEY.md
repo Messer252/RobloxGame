@@ -1,5 +1,6 @@
 # Cookie valley update
 
+**Current controls and mechanics:** see [the Workshop update](WORKSHOP.md), which replaces the earlier mining prompts, quest waypoints, cookie swaps, generic food buffs, and scenery described below.
 Download the latest [Studio ZIP](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip), extract it, and open `CookieCorner.rbxlx`. Publish to your existing start place and **restart outdated servers**. Keep the existing player DataStore name. Before replacing a customized Studio file, copy across any audio IDs, shop product IDs, and friends you added to AdminConfig.
 
 ## Map and travel
@@ -85,7 +86,7 @@ The HUD now includes a **heading compass, direction arrow, target name, and dist
 
 ## Save upgrade and playtest checklist
 
-Save envelope **6** accepts versions 1–5 and preserves previous cash, paid boosts, receipts, audio, and quest progress. New inventory/dough/machine state lives in the existing `CookieCorner_PlayerData_v1` store. Trade recovery uses `CookieCorner_CookieTrades_v1`. Restart old servers; earlier writers must not drop the new ownership fields.
+Save envelope **7** accepts versions 1–6 and preserves previous cash, paid boosts, receipts, audio, and quest progress. New inventory/dough/machine state lives in the existing `CookieCorner_PlayerData_v1` store. Trade recovery uses `CookieCorner_CookieTrades_v1`. Restart old servers; earlier writers must not drop the new ownership fields.
 
 Automated tests cover inventory validation/capacity, values, buff expiry, costs and rebirth rules, finishing queues, bargaining outcomes, trade confirmation prerequisites, activity locks, journal abort/commit recovery, and lost save responses. Roblox Studio is still required for these engine checks:
 

@@ -5,6 +5,8 @@ local W, Features = require(script.Parent.WorldWidgets), require(script.Parent.B
 local Tools, Appearance = require(script.Parent.CookieTools), require(script.Parent.CookieAppearance)
 local Customers = require(script.Parent.CookieCustomers)
 local Packaging = require(script.Parent.CookiePackaging)
+local Polish = require(Shared.BakeryPolish)
+local Contracts = require(Shared.BakeryContracts)
 local Server = {}
 Server.__index = Server
 function Server.start(context)
@@ -17,7 +19,7 @@ function Server.start(context)
 	self.action, self.stateRemote, self.open = remote("LifeAction"), remote("LifeState"), remote("OpenLife")
 	self.features = Features.create(context.World, context.Plots, function(...) self:Action(...) end)
 	self.customers = Customers.create(context.World, function(player, customer) self:OfferCustomer(player, customer) end)
-	context.OnCookie(function(...) self:Cookie(...) end)
+	context.OnCookie(function(...) self:Cookie(...) end, function(...) self:ProcessCookie(...) end)
 	self.action.OnServerEvent:Connect(function(player, action, argument) self:Action(player, action, argument) end)
 	Players.PlayerRemoving:Connect(function(player)
 		self:CancelTrade(player)
@@ -29,19 +31,6 @@ function Server.start(context)
 	task.spawn(function()
 		while context.World.Parent do
 			Features.step(self.features)
-			for model, pickup in pairs(self.pickups) do
-				if not model.Parent or not model.PrimaryPart or not model.PrimaryPart.Parent then self.pickups[model] = nil
-				elseif pickup.plot.data then
-					local z = (model.PrimaryPart.Position.Z - pickup.plot.origin.Z) * pickup.plot.direction
-					local machines = pickup.plot.data.life.machines
-					if z >= 120 and machines.Packager then pickup.cookie.wrapped = true; Packaging.wrap(model, model.PrimaryPart) end
-					if z >= 124 and machines.Boxer then pickup.cookie.boxed = true; Packaging.box(model, model.PrimaryPart) end
-					local worth = Life.value(pickup.cookie)
-					pickup.label.Text = Recipes[pickup.cookie.recipe].Name .. "\n$" .. context.Format(worth)
-					pickup.prompt.ActionText = "Pick up • $" .. context.Format(worth)
-					model:SetAttribute("CashValue", worth)
-				end
-			end
 			for _, player in ipairs(Players:GetPlayers()) do
 				local state = context.GetState(player)
 				if state and not state.closing then
@@ -54,9 +43,13 @@ function Server.start(context)
 					end
 					local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 					if root and not root:FindFirstChild("CookieTradePrompt") then self:TradePrompt(player) end
+					if not runtime.bagTool or not runtime.bagTool.Parent then
+						if runtime.bagTool then runtime.bagTool:Destroy() end
+						runtime.bagTool = Tools.bag(player, function() self.open:FireClient(player, "Bag") end)
+					end
 					if not runtime.pinTool or not runtime.pinTool.Parent or runtime.pinLevel ~= state.data.life.pin then
 						if runtime.pinTool then runtime.pinTool:Destroy() end
-						runtime.pinLevel, runtime.pinTool = state.data.life.pin, Tools.pin(player, state.data.life.pin)
+						runtime.pinLevel, runtime.pinTool = state.data.life.pin, Tools.pin(player, state.data.life.pin, function() self:Swing(player) end)
 					end
 					if runtime.cookieTool and not runtime.cookieTool.Parent then runtime.cookieTool, runtime.held = nil, nil end
 					if context.Usable(player) and Life.finishOven(state.data.life, os.time()) then
@@ -72,6 +65,16 @@ function Server.start(context)
 		end
 	end)
 	return self
+end
+function Server:Swing(player)
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not root or not self.context.Usable(player) then return end
+	local nearest, distance = nil, 12
+	for _, node in ipairs(self.features.ores) do
+		local delta = node.part.Position - root.Position
+		if node.hp > 0 and delta.Magnitude < distance and delta:Dot(root.CFrame.LookVector) > -2 then nearest, distance = node, delta.Magnitude end
+	end
+	if nearest then self:Action(player, "Mine", nearest) end
 end
 function Server:Runtime(player)
 	if not self.runtime[player] then
@@ -91,7 +94,7 @@ function Server:Refresh(player)
 	local b, trade = runtime.bargain, self.offers[player]
 	local snapshot = { life = state.data.life, held = self:Held(player), hasPlot = state.plot ~= nil,
 		busy = state.profile.activityLock ~= nil or state.profile.transacting == true }
-	if b then snapshot.bargain = { name = b.customer.name, price = b.price, attempts = b.attempts, item = b.item } end
+	if b then snapshot.bargain = { name = b.customer.name, price = b.price, attempts = b.attempts, item = b.item, personality = b.customer.traits.Style, favorite = Recipes[b.customer.traits.Favorite].Name } end
 	if trade then snapshot.trade = { id = trade.id, from = trade.a.Name, to = trade.b.Name,
 		giveA = Recipes[trade.itemA.recipe].Name .. " • $" .. self.context.Format(Life.value(trade.itemA)),
 		giveB = trade.itemB and (Recipes[trade.itemB.recipe].Name .. " • $" .. self.context.Format(Life.value(trade.itemB))) or "Gift (no cookie requested)",
@@ -110,6 +113,20 @@ function Server:ClearTool(player)
 	local runtime = self:Runtime(player)
 	if runtime.cookieTool then runtime.cookieTool:Destroy() end
 	runtime.cookieTool, runtime.held = nil, nil
+end
+function Server:ProcessCookie(plot, model, z)
+	local pickup = self.pickups[model]
+	if not pickup or not plot.data or model:GetAttribute("Collected") then return end
+	if Life.process(pickup.cookie, plot.data.life.machines, z) then
+		if pickup.cookie.wrapped then Packaging.wrap(model, model.PrimaryPart) end
+		if pickup.cookie.boxed then Packaging.box(model, model.PrimaryPart) end
+		local worth = Life.value(pickup.cookie)
+		pickup.label.Text = Recipes[pickup.cookie.recipe].Name .. "\n$" .. self.context.Format(worth)
+		pickup.prompt.ActionText = "Pick up • $" .. self.context.Format(worth)
+		model:SetAttribute("CashValue", worth)
+		model:SetAttribute("Packaged", pickup.cookie.wrapped)
+		model:SetAttribute("Boxed", pickup.cookie.boxed)
+	end
 end
 function Server:Cookie(plot, model, index, data)
 	local cookie = { id = Http:GenerateGUID(false), recipe = index, mask = Crafting.encode(data.modifiers[tostring(index)]),
@@ -147,8 +164,10 @@ function Server:OfferCustomer(player, customer)
 	if customer.reservedUntil > os.clock() then self.context.Notify(player, "This customer is already talking to someone.") ; return end
 	self:CloseBargain(runtime)
 	local item = Life.find(state.data.life, runtime.held)
+	local base = math.floor(Life.value(item) * (1 + Polish.active(state.data.life, os.time()).Sell / 100))
+	local price, budget = Polish.offer(base, item.recipe, customer.traits, math.random())
 	customer.reservedUntil, customer.reservedBy = os.clock() + 30, player
-	runtime.bargain = { customer = customer, item = item.id, base = Life.value(item), price = math.floor(Life.value(item) * 1.2), attempts = 0, expires = os.clock() + 30 }
+	runtime.bargain = { customer = customer, item = item.id, base = base, price = price, budget = budget, attempts = 0, expires = os.clock() + 30 }
 	customer.label.Text = customer.name .. "\nLet's talk cookies!"
 	self:Refresh(player)
 	self.open:FireClient(player, "Customer")
@@ -171,13 +190,15 @@ function Server:Invite(a, b)
 	if a == b or not root or not W.near(a, root.Position, 12) then return end
 	local sa, sb = self.context.Usable(a), self.context.Usable(b)
 	if not sa or not sb or self.offers[a] or self.offers[b] then return end
-	local ra, rb = self:Runtime(a), self:Runtime(b)
+	local ra = self:Runtime(a)
 	if not self:Held(a) or not Life.available(sa.data.life, ra.held) then self.context.Notify(a, "Hold the cookie you want to offer first.") ; return end
-	local itemB = self:Held(b) and Life.available(sb.data.life, rb.held) and Life.find(sb.data.life, rb.held) or nil
+	local itemB = nil -- Sharing is always a free, one-way gift, regardless of what the recipient holds.
 	local offer = { id = Http:GenerateGUID(false), a = a, b = b, itemA = Life.cookie(Life.find(sa.data.life, ra.held)), itemB = itemB and Life.cookie(itemB) or nil,
 		confirmed = {}, expires = os.clock() + 45 }
 	self.offers[a], self.offers[b] = offer, offer
-	for _, p in ipairs({ a, b }) do self:Refresh(p) ; self.open:FireClient(p, "Trade") end
+	self.context.Notify(b, "@" .. a.Name .. " wants to give you a cookie! Accept or decline the free gift.")
+	self.context.Notify(a, "Gift offered to @" .. b.Name .. ". No cash or return cookie is requested.")
+	for _, p in ipairs({ a, b }) do self:Refresh(p); self.open:FireClient(p, "Gift") end
 end
 function Server:Confirm(player, id)
 	local offer = self.offers[player]
@@ -201,10 +222,16 @@ function Server:Confirm(player, id)
 			for _ = 1, 12 do
 				local doneA = self.context.Trades:Recover(sa.profile, offer.a.UserId, offer.id)
 				local doneB = self.context.Trades:Recover(sb.profile, offer.b.UserId, offer.id)
-				if doneA and doneB then pending = false ; break end
+				if doneA and doneB then
+					pending = false
+					ok = Life.find(sb.data.life, offer.itemA.id) ~= nil and Life.find(sa.data.life, offer.itemA.id) == nil
+					message = ok and "Cookie gift saved! No cash was charged." or "Gift canceled; your cookie was kept."
+					break
+				end
 				task.wait(2)
 			end
 		end
+		if ok then Contracts.record(sa.data, "Gift", 1); sa.nextSave = math.min(sa.nextSave, os.clock() + 2); message = "Cookie gift saved! No cash was charged." end
 		self.offers[offer.a], self.offers[offer.b] = nil, nil
 		for _, entry in ipairs({ { offer.a, sa }, { offer.b, sb } }) do
 			if entry[1].Parent then
@@ -239,7 +266,7 @@ function Server:Action(player, action, argument, plot)
 	elseif action == "Eat" then
 		if argument ~= self:Held(player) then return end
 		ok, message = Life.eat(data.life, argument, os.time(), math.random(1, 1000000))
-		if ok then self:ClearTool(player) end
+		if ok then self:ClearTool(player); Contracts.record(data, "Eat", 1) end
 	elseif action == "UpgradeRecipe" then ok, message = Life.upgradeRecipe(data, argument)
 	elseif action == "Mine" then
 		local node = argument
@@ -247,17 +274,32 @@ function Server:Action(player, action, argument, plot)
 		if not runtime.pinTool or runtime.pinTool.Parent ~= player.Character then self.context.Notify(player, "Equip your rolling pin first.") ; return end
 		if os.clock() - (runtime.lastMine or 0) < 0.4 then return end
 		runtime.lastMine = os.clock()
-		node.hp = math.max(0, node.hp - Life.PinPower[data.life.pin])
-		node.label.Text = "Dough ore • " .. node.hp .. " HP"
+		local feedback = self.context.Remotes:FindFirstChild("Feedback")
+		if feedback then feedback:FireClient(player, "Click") end
+		local crumbs = Instance.new("ParticleEmitter")
+		crumbs.Texture, crumbs.Color, crumbs.Rate, crumbs.Lifetime = "rbxasset://textures/particles/sparkles_main.dds", ColorSequence.new(node.part.Color), 0, NumberRange.new(0.15, 0.35)
+		crumbs.Speed, crumbs.SpreadAngle, crumbs.Size, crumbs.Parent = NumberRange.new(3, 6), Vector2.new(160, 160), NumberSequence.new(0.2, 0), node.part
+		crumbs:Emit(6)
+		game:GetService("Debris"):AddItem(crumbs, 0.5)
+		node.hp = math.max(0, node.hp - Life.PinPower[data.life.pin] - Polish.active(data.life, os.time()).Mine)
+		node.label.Text = "Dough ore • " .. node.hp .. "/" .. node.maximum .. " HP"
+		node.bar.Size = UDim2.fromScale(node.hp / node.maximum, 1)
 		if node.hp == 0 then
+			Contracts.record(data, "Mine", 1)
 			data.life.dough = math.min(1e9, data.life.dough + node.reward)
-			node.ready, node.part.Transparency, node.part.CanCollide, node.prompt.Enabled = os.clock() + 10, 1, false, false
+			node.ready, node.part.Transparency, node.part.CanCollide = os.clock() + 10, 1, false
+			node.label.Parent.Enabled = false
 			for _, chip in ipairs(node.chips) do chip.Transparency = 1 end
 			ok, message = true, "+" .. node.reward .. " cookie dough!"
 		end
 	elseif action == "Pin" or action == "Dough" then
 		if not W.near(player, self.features.mine, 22) then self.context.Notify(player, "Visit the dough mine workshop to upgrade.") ; return end
 		if action == "Pin" then ok, message = Life.upgradePin(data) else ok, message = Life.upgradeDough(data, argument) end
+	elseif action == "BuildBelt" or action == "Decoration" then
+		if not state.plot or (plot and state.plot ~= plot) then return end
+		local point = action == "BuildBelt" and self.features.buildPads[state.plot].pad.Position or W.position(state.plot, 60, 1, -70)
+		if not W.near(player, point, action == "BuildBelt" and 16 or 32) then self.context.Notify(player, "Visit the purchase pads in your bakery."); return end
+		if action == "BuildBelt" then ok, message = Polish.buyBelt(data) else ok, message = Polish.buyDecoration(data, argument) end
 	elseif action == "Machine" or action == "Bake" then
 		local key = action == "Bake" and "FinishingOven" or argument
 		if type(key) ~= "string" or not state.plot or (plot and state.plot ~= plot) then return end
@@ -273,11 +315,12 @@ function Server:Action(player, action, argument, plot)
 		if action == "WalkAway" then self:CloseBargain(runtime) ; self:Refresh(player) ; return end
 		if b.customer.reservedBy ~= player or b.expires < os.clock() or not W.near(player, b.customer.root.Position, 12) or b.item ~= self:Held(player) or not Life.available(data.life, b.item) then self:CloseBargain(runtime) ; self:Refresh(player) ; return end
 		if action == "Pitch" then
-			local accepted, price = Life.pitch(b.base, b.attempts, math.random())
+			local accepted, price = Polish.negotiate(b.price, b.budget, b.attempts, b.customer.traits, math.random(), math.random())
 			if accepted then b.attempts += 1 ; b.price = price ; message = "They like your pitch!" else b.customer.label.Text = b.customer.name .. "\nToo pushy! I'm leaving." ; self:CloseBargain(runtime) ; message = "The customer got annoyed and walked away." end
 		elseif b.price <= Life.MaxCurrency - data.bank then
 			Life.remove(data.life, b.item)
 			data.bank += b.price
+			Contracts.record(data, "Sell", 1)
 			ok, message = true, "Sold! $" .. self.context.Format(b.price) .. " added to your collection register."
 			self:ClearTool(player)
 			self:CloseBargain(runtime)

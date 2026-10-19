@@ -10,11 +10,13 @@ Stand on your next cookie's purchase pad for about **0.28 seconds** to buy it wi
 
 See [the full cookie valley feature guide and playtest checklist](VALLEY.md) for mirrored plots, the fast road and Home button, cookie forests, lake/waterfall, mountain scenery, day/night and the cookie sun. Pick up, eat, sell, or trade stored cookies; buy conveyor machines, mine dough, upgrade rolling pins, and follow the quest compass. Nearby conveyor cookies show their current value. Cash from production and customer sales must be collected at your own register.
 
-The presentation includes warm lighting, pastel bakeries, string lights, oven steam, and animated menu/reward feedback. **Music** and **SFX** have separate mute buttons and saved **0–100% volume sliders**. The selected background song is your friend's **cookiecookieloop1.ogg**; it is included in the Studio ZIP and loops after you upload it to Roblox and set its audio asset ID. Background music stays quiet until configured; SFX work immediately. See [audio upload and volume setup](AUDIO.md).
+The [Workshop update](WORKSHOP.md) adds a hotbar cookie bag, left-click rolling-pin mining inside a cave, paid conveyor expansion and decorations, thirty different cookie buffs, recipe-themed ovens, varied NPC personalities/appearances, free gifts with notifications, randomized activity quests without waypoints, harder obbys, admin flight, and improved mountain/waterfall/leaderboard models. New players build their first conveyor for free; old saves retain built lines.
+
+**Valley Afterglow** is a new original ambient soundtrack. Its built-in score plays immediately; an optional full WAV mix is included in the Studio ZIP. Music and SFX have separate saved mute buttons and 0–100% volume sliders. The friend's old song is no longer selected. See [audio setup](AUDIO.md).
 
 Recipes have **six rarity tiers**, from Common (1×) to Mythic (6×). In **Toppings**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible decorations. See [rarity and topping details](CRAFTING.md).
 
-Meet **Baker Biscuit** in the plaza for four saved scavenger hunts. Find hidden baking tools and treasures, follow clues in **Quests**, then return for a cash bonus. Each hunt can be rewarded once; completed and active progress survives rebirth and rejoining. See [quests and rewards](QUESTS.md).
+Meet **Baker Biscuit** in the plaza for four saved scavenger hunts. Get randomized mining, selling, eating, gifting, baking, obby, or occasional search tasks in **Quests**, then return for a cash bonus. Old active hunts remain finishable. Job state survives rebirth and rejoining. See [quests and rewards](QUESTS.md).
 
 The lineup grows from chocolate chip and oatmeal raisin through peanut butter, snickerdoodle, red velvet, s'mores, matcha, birthday cake, galaxy brownie, and Golden Chocolate Chip. Only unlocked ovens and the next purchase appear along the conveyor. Cookie animations are capped independently of production to keep late-game part creation bounded.
 
@@ -24,7 +26,7 @@ The **Shop** tab includes permanent 2× income and 2× baking-speed passes plus 
 
 Try the **Easy, Medium, and Hard obbys** east of the bakeries for **+10%, +30%, and +50% cookie income for five minutes**. The strongest active bonus wins. The Shop supports permanent income stages starting at **2× for 20 Robux**, then **4× for 40**, doubling each stage; sales remain disabled until you create the matching developer products. See [map, conveyors, obbys, and playtest checks](EXPANSION.md) and [purchase setup](MONETIZATION.md). The plaza includes live server cash/rebirth rankings and **Zach's Box**. Biscuit now uses a standard Roblox R6 character with improved treasure props.
 
-**Admin tools:** `unbenator` is configured as an admin. Add friends by account username in **ServerScriptService → Tycoon → AdminConfig**, publish, and restart outdated servers. Admins open **Bakery → Admin tools** to kick, return/teleport/bring players, grant wallet or uncollected cash, and toggle self-invisibility. See [the admin setup guide](ADMINS.md).
+**Admin tools:** `unbenator` is configured as an admin. Add friends by account username in **ServerScriptService → Tycoon → AdminConfig**, publish, and restart outdated servers. Admins open **Bakery → Admin tools** to kick, return/teleport/bring players, grant wallet or uncollected cash, toggle self-invisibility, and fly. See [the admin setup guide](ADMINS.md).
 
 ## Open in Roblox Studio
 
@@ -45,6 +47,8 @@ Without Rojo, create this structure in a new Baseplate place and paste each file
 ```text
 ReplicatedStorage
   CookieTycoon (Folder)
+    BakeryPolish (ModuleScript) <- src/shared/BakeryPolish.luau
+    BakeryContracts (ModuleScript) <- src/shared/BakeryContracts.luau
     BakeryLife (ModuleScript)       <- src/shared/BakeryLife.luau
     Recipes (ModuleScript)          <- src/shared/Recipes.luau
     Progression (ModuleScript)      <- src/shared/Progression.luau
@@ -83,6 +87,11 @@ ServerScriptService
     PlotMirror (ModuleScript) <- src/server/PlotMirror.luau
     ValleyWorld (ModuleScript) <- src/server/ValleyWorld.luau
     WorldWidgets (ModuleScript) <- src/server/WorldWidgets.luau
+    DoughCave (ModuleScript) <- src/server/DoughCave.luau
+    OvenDesign (ModuleScript) <- src/server/OvenDesign.luau
+    BakeryDecorations (ModuleScript) <- src/server/BakeryDecorations.luau
+    CustomerStyle (ModuleScript) <- src/server/CustomerStyle.luau
+    AdminFlight (ModuleScript) <- src/server/AdminFlight.luau
     Settings (ModuleScript)         <- src/server/Settings.luau
     World (ModuleScript)            <- src/server/World.luau
     Presentation (ModuleScript)     <- src/server/Presentation.luau
@@ -99,6 +108,7 @@ StarterPlayer
   StarterPlayerScripts
     TycoonUI (LocalScript)          <- src/client/init.client.luau
       BakeryLifeClient (ModuleScript) <- src/client/BakeryLifeClient.luau
+      AdminFlightClient (ModuleScript) <- src/client/AdminFlightClient.luau
       AudioController (ModuleScript) <- src/client/AudioController.luau
       VolumeSlider (ModuleScript)    <- src/client/VolumeSlider.luau
       AdminPanel (ModuleScript)      <- src/client/AdminPanel.luau
@@ -116,7 +126,7 @@ The server generates the map and remotes. Set the experience's maximum player co
 
 Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after important upgrades and quest changes, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
 
-The current **version-6 save envelope** accepts existing versions 1–5 and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-6 records.
+The current **version-7 save envelope** accepts existing versions 1–6 and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-7 records.
 
 For offline Studio development only, explicitly set `AllowStudioSessionOnly = true` in Settings. If DataStore access is unavailable, Studio then starts a clearly labeled temporary session that **does not save**. This fallback never writes temporary data into a saved profile and is ignored on live servers. Locked or incompatible saves do not fall back.
 
@@ -152,7 +162,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 132 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. They do not contact Roblox's live DataStore or payment services.
+The 143 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 
@@ -160,7 +170,7 @@ Run `python tools/build_audio.py` to regenerate the original audio and its share
 
 Complete these engine checks in Studio:
 
-- Claim a bakery and confirm the initial chocolate chip oven adds $5 roughly every three seconds. Collect, buy oatmeal raisin for $250, and confirm both recipes contribute $17 per batch.
+- Claim a bakery, build the free first conveyor, and confirm the initial chocolate chip oven adds $5 roughly every three seconds. Collect, buy oatmeal raisin for $250, and confirm both recipes contribute $17 per batch.
 - Claim a plot and verify you arrive beside Chocolate Chip and the Oatmeal Raisin purchase pad. Reset your character and verify you return to your own bakery.
 - Stand on Oatmeal Raisin's pad with $250 and verify one purchase after about 0.28 seconds, with no held key. Remain still: the next recipe must not buy automatically. Step off and walk to the next highlighted pad to continue.
 - Stand on an unaffordable recipe pad, collect enough cash at the register, and confirm the pad buys once when the server is ready. It must recover from a temporarily busy action without requiring another entry.

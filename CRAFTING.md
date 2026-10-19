@@ -60,7 +60,7 @@ Toppings save separately for each recipe, alongside cash, baking speed, rebirths
 
 **Rebirth resets topping modifiers**, along with cash, banked earnings, recipe unlocks, and speed levels. Golden Chip upgrades, owned passes, audio choices, and [quest progress](QUESTS.md) are retained. Expand **Bakery → Golden Chips & rebirth** to review the reset before confirming.
 
-Existing versions **1–5** migrate to save envelope **version 6** without changing `CookieCorner_PlayerData_v1`. Saves retain existing progress, receipt history, toppings, and audio choices; absent fields receive defaults. Restart old servers when publishing this version so players do not land on game code that cannot open their upgraded saves.
+Existing versions **1–6** migrate to save envelope **version 7** without changing `CookieCorner_PlayerData_v1`. Saves retain existing progress, receipt history, toppings, and audio choices; absent fields receive defaults. Restart old servers when publishing this version so players do not land on game code that cannot open their upgraded saves.
 
 ## Customize the system
 

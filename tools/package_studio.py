@@ -15,7 +15,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 ROOT = Path(__file__).resolve().parents[1]
 PLACE = ROOT / "CookieCorner.rbxlx"
 ARCHIVE = ROOT / "CookieCorner_Studio.zip"
-MUSIC = ROOT / "assets/audio/friend/cookiecookieloop1.ogg"
+MUSIC = ROOT / "assets/audio/CookieCornerCafe.wav"
 
 START_HERE = """COOKIE CORNER TYCOON - OPEN IN ROBLOX STUDIO
 
@@ -60,7 +60,7 @@ wallet/earnings cash gifts, and self-invisibility. Full guide: ADMINS.md in this
 
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
-servers: save formats 1-5 migrate to version 6 with existing progress and receipts preserved.
+servers: save formats 1-6 migrate to version 7 with existing progress and receipts preserved.
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 The conveyor update widens the tracks, adds taller rounded outer rails, closes
@@ -75,16 +75,21 @@ The map includes a cookie forest, lake/waterfall, mountains, and day/night.
 Before replacing a customized place, copy across your audio IDs, product IDs,
 and friends added to AdminConfig. Restart outdated servers after publishing.
 
-NEW BACKGROUND SONG / SAVED VOLUME SLIDERS
-This ZIP includes your friend's cookiecookieloop1.ogg. Upload it to Roblox as
-audio, grant this experience access, then open ReplicatedStorage > CookieTycoon >
-AudioConfig and set MusicAssetId to the resulting numeric Roblox audio ID.
-Publish again. Background music stays silent until this is configured.
-The song loops at its original speed. Music and SFX have independent saved
-0-100% sliders and mute buttons in the HUD. Use drag, tap, or the +/- buttons.
-The supplied song is not included in the free asset pack's CC0 license.
-Full upload and permissions guide:
-https://github.com/Messer252/RobloxGame/blob/main/AUDIO.md
+NEW WORKSHOP CONTROLS AND MUSIC
+Select Cookie Bag in the Roblox hotbar to open inventory. Enter the cave and
+left-click with your rolling pin to swing; there is no E mining prompt.
+New players build the first conveyor free at Build Conveyor before producing.
+Buy more lines, walls, windows, doors, plants, and trees with cookie cash.
+Cookie sharing is a free gift with accept/decline notifications, never a fee.
+Biscuit gives varied randomized jobs; item waypoints have been removed.
+See WORKSHOP.md for all current features, prices, food effects, and playtests.
+
+Valley Afterglow is the new original ambient soundtrack. Its built-in score
+plays immediately; Music and SFX retain independent saved volume sliders.
+CookieCornerCafe.wav is the optional full mix. To use it, upload it to Roblox,
+grant your experience access, and put its numeric ID in AudioConfig.MusicAssetId.
+The previous friend's song is no longer selected or included in this ZIP.
+See AUDIO.md for optional upload instructions and playback checks.
 
 You open CookieCorner.rbxlx in Studio; you do not upload this ZIP or the
 src/assets folders as a Roblox model. Scripts and models are already included.
@@ -124,7 +129,8 @@ def main():
         archive.write(ROOT / "AUDIO.md", "AUDIO.md")
         archive.write(ROOT / "ADMINS.md", "ADMINS.md")
         archive.write(ROOT / "VALLEY.md", "VALLEY.md")
-        archive.write(MUSIC.parent / "README.md", "SONG_CREDIT.txt")
+        archive.write(ROOT / "WORKSHOP.md", "WORKSHOP.md")
+        archive.write(ROOT / "assets/LICENSE.txt", "ASSET_LICENSE.txt")
     with ZipFile(ARCHIVE) as archive:
         assert archive.testzip() is None, "Download ZIP failed its integrity check"
         assert archive.read(PLACE.name) == PLACE.read_bytes()

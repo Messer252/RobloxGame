@@ -132,19 +132,19 @@ When you finish, reopen the intended production game using Creator Dashboard's *
 You can do these checks in the temporary preview, the published Studio test copy, or the Roblox app as an authorized player.
 
 1. Walk to an unclaimed bakery's green claim pad. Use the **Claim free bakery** prompt; on a keyboard, tap the displayed key (normally **E**) once. There is no held delay.
-2. Claiming moves you beside your free Chocolate Chip oven and the first cookie purchase. Your bakery has **three feeder lanes merging into one delivery belt and box**. Chocolate Chip starts automatically; a fresh profile earns **$5 per batch about every three seconds** before upgrades.
-3. Stand on your register's **gold collection pad**, or use its **Collect cash** prompt to move earnings into your wallet. Waiting builds uncollected earnings; it does not spend or collect them for you.
-4. Open **Bakery**. The four tabs are **Bakery**, **Toppings**, **Quests**, and **Shop**. Bakery lets you collect and buy upgrades without walking back to each pad. **Golden Chips & rebirth** expands the permanent upgrades and rebirth controls.
+2. Claiming moves you beside your free Chocolate Chip oven and the first cookie purchase. Your bakery has **three feeder lanes merging into one delivery belt and box**. After building the first line, Chocolate Chip produces automatically; a fresh profile earns **$5 per batch about every three seconds** before upgrades.
+3. First use **Build Conveyor** beside your starter oven to build the free first line. Production starts after construction. Stand on your register's **gold collection pad**, or use its **Collect cash** prompt to move earnings into your wallet. Waiting builds uncollected earnings; it does not spend or collect them for you.
+4. Open **Bakery**. The four tabs are **Bakery**, **Toppings**, **Quests**, and **Shop**. Bakery lets you buy recipe/speed upgrades remotely; collecting cash, constructing lines, and purchasing decorations require visiting your own pads. **Golden Chips & rebirth** expands the permanent upgrades and rebirth controls.
 5. Collect **$250**, then stand on the highlighted **Oatmeal Raisin** purchase pad for about **0.28 seconds**. No key or held prompt is needed. It buys once, reveals the next station, and both starting recipes produce **$17 per batch** before other upgrades. Only unlocked ovens and the next purchase appear; progression continues along the same belt.
 6. In **Toppings**, select Chocolate Chip. Buy **Glaze** for $100: its value should become $6. Later, add **Sprinkles** for $350: with both toppings, its rounded value should become $7.
 7. Check that toppings apply to the selected recipe, and that its button changes to **✓ Added** after a purchase. Other recipes have separate topping purchases.
 8. Buy the first **$500 speed upgrade**, using **Faster conveyor** in Bakery or standing on your physical speed pad. Check that the batch interval changes from 3 to 2.4 seconds. Step off and re-enter a physical pad before buying another level; remaining on it must not repeatedly spend your cash.
 9. Browse later recipes to see the higher rarity tiers and their value bonuses. These are fixed recipe rarities, not random drops. Reset your character and check that you respawn beside your own starter oven while you own the bakery.
-10. Visit **Baker Biscuit** in the plaza, use his talk prompt, and press **Start quest**. Check **Quests** for clues, find the three hidden items, then return to claim the cash reward. The tracker opens anywhere; accepting and claiming require standing near Biscuit. See [the quest guide](QUESTS.md).
+10. Visit **Baker Biscuit** in the plaza, use his talk prompt, and press **Ask for a task**. Check **Quests** for a randomized activity such as mining, baking, selling, or an occasional search, then return to claim its cash reward. The tracker opens anywhere; accepting and claiming require standing near Biscuit. See [the quest guide](QUESTS.md).
 11. Open **Shop**. **Coming soon** is correct while the offer IDs are still `0`.
 12. Check **Output** for script errors and save warnings.
 
-Beside the Bakery button, **Music ON/OFF** and **SFX ON/OFF** control audio independently. Two **0–100% volume sliders** below them save separate music and SFX levels. The selected background music is your friend's roughly **44-second OGG**, included in the Studio ZIP. Upload it to Roblox and set `AudioConfig.MusicAssetId` before music can play; the old background tune is disabled. See [the audio setup guide](AUDIO.md). Sound effects work immediately.
+Beside the Bakery button, **Music ON/OFF** and **SFX ON/OFF** control audio independently. Two **0–100% volume sliders** below them save separate music and SFX levels. The new **Valley Afterglow** built-in score plays without an upload. The ZIP includes `CookieCornerCafe.wav`, its optional full mix; upload that and set `AudioConfig.MusicAssetId` only if you want to use the recording. See [the audio setup guide](AUDIO.md). Sound effects work immediately.
 
 For a longer progression test, expand **Bakery → Golden Chips & rebirth**. The first rebirth needs **18 recipes** and **$5 million in wallet cash plus uncollected earnings**. Cancel the confirmation once to check that nothing resets. On a confirmed rebirth, expect **5 Golden Chips**, reset cash/recipes/speed/toppings, and preserved permanent Golden Chip upgrades. Owned passes, permanent paid income tiers, audio preferences, and quest progress also survive rebirth. Active obby timers retain their original expiry. Claimed quest cash follows the normal cash reset, and completed hunts do not become repeatable.
 
@@ -238,7 +238,7 @@ The speed pass speeds up baking. Bought cash resets on rebirth; permanent passes
 5. In Creator Dashboard, use **Configurations → Server management → Restart Servers** and select outdated servers when the update needs everyone on the new code. In particular, restart older servers when rolling out this version's inventory and trade save format.
 6. Join through the Roblox app to check the published update.
 
-The current **version-6 save envelope** accepts versions **1–5** and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Earlier game versions cannot read version-6 records. Keep `CookieCorner_PlayerData_v1` and do not roll back to older save code after players have saved with this build.
+The current **version-7 save envelope** accepts versions **1–6** and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Earlier game versions cannot read version-7 records. Keep `CookieCorner_PlayerData_v1` and do not roll back to older save code after players have saved with this build.
 
 Keep these three copies in mind:
 
@@ -309,8 +309,10 @@ For live source editing, use `rojo serve default.project.json` with the Studio R
 - [ ] The chosen audience can join through the Roblox game-page link.
 - [ ] Purchases remain disabled, or the configured offers have passed the monetization checks.
 
-The place packager verifies all **52 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes your friend's OGG; upload it and set AudioConfig.MusicAssetId for background music. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
+The place packager verifies all **60 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes the new original soundtrack WAV and plays its built-in score immediately. An uploaded full mix is optional. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
 
 Official references: [Studio installation](https://create.roblox.com/docs/studio/setup), [publishing and audience requirements](https://create.roblox.com/docs/production/publishing/publish-games-and-places), [Studio DataStore access](https://create.roblox.com/docs/cloud-services/data-stores#enable-studio-access), [testing modes](https://create.roblox.com/docs/studio/testing-modes), and [server updates](https://create.roblox.com/docs/projects/update-games). Roblox's menu labels and release requirements can change; follow the current prompts if your layout differs.
 
 For the map, Home button, cookie bag, eating, mining, machines, customer sales, trading, and quest compass, follow [the cookie valley guide](VALLEY.md). Before overwriting a customized place, copy your audio/product IDs and AdminConfig username additions into the new file.
+
+For current controls, building, mining, free gifts, random jobs, buffs, scenery, and flight, use [WORKSHOP.md](WORKSHOP.md).

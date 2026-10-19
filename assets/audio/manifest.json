@@ -1,15 +1,15 @@
 {
   "license": "CC0-1.0",
-  "title": "Cookie Corner Caf\u00e9",
-  "bpm": 66,
-  "beats": 64,
+  "title": "Valley Afterglow",
+  "bpm": 68,
+  "beats": 128,
   "files": [
     {
       "file": "CookieCornerCafe.wav",
-      "seconds": 58.1818125,
+      "seconds": 112.9411875,
       "sampleRate": 32000,
       "channels": 2,
-      "sha256": "d0f0fb551abf39293b0f1590de727777c4b763f6442cc21434e7ede558af1153"
+      "sha256": "49c3d0cb09f1bbf1b715aa14e99bc977ca5c6907c73237c0f275a371a12701ec"
     },
     {
       "file": "Click.wav",

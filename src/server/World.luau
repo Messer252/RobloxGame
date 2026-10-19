@@ -10,6 +10,7 @@ local Presentation = require(script.Parent.Presentation)
 local StepPads = require(script.Parent.StepPads)
 local Mirror = require(script.Parent.PlotMirror)
 local Valley = require(script.Parent.ValleyWorld)
+local OvenDesign = require(script.Parent.OvenDesign)
 local World = {}
 
 local function color(rgb) return Color3.fromRGB(rgb[1], rgb[2], rgb[3]) end
@@ -233,7 +234,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		plot.nextMarker = marker
 		table.insert(plots, plot)
 		prop(plot, "BakeryFloor", 0, 0, 0)
-		prop(plot, "BakeryShell", 0, 0, 0)
+		plot.shell = prop(plot, "BakeryShell", 0, 0, 0)
 		prop(plot, "BakeryAwning", 0, 113)
 		Conveyor.create(plot, position)
 		local counter = prop(plot, "PrepCounter", -49, -45)
@@ -294,10 +295,8 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 			local stationModel = Instance.new("Model")
 			stationModel.Name = string.format("%02d %s", index, recipe.Name)
 			stationModel.Parent = model
-			local ovenModel = prop(plot, "Oven", geometry.x, geometry.z)
-			ovenModel:ScaleTo(geometry.scale)
-			-- Original oven doors face +Z; these ovens feed sideways onto the belt.
-			ovenModel:PivotTo(CFrame.new(position(plot, geometry.x, 2.3, geometry.z)) * CFrame.Angles(0, math.pi / 2, 0))
+			local ovenModel = OvenDesign.create(index, stationModel,
+				CFrame.new(position(plot, geometry.x, 3.7, geometry.z)) * CFrame.Angles(0, math.pi / 2, 0))
 			ovenModel.Parent = stationModel
 			local bench = detail(plot, "Oven Counter", Vector3.new(6, 1.8, 6.6), geometry.x, 1.4, geometry.z, Color3.fromRGB(127, 100, 83), stationModel)
 			bench.CanCollide = true
@@ -340,6 +339,7 @@ function World.animate(plot, data, perks)
 		if model.Parent then active += 1 else plot.visuals[model] = nil end
 	end
 	local count = math.min(2, data.unlocked, Layout.MaxVisualCookies - active)
+	if data.life.belt == 0 then return end
 	for number = 1, count do
 		plot.visualCursor = plot.visualCursor % data.unlocked + 1
 		local index = plot.visualCursor

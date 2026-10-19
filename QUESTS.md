@@ -49,4 +49,4 @@ The definitions are in **ReplicatedStorage → CookieTycoon → ChallengeCatalog
 
 Keep existing hunt IDs, item IDs, and the existing hunt order stable once players have saved progress. Reordering or replacing existing hunts changes what a saved index means. Append future hunts at the end and review save-format compatibility before deploying changes to saved progress.
 
-The HUD now shows a heading compass, an arrow, the next missing item's name and distance, plus a guide beam. When all items are found, it points back to Biscuit for the reward. See [the valley guide](VALLEY.md).
+The current [Workshop update](WORKSHOP.md) removes item waypoints, arrows, distances, and guide beams. Biscuit gives randomized mining, selling, eating, gifting, baking, obby, and occasional search jobs. Earlier active hunts still finish using the clues below.

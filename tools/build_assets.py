@@ -63,10 +63,11 @@ def cookie(index, recipe):
     target = model(recipe["name"], "Cookies")
     rng = random.Random(800 + index)
     base, accent = recipe["color"], recipe["accent"]
-    disc(target, "Baked Edge", 3.55, .48, (0, -.06, 0), tint(base, .84))
+    disc(target, "Baked Edge", 3.45, .34, (0, -.06, 0), tint(base, .84))
+    add(target, "Soft Baked Shoulder", (3.55, .48, 3.55), (0, .035, 0), tint(base, .95), "Ball")
     disc(target, f"Texture_Cookie{index:02}", 3.35, .19, (0, .20, 0), base)
-    for crumb in range(4):
-        angle = crumb * math.pi / 2 + .2
+    for crumb in range(3):
+        angle = crumb * math.pi * 2 / 3 + .2
         add(target, "Baked Crumb", (.35, .18, .28), (1.56 * math.cos(angle), -.05, 1.56 * math.sin(angle)), tint(base, .94), "Ball")
     frosted = index in (3, 11, 15, 17, 19, 23)
     if frosted:
@@ -79,7 +80,7 @@ def cookie(index, recipe):
             radius = .25 + math.sqrt((n + 1) / count) * 1.0
             rgb = (shades or [accent])[n % len(shades or [accent])]
             size = (.44, .22, .36)
-            shape = "Block"
+            shape = "Ball"
             if style == "sprinkles": size = (.12, .10, .42)
             elif style == "flakes": size = (.40, .08, .15)
             elif style == "berries": size, shape = (.43, .38, .43), "Ball"

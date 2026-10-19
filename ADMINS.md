@@ -68,3 +68,5 @@ User IDs identify the same account after a rename. Username entries are resolved
 - If the menu is missing, check the username, the latest published start place, and server Output for **Cookie Corner admin setup** warnings. Invalid/unavailable lookups do not grant access; correct the config or retry in a restarted server.
 
 All requests are checked against a server-owned account-ID set, with a one-second cooldown. Client attributes and hidden buttons do not authorize actions. Successful actions are logged in server Output with the acting account, target, action, and cash amount where applicable. Roblox engine tests are still required for the UI, live name lookup, character appearance, teleporting, and kick behavior.
+
+**Flight:** Admin tools now includes **My flight**. WASD steers, Space rises, Ctrl/Q descends; touch users get up/down buttons. Only the authorized admin can fly their own character. It stops on death/respawn/leave. See [Workshop controls](WORKSHOP.md).

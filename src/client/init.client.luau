@@ -17,6 +17,7 @@ local Catalog = require(shared:WaitForChild("ShopCatalog"))
 local Boosts = require(shared:WaitForChild("Boosts"))
 local Life = require(shared:WaitForChild("BakeryLife"))
 local Challenges = require(shared:WaitForChild("ChallengeCatalog"))
+local Contracts = require(shared:WaitForChild("BakeryContracts"))
 local remotes = shared:WaitForChild("Remotes")
 local requestAction = remotes:WaitForChild("RequestAction")
 local openShop = remotes:WaitForChild("OpenShop")
@@ -418,7 +419,14 @@ for index = 1, 3 do
 end
 local challengeButton = ordered(button(challengesScroll, "Visit Baker Biscuit", Color3.fromRGB(66, 114, 100)))
 local challengeStatus = ordered(text(challengesScroll, "", 13))
-challengeButton.Activated:Connect(function() requestAction:FireServer("ChallengeAction") end)
+local function currentContract()
+	local ok, result = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ContractJSON") or "{}")
+	return Contracts.normalize(ok and result or nil)
+end
+challengeButton.Activated:Connect(function()
+	local c = currentContract()
+	requestAction:FireServer("ChallengeAction", c.kind ~= "" and c.progress < c.target and "Skip" or nil)
+end)
 
 ordered(text(shopScroll, "Optional. Roblox confirms every purchase and its final price.", 13))
 local shopStatus = ordered(text(shopScroll, "Loading shop...", 15, gold))
@@ -537,6 +545,23 @@ local function enable(target, enabled)
 end
 
 local function renderChallenges(ready, purchasePending)
+	if player:GetAttribute("ChallengeActive") ~= true then
+		local c = currentContract()
+		local near = player:GetAttribute("NearChallengeNPC") == true
+		local verbs = { Mine = "Break dough ore in the cave", Sell = "Sell cookies to walking customers", Eat = "Eat cookies from your bag", Gift = "Give another player a free cookie", Bake = "Produce batches in your bakery", Obby = "Finish any obby and earn its boost", Find = "Find Biscuit's lost supplies" }
+		challengeName.Text = Contracts.Titles[c.kind] or "Biscuit's job board"
+		challengeHint.Text = verbs[c.kind] or "Biscuit offers different jobs: mining, baking, tasting, selling, gifting, obbys, and occasional searches."
+		challengeProgress.Text = c.kind == "" and "Ask for a random task" or (c.progress .. "/" .. c.target .. " • $" .. Progression.format(c.reward) .. " reward")
+		for index, row in ipairs(challengeItems) do
+			local id = c.items[index]
+			row.Visible = c.kind == "Find" and id ~= nil
+			if id then row.Text = (c.found[id] and "✓ " or "○ ") .. Challenges.Items[id].Name .. "\n" .. Challenges.Items[id].Hint end
+		end
+		challengeButton.Text = not near and "Visit Baker Biscuit" or (c.kind == "" and "Ask for a task" or (c.progress >= c.target and "Claim reward" or "Ask for another task (after 60s)"))
+		enable(challengeButton, ready and not purchasePending and near)
+		challengeStatus.Text = "No item waypoints. Use the task description and clues. Tasks and progress save."
+		return
+	end
 	local index = player:GetAttribute("ChallengeIndex") or 1
 	local challenge = Challenges.Challenges[index]
 	local active = player:GetAttribute("ChallengeActive") == true
@@ -594,6 +619,10 @@ local function refreshChallengeItems()
 		local itemIndex = definition and table.find(definition.Items, model:GetAttribute("ChallengeItemId"))
 		local visible = active and questIndex == current and itemIndex ~= nil
 			and bit32.band(mask, bit32.lshift(1, itemIndex - 1)) == 0
+		if not active then
+			local c, id = currentContract(), model:GetAttribute("ChallengeItemId")
+			visible = c.kind == "Find" and table.find(c.items, id) ~= nil and not c.found[id]
+		end
 		for _, descendant in ipairs(model:GetDescendants()) do
 			if descendant:IsA("BasePart") then descendant.LocalTransparencyModifier = visible and 0 or 1
 			elseif descendant:IsA("ProximityPrompt") or descendant:IsA("BillboardGui") or descendant:IsA("PointLight") then descendant.Enabled = visible end

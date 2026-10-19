@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 6 preserves cookie inventories, dough, machinery, and durable trade
--- recovery references. Older writers must never drop these ownership records.
-ProfileStore.CURRENT_VERSION = 6
+-- Version 7 adds conveyor construction, decorations, and randomized jobs while
+-- retaining cookie ownership and durable gift/exchange recovery references.
+ProfileStore.CURRENT_VERSION = 7
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0

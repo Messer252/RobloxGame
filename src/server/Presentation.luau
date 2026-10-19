@@ -89,13 +89,6 @@ function Presentation.world(world)
 	for _, x in ipairs({ -14.6, 14.6 }) do
 		part(world, "Cream Path Border", Vector3.new(0.7, 0.25, 1140), CFrame.new(x, 0.15, 0), cream, Enum.Material.Concrete)
 	end
-	for _, x in ipairs({ -485, 485 }) do
-		for index = -2, 2 do
-			local hill = part(world, "Pastel Meadow Hill", Vector3.new(105, 70, 118), CFrame.new(x, -19, index * 285),
-				Color3.fromRGB(139 + (index % 2) * 9, 177, 132), Enum.Material.Grass)
-			hill.Shape = Enum.PartType.Ball
-		end
-	end
 	for _, x in ipairs({ -34, 34 }) do
 		local seat = part(world, "Plaza Bench", Vector3.new(12, 0.6, 4), CFrame.new(x, 2.1, 0), cocoa, Enum.Material.WoodPlanks)
 		seat.CanCollide = true

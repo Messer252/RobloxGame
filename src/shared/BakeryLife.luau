@@ -1,5 +1,7 @@
 local Recipes = if script then require(script.Parent.Recipes) else require("./Recipes")
 local Crafting = if script then require(script.Parent.CookieCrafting) else require("./CookieCrafting")
+local Polish = if script then require(script.Parent.BakeryPolish) else require("./BakeryPolish")
+local Contracts = if script then require(script.Parent.BakeryContracts) else require("./BakeryContracts")
 local Life = { MaxCurrency = 1e15, MaxInventory = 40, OvenSeconds = 20 }
 Life.Machines = { Packager = { Cost = 25000, Bonus = 0.25 }, Boxer = { Cost = 250000, Bonus = 0.5 }, FinishingOven = { Cost = 2500000, Bonus = 0 } }
 Life.PinCosts = { 0, 5000, 50000, 500000, 5000000 }
@@ -23,7 +25,8 @@ end
 function Life.normalize(raw)
 	raw = type(raw) == "table" and raw or {}
 	local data = { inventory = {}, dough = integer(raw.dough, 0, 0, 1e9), pin = integer(raw.pin, 1, 1, 5),
-		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "" }
+		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "", belt = integer(raw.belt, 0, 0, 3), decorations = {}, contract = Contracts.normalize(raw.contract) }
+	for key in pairs(Polish.Decorations) do data.decorations[key] = type(raw.decorations) == "table" and raw.decorations[key] == true or false end
 	local seen = {}
 	if type(raw.inventory) == "table" then
 		for _, v in ipairs(raw.inventory) do
@@ -74,10 +77,16 @@ function Life.eat(data, id, now, seed)
 	return true, "Yum! Cookie look and speed boost for 90 seconds."
 end
 function Life.speed(data, now)
-	return (data.buff.expires or 0) > now and (5 + data.buff.recipe * 0.25) or 0
+	return Polish.active(data, now).Speed
 end
-function Life.production(data)
-	return (1 + data.upgrades.Mixing * 0.1) * (data.machines.Packager and 1.25 or 1) * (data.machines.Boxer and 1.5 or 1)
+function Life.production(data, now)
+	return (1 + Polish.active(data, now or os.time()).Income / 100) * (1 + data.upgrades.Mixing * 0.1) * (data.machines.Packager and 1.25 or 1) * (data.machines.Boxer and 1.5 or 1)
+end
+function Life.process(cookie, machines, z)
+	local changed = false
+	if machines.Packager and z >= Polish.WrapZ and not cookie.wrapped then cookie.wrapped, changed = true, true end
+	if machines.Boxer and z >= Polish.BoxZ and not cookie.boxed then cookie.boxed, changed = true, true end
+	return changed
 end
 function Life.buyMachine(profile, key)
 	local definition = Life.Machines[key]

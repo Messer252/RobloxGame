@@ -13,6 +13,7 @@ function Admin.start(remotes, context)
 	local admins = Permissions.resolve({ AutoExperienceOwner = Config.AutoExperienceOwner, UserIds = Config.UserIds }, function() return nil end, ownerId)
 	local cooldowns = {}
 	local visibility = Visibility.new()
+	local flight = require(script.Parent.AdminFlight).start(remotes, function(player) return admins[player.UserId] == true end)
 	local function mark(player) player:SetAttribute("IsAdmin", admins[player.UserId] == true) end
 	Players.PlayerAdded:Connect(mark)
 	Players.PlayerRemoving:Connect(function(player) cooldowns[player] = nil end)
@@ -46,6 +47,10 @@ function Admin.start(remotes, context)
 				return
 			end
 			resultMessage = "@" .. target.Name .. ": " .. grantMessage
+		elseif action == "SetFlying" then
+			if type(argument) ~= "boolean" then return end
+			flight:Set(actor, argument)
+			resultMessage = argument and "Flight enabled. WASD to steer, Space up, Ctrl/Q down; touch buttons also available." or "Flight disabled."
 		elseif action == "SetInvisible" then
 			if type(argument) ~= "boolean" then return end
 			visibility:Set(actor, argument)

@@ -2,7 +2,7 @@
 -- client attributes, display names, and remote arguments never grant a role.
 local Permissions = {}
 local Actions = { Kick = true, ReturnToSpawn = true, GiveWalletCash = true, GiveBankCash = true,
-	SetInvisible = true, GoToPlayer = true, BringPlayer = true }
+	SetInvisible = true, SetFlying = true, GoToPlayer = true, BringPlayer = true }
 
 function Permissions.validId(value)
 	return type(value) == "number" and value > 0 and value < 2^53 and value % 1 == 0
@@ -39,7 +39,7 @@ function Permissions.authorize(admins, actorId, action, targetId)
 	if type(action) ~= "string" or not Actions[action] then return false, "Unknown admin action." end
 	if type(targetId) ~= "number" or targetId % 1 ~= 0 or math.abs(targetId) >= 2^53 then return false, "Invalid target account." end
 	if action == "Kick" and admins[targetId] == true then return false, "Admins cannot be kicked with these tools." end
-	if action == "SetInvisible" and actorId ~= targetId then return false, "Invisibility changes your own character only." end
+	if (action == "SetInvisible" or action == "SetFlying") and actorId ~= targetId then return false, "This action changes your own character only." end
 	return true
 end
 

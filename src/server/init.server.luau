@@ -8,6 +8,7 @@ local Progression = require(shared.Progression)
 local Recipes = require(shared.Recipes)
 local Crafting = require(shared.CookieCrafting)
 local Challenges = require(shared.Challenges)
+local Contracts = require(shared.BakeryContracts)
 local Boosts = require(shared.Boosts)
 local AudioPreferences = require(shared.AudioPreferences)
 local ProfileStore = require(script.ProfileStore)
@@ -76,7 +77,8 @@ local function sync(player, state)
 	player:SetAttribute("EffectsEnabled", data.audio.effects)
 	player:SetAttribute("MusicVolume", data.audio.musicVolume)
 	player:SetAttribute("EffectsVolume", data.audio.effectsVolume)
-	player:SetAttribute("LifeProgress", HttpService:JSONEncode({ upgrades = data.life.upgrades, machines = data.life.machines, recipeLevels = data.life.recipeLevels }))
+	player:SetAttribute("LifeProgress", HttpService:JSONEncode({ upgrades = data.life.upgrades, machines = data.life.machines, recipeLevels = data.life.recipeLevels, buff = data.life.buff, belt = data.life.belt }))
+	player:SetAttribute("ContractJSON", HttpService:JSONEncode(data.life.contract))
 	player:SetAttribute("ChallengeIndex", data.challenges.index)
 	player:SetAttribute("ChallengeActive", data.challenges.active)
 	player:SetAttribute("ChallengeFound", Challenges.encode(data.challenges))
@@ -167,10 +169,12 @@ local function onAction(player, action, argument, sourcePlot)
 		if now - (state.lastChallengeAction or -math.huge) < 0.5 then return end
 		state.lastChallengeAction = now
 		if not ChallengeWorld.IsNearNPC(player) then
-			notify(player, "Visit Baker Biscuit in the plaza to start or finish a hunt.")
+			notify(player, "Visit Baker Biscuit in the plaza to start or finish a job.")
 			return
 		end
-		local success, message, reward = Challenges.interact(state.data, Progression.MAX_CASH)
+		local success, message, reward
+		if state.data.challenges.active then success, message, reward = Challenges.interact(state.data, Progression.MAX_CASH)
+		else success, message, reward = Contracts.interact(state.data, os.time(), math.random(), math.random(), math.random(), argument == "Skip") end
 		if success then
 			sync(player, state)
 			if state.plot then World.updateBank(state.plot, state.data) end
@@ -212,6 +216,7 @@ local function onAction(player, action, argument, sourcePlot)
 		success, message = amount > 0, "Collected $" .. Progression.format(amount) .. "."
 	elseif action == "BuyRecipe" then
 		if argument ~= nil and argument ~= data.unlocked + 1 then return end
+		if math.ceil((data.unlocked + 1) / 10) > data.life.belt then notify(player, "Build the next conveyor line first."); return false end
 		success, message = Progression.buyRecipe(data)
 	elseif action == "UpgradeOven" then
 		success, message = Progression.upgradeOven(data)
@@ -271,7 +276,12 @@ ChallengeWorld.create(workspace:WaitForChild("CookieTycoonWorld"), function(play
 end, function(player, itemId)
 	local state = usable(player)
 	if not state then return end
-	local success, message = Challenges.find(state.data, itemId)
+	local success, message
+	if state.data.challenges.active then success, message = Challenges.find(state.data, itemId)
+	else
+		success = Contracts.record(state.data, "Find", 1, itemId)
+		message = success and "Found a lost supply! Return to Biscuit when the task is complete." or nil
+	end
 	if not success then return end
 	sync(player, state)
 	state.nextSave = math.min(state.nextSave, os.clock() + 2)
@@ -286,6 +296,7 @@ ObbyWorld.create(workspace.CookieTycoonWorld, function(player, difficulty)
 	if not state then return false end
 	local success, message = Boosts.awardObby(state.data, difficulty, os.time())
 	if success then
+		Contracts.record(state.data, "Obby", 1)
 		sync(player, state)
 		state.nextSave = math.min(state.nextSave, os.clock() + 2)
 		feedback:FireClient(player, "UpgradePermanent")
@@ -300,7 +311,7 @@ LifeServer.start({
 	Remotes = remotes, World = workspace.CookieTycoonWorld, Plots = plots, Trades = trades, Profiles = profiles,
 	GetState = function(player) return sessions[player] end,
 	Usable = usable, Notify = notify, Format = Progression.format, Home = World.spawnPlayer,
-	OnCookie = function(callback) World.OnCookie = callback end,
+	OnCookie = function(callback, process) World.OnCookie = callback; require(script.ConveyorWorld).OnProcess = process end,
 	Changed = function(player, state)
 		sync(player, state)
 		if state.plot then World.refresh(state.plot, state.data, state.perks) end
@@ -400,11 +411,12 @@ task.spawn(function()
 		if checkNPC then nextNPCCheck = now + 0.5 end
 		for player, state in pairs(sessions) do
 			if checkNPC and not state.closing then player:SetAttribute("NearChallengeNPC", ChallengeWorld.IsNearNPC(player)) end
-			if usable(player) and state.plot and now >= state.nextBake then
+			if usable(player) and state.plot and state.data.life.belt > 0 and now >= state.nextBake then
 				local interval = Progression.interval(state.data, state.perks)
 				local batches = math.min(5, math.floor((now - state.nextBake) / interval) + 1)
 				state.nextBake = now + interval
 				state.data.bank = math.min(Progression.MAX_CASH, state.data.bank + Progression.batchValue(state.data, state.perks) * batches)
+				Contracts.record(state.data, "Bake", batches)
 				World.updateBank(state.plot, state.data)
 				sync(player, state)
 				if now >= state.nextVisual then

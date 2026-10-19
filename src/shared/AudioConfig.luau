@@ -1,10 +1,8 @@
--- Upload assets/audio/friend/cookiecookieloop1.ogg and enter its Roblox audio ID.
--- Until configured, background music stays quiet instead of playing the old song.
--- Uploaded audio must be approved and permitted for this experience.
+-- Original Valley Afterglow score plays locally; optional full mix upload uses MusicAssetId.
 return {
 	MusicAssetId = 0,
-	MusicName = "cookiecookieloop1",
-	FallbackMusicEnabled = false,
+	MusicName = "Valley Afterglow",
+	FallbackMusicEnabled = true,
 	MusicAttackSeconds = 0.18,
 	MusicReleaseSeconds = 0.35,
 	BundledChime = "rbxasset://sounds/electronicpingshort.wav",
