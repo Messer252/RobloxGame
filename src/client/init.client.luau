@@ -6,6 +6,8 @@ local Debris = game:GetService("Debris")
 local AudioController = require(script:WaitForChild("AudioController"))
 local VolumeSlider = require(script:WaitForChild("VolumeSlider"))
 local AdminPanel = require(script:WaitForChild("AdminPanel"))
+local LifeClient = require(script:WaitForChild("BakeryLifeClient"))
+local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Recipes = require(shared:WaitForChild("Recipes"))
@@ -13,6 +15,7 @@ local Progression = require(shared:WaitForChild("Progression"))
 local Crafting = require(shared:WaitForChild("CookieCrafting"))
 local Catalog = require(shared:WaitForChild("ShopCatalog"))
 local Boosts = require(shared:WaitForChild("Boosts"))
+local Life = require(shared:WaitForChild("BakeryLife"))
 local Challenges = require(shared:WaitForChild("ChallengeCatalog"))
 local remotes = shared:WaitForChild("Remotes")
 local requestAction = remotes:WaitForChild("RequestAction")
@@ -66,7 +69,7 @@ local function fixedLabel(parent, y, height, size, tint)
 end
 
 local hud = Instance.new("Frame")
-hud.Size = UDim2.new(0.94, 0, 0, 238)
+hud.Size = UDim2.new(0.94, 0, 0, 264)
 hud.Position = UDim2.fromOffset(12, 12)
 hud.BackgroundColor3 = Color3.fromRGB(53, 36, 32)
 hud.BackgroundTransparency = 0.06
@@ -74,7 +77,7 @@ hud.Parent = gui
 round(hud, 16)
 local hudStroke = finish(hud, gold)
 local hudLimit = Instance.new("UISizeConstraint")
-hudLimit.MaxSize = Vector2.new(420, 238)
+hudLimit.MaxSize = Vector2.new(420, 264)
 hudLimit.Parent = hud
 local cookieIcon = Instance.new("Frame")
 cookieIcon.Position = UDim2.fromOffset(15, 9)
@@ -188,7 +191,11 @@ close.Position = UDim2.new(1, -50, 0, 10)
 close.Activated:Connect(function() menu.Visible = false end)
 local toggle = button(hud, "Bakery", Color3.fromRGB(130, 87, 49))
 toggle.Position = UDim2.fromOffset(14, 106)
-toggle.Size = UDim2.new(0.44, -16, 0, 30)
+toggle.Size = UDim2.new(0.22, -14, 0, 30)
+toggle.TextSize = 12
+local homeButton = button(hud, "Home", Color3.fromRGB(66, 114, 100))
+homeButton.Position, homeButton.Size, homeButton.TextSize = UDim2.new(0.22, 4, 0, 106), UDim2.new(0.22, -8, 0, 30), 12
+homeButton.Activated:Connect(function() remotes:WaitForChild("LifeAction"):FireServer("Home") end)
 toggle.Activated:Connect(function() menu.Visible = not menu.Visible end)
 local musicToggle = button(hud, "Music ON", Color3.fromRGB(66, 114, 100))
 musicToggle.Name = "MusicToggle"
@@ -320,6 +327,9 @@ local bakeryInfo = ordered(text(scroll, "Claim a green pad to start baking."))
 local adminButton = ordered(button(scroll, "Admin tools", Color3.fromRGB(66, 114, 100)))
 adminButton.Size, adminButton.Visible = UDim2.new(1, 0, 0, 40), false
 AdminPanel.start(player, remotes, gui, adminButton)
+local bagButton = ordered(button(scroll, "Cookie bag • mine • machines", Color3.fromRGB(66, 114, 100)))
+bagButton.Size = UDim2.new(1, 0, 0, 42)
+LifeClient.start(player, remotes, gui, hud, bagButton)
 local collectButton = ordered(button(scroll, "Collect earnings", Color3.fromRGB(134, 100, 35)))
 local recipeButton = ordered(button(scroll, "Unlock next cookie"))
 local ovenButton = ordered(button(scroll, "Faster conveyor", Color3.fromRGB(103, 82, 147)))
@@ -383,6 +393,9 @@ recipeTitle.Size = UDim2.new(1, -100, 0, 50)
 recipeTitle.TextXAlignment = Enum.TextXAlignment.Center
 local workshopDetails = ordered(text(workshopScroll, "", 18, gold))
 local toppingSummary = ordered(text(workshopScroll, "", 13))
+local masteryButton = ordered(button(workshopScroll, "Upgrade this cookie"))
+masteryButton.Size = UDim2.new(1, 0, 0, 48)
+masteryButton.Activated:Connect(function() remotes.LifeAction:FireServer("UpgradeRecipe", selectedRecipe) end)
 local modifierButtons = {}
 for _, key in ipairs(Crafting.ModifierOrder) do
 	local definition = Crafting.Modifiers[key]
@@ -511,6 +524,8 @@ local function currentData()
 		local flags = Crafting.decode(player:GetAttribute("RecipeModifiers_" .. index) or 0)
 		if next(flags) then data.modifiers[tostring(index)] = flags end
 	end
+	local ok, raw = pcall(function() return HttpService:JSONDecode(player:GetAttribute("LifeProgress") or "{}") end)
+	data.life = Life.normalize(ok and raw or nil)
 	return data
 end
 local function enable(target, enabled)
@@ -599,7 +614,7 @@ local function render()
 	local ready = player:GetAttribute("DataReady") == true
 	local ownsBakery = ready and player:GetAttribute("HasBakery") == true
 	local purchasePending = player:GetAttribute("PurchasePending") == true
-	local canManage = ownsBakery and not purchasePending
+	local canManage = ownsBakery and not purchasePending and player:GetAttribute("CookieTradeBusy") ~= true
 	local format = Progression.format
 	local remaining = math.max(0, data.boosts.obbyExpires - data.perks.Now)
 	boostStatus.Text = "Permanent income x" .. Boosts.paidMultiplier(data.boosts)
@@ -625,8 +640,8 @@ local function render()
 		bakeryInfo.Text = string.format("$%s per batch  •  Every %.2fs",
 			format(Progression.batchValue(data, data.perks)), Progression.interval(data, data.perks))
 	end
-	collectButton.Text = "Collect $" .. format(data.bank)
-	enable(collectButton, canManage and data.bank > 0 and data.cash < Progression.MAX_CASH)
+	collectButton.Text = "Collect $" .. format(data.bank) .. " at your register"
+	enable(collectButton, false)
 	local nextRecipe = Recipes[data.unlocked + 1]
 	recipeButton.Text = nextRecipe and (nextRecipe.Name .. "  •  $" .. format(nextRecipe.Cost) .. "\nUnlock next cookie") or "All 30 cookies unlocked!"
 	enable(recipeButton, canManage and nextRecipe ~= nil and data.cash >= (nextRecipe and nextRecipe.Cost or 0))
@@ -664,6 +679,10 @@ local function render()
 	workshopDetails.Text = rarity.Name .. "  •  " .. (unlocked and "$" .. format(Progression.recipeValue(data, selectedRecipe, data.perks)) .. " / cookie"
 		or "Unlock for $" .. format(selected.Cost))
 	toppingSummary.Text = "Toppings: " .. Crafting.summary(flags)
+	local mastery = data.life.recipeLevels[tostring(selectedRecipe)] or 0
+	local masteryCost = Life.recipeCost(selectedRecipe, mastery)
+	masteryButton.Text = mastery == 10 and "Cookie mastery MAX" or ("Cookie mastery " .. mastery .. "/10 • $" .. format(masteryCost) .. "\n+20% value for this recipe")
+	enable(masteryButton, canManage and unlocked and mastery < 10 and data.cash >= masteryCost)
 	enable(previousCookie, selectedRecipe > 1)
 	enable(nextCookie, selectedRecipe < #Recipes)
 	for key, addButton in pairs(modifierButtons) do

@@ -60,11 +60,20 @@ wallet/earnings cash gifts, and self-invisibility. Full guide: ADMINS.md in this
 
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
-servers: save formats 1-4 migrate to version 5 with quest progress and receipts preserved.
+servers: save formats 1-5 migrate to version 6 with existing progress and receipts preserved.
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 The conveyor update widens the tracks, adds taller rounded outer rails, closes
 curve joints, and guides physical cookies through the merge without teleporting.
+
+COOKIE VALLEY FEATURES
+See VALLEY.md in this ZIP for the full feature and playtest guide. Home returns
+you to your bakery; the road increases walking speed. Collect production cash
+at your own register/gold pad. Nearby conveyor cookies show their value.
+Bakery > Cookie bag opens inventory, mining, machines, customers, and trades.
+The map includes a cookie forest, lake/waterfall, mountains, and day/night.
+Before replacing a customized place, copy across your audio IDs, product IDs,
+and friends added to AdminConfig. Restart outdated servers after publishing.
 
 NEW BACKGROUND SONG / SAVED VOLUME SLIDERS
 This ZIP includes your friend's cookiecookieloop1.ogg. Upload it to Roblox as
@@ -114,6 +123,7 @@ def main():
         archive.write(MUSIC, MUSIC.name)
         archive.write(ROOT / "AUDIO.md", "AUDIO.md")
         archive.write(ROOT / "ADMINS.md", "ADMINS.md")
+        archive.write(ROOT / "VALLEY.md", "VALLEY.md")
         archive.write(MUSIC.parent / "README.md", "SONG_CREDIT.txt")
     with ZipFile(ARCHIVE) as archive:
         assert archive.testzip() is None, "Download ZIP failed its integrity check"

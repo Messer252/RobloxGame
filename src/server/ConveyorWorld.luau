@@ -223,11 +223,11 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 			local p = hull.Position - plot.origin
 			if p.Y < Layout.BeltTop - 0.1 or p.Y > Layout.BeltTop + 1.1 then continue end
-			local drive = Routing.drive(paths[state.lane], p.X, p.Z * plot.direction, state.progress, plot.beltSpeed)
+			local drive = Routing.drive(paths[state.lane], p.X * (plot.mirrorX or 1), p.Z * plot.direction, state.progress, plot.beltSpeed)
 			if drive then
 				state.progress = drive.s
 				local current = hull.AssemblyLinearVelocity
-				local target = Vector3.new(drive.vx, current.Y, drive.vz * plot.direction)
+				local target = Vector3.new(drive.vx * (plot.mirrorX or 1), current.Y, drive.vz * plot.direction)
 				hull.AssemblyLinearVelocity = current:Lerp(target, alpha)
 			end
 		end

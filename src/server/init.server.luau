@@ -19,6 +19,8 @@ local PlazaExtras = require(script.PlazaExtras)
 local CommerceServer = require(script.CommerceServer)
 local AdminServer = require(script.AdminServer)
 local AdminRewards = require(script.AdminRewards)
+local LifeServer = require(script.BakeryLifeServer)
+local CookieTrades = require(script.CookieTrades)
 
 local remotes = Instance.new("Folder")
 remotes.Name = "Remotes"
@@ -47,6 +49,9 @@ end
 local profiles = ProfileStore.new(store, {
 	clock = os.time, wait = task.wait, copy = Progression.normalize, lease = Settings.SessionLeaseSeconds,
 })
+local journalOk, journal = pcall(function() return DataStoreService:GetDataStore("CookieCorner_CookieTrades_v1") end)
+if not journalOk then journal = { UpdateAsync = function() error("Cookie trade saving unavailable") end } end
+local trades = CookieTrades.new(journal, profiles, task.wait)
 local sessions = {}
 local pendingLoads = {}
 local shuttingDown = false
@@ -71,6 +76,7 @@ local function sync(player, state)
 	player:SetAttribute("EffectsEnabled", data.audio.effects)
 	player:SetAttribute("MusicVolume", data.audio.musicVolume)
 	player:SetAttribute("EffectsVolume", data.audio.effectsVolume)
+	player:SetAttribute("LifeProgress", HttpService:JSONEncode({ upgrades = data.life.upgrades, machines = data.life.machines, recipeLevels = data.life.recipeLevels }))
 	player:SetAttribute("ChallengeIndex", data.challenges.index)
 	player:SetAttribute("ChallengeActive", data.challenges.active)
 	player:SetAttribute("ChallengeFound", Challenges.encode(data.challenges))
@@ -88,13 +94,14 @@ local function usable(player)
 	local state = sessions[player]
 	if not state or state.closing or state.profile.lost or state.profile.closed then return nil end
 	if state.profile.transacting or (state.receiptWorkers or 0) > 0 then return nil end
+	if state.profile.activityLock or state.data.life.pendingTrade ~= "" then return nil end
 	if not state.profile.sessionOnly and os.time() >= state.profile.expiresAt then return nil end
 	return state
 end
 
 local function saveState(player, state, release)
 	if state.profile.sessionOnly then return true end
-	if not release and (state.profile.saving or state.profile.closing or state.profile.transacting or (state.receiptWorkers or 0) > 0) then return false end
+	if not release and (state.profile.saving or state.profile.closing or state.profile.transacting or state.profile.activityLock or (state.receiptWorkers or 0) > 0) then return false end
 	if not state.closing then player:SetAttribute("DataStatus", "Saving") end
 	local ok, reason, detail = profiles:Save(state.profile, release)
 	if not state.closing then
@@ -197,6 +204,10 @@ local function onAction(player, action, argument, sourcePlot)
 	local data = state.data
 	local success, message
 	if action == "Collect" then
+		if sourcePlot ~= state.plot then
+			notify(player, "Visit your collection register to collect cash.")
+			return false
+		end
 		local amount = Progression.collect(data)
 		success, message = amount > 0, "Collected $" .. Progression.format(amount) .. "."
 	elseif action == "BuyRecipe" then
@@ -231,7 +242,7 @@ local function onAction(player, action, argument, sourcePlot)
 	return success == true
 end
 
-World.create(function(player, plot)
+local plots = World.create(function(player, plot)
 	local state = usable(player)
 	if not state then return end
 	if state.plot then
@@ -269,17 +280,32 @@ end, function(player, itemId)
 end)
 
 ObbyWorld.create(workspace.CookieTycoonWorld, function(player, difficulty)
-	local state = sessions[player]
-	if not state or state.closing then return end
-	-- Queue a server-validated finish while a purchase is saving. Mutating the
-	-- profile during a receipt transaction could discard either reward.
-	local pending = state.pendingObby
-	if not pending or Boosts.ObbyBonuses[difficulty] >= Boosts.ObbyBonuses[pending.difficulty] then
-		state.pendingObby = { difficulty = difficulty, completed = os.time() }
+	-- The finish detector retries until a receipt/trade transaction releases the
+	-- profile. Acknowledgement means the bonus is already applied, not queued.
+	local state = usable(player)
+	if not state then return false end
+	local success, message = Boosts.awardObby(state.data, difficulty, os.time())
+	if success then
+		sync(player, state)
+		state.nextSave = math.min(state.nextSave, os.clock() + 2)
+		feedback:FireClient(player, "UpgradePermanent")
 	end
+	if message then notify(player, message) end
+	return true -- A stronger existing boost also counts as a completed course.
 end, notify)
 
 PlazaExtras.create(workspace.CookieTycoonWorld, function(player) return sessions[player] end)
+
+LifeServer.start({
+	Remotes = remotes, World = workspace.CookieTycoonWorld, Plots = plots, Trades = trades, Profiles = profiles,
+	GetState = function(player) return sessions[player] end,
+	Usable = usable, Notify = notify, Format = Progression.format, Home = World.spawnPlayer,
+	OnCookie = function(callback) World.OnCookie = callback end,
+	Changed = function(player, state)
+		sync(player, state)
+		if state.plot then World.refresh(state.plot, state.data, state.perks) end
+	end,
+})
 
 requestAction.OnServerEvent:Connect(function(player, action, argument)
 	onAction(player, action, argument, nil)
@@ -301,6 +327,11 @@ local function addPlayer(player)
 		value.Parent = stats
 	end
 	local profile, reason, detail = profiles:Load(player.UserId, HttpService:GenerateGUID(false))
+	if profile and profile.data.life.pendingTrade ~= "" and not trades:Recover(profile, player.UserId) then
+		pendingLoads[player] = nil
+		player:Kick("Cookie trade recovery is waiting for saving. Rejoin shortly; your cookies have not been reset.")
+		return
+	end
 	if not profile and reason == "unavailable" and RunService:IsStudio() and Settings.AllowStudioSessionOnly then
 		profile = { data = Progression.newData(), sessionOnly = true, expiresAt = math.huge }
 		warn("Cookie Corner: Studio session-only mode; this player's progress WILL NOT SAVE.")
@@ -369,19 +400,6 @@ task.spawn(function()
 		if checkNPC then nextNPCCheck = now + 0.5 end
 		for player, state in pairs(sessions) do
 			if checkNPC and not state.closing then player:SetAttribute("NearChallengeNPC", ChallengeWorld.IsNearNPC(player)) end
-			if usable(player) and state.pendingObby then
-				local pending = state.pendingObby
-				state.pendingObby = nil
-				if os.time() < pending.completed + Boosts.Duration then
-					local success, message = Boosts.awardObby(state.data, pending.difficulty, pending.completed)
-					if success then
-						sync(player, state)
-						state.nextSave = math.min(state.nextSave, now + 2)
-						feedback:FireClient(player, "UpgradePermanent")
-					end
-					if message then notify(player, message) end
-				end
-			end
 			if usable(player) and state.plot and now >= state.nextBake then
 				local interval = Progression.interval(state.data, state.perks)
 				local batches = math.min(5, math.floor((now - state.nextBake) / interval) + 1)
@@ -406,7 +424,7 @@ task.spawn(function()
 				if os.time() >= state.profile.expiresAt then
 					player:SetAttribute("DataReady", false)
 					player:Kick("Saving could not reconnect safely. Please rejoin to load your last saved bakery.")
-				elseif os.clock() >= state.nextSave and not state.profile.saving and not state.profile.transacting and state.receiptWorkers == 0 then
+				elseif os.clock() >= state.nextSave and not state.profile.saving and not state.profile.transacting and not state.profile.activityLock and state.receiptWorkers == 0 then
 					state.nextSave = os.clock() + Settings.AutosaveSeconds
 					task.spawn(saveState, player, state, false)
 				end

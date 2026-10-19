@@ -123,7 +123,7 @@ function Presentation.plot(plot, slot)
 		end
 	end
 	local function frame(x, y, z)
-		return CFrame.new(plot.origin + Vector3.new(x, y, z * plot.direction))
+		return CFrame.new(plot.origin + Vector3.new(x * (plot.mirrorX or 1), y, z * plot.direction))
 			* CFrame.Angles(0, plot.direction == 1 and 0 or math.pi, 0)
 	end
 	for column = 0, 3 do

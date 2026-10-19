@@ -133,7 +133,7 @@ You can do these checks in the temporary preview, the published Studio test copy
 
 1. Walk to an unclaimed bakery's green claim pad. Use the **Claim free bakery** prompt; on a keyboard, tap the displayed key (normally **E**) once. There is no held delay.
 2. Claiming moves you beside your free Chocolate Chip oven and the first cookie purchase. Your bakery has **three feeder lanes merging into one delivery belt and box**. Chocolate Chip starts automatically; a fresh profile earns **$5 per batch about every three seconds** before upgrades.
-3. Use the register's **Collect cash** prompt to move earnings into your wallet. Waiting builds uncollected earnings; it does not spend or collect them for you.
+3. Stand on your register's **gold collection pad**, or use its **Collect cash** prompt to move earnings into your wallet. Waiting builds uncollected earnings; it does not spend or collect them for you.
 4. Open **Bakery**. The four tabs are **Bakery**, **Toppings**, **Quests**, and **Shop**. Bakery lets you collect and buy upgrades without walking back to each pad. **Golden Chips & rebirth** expands the permanent upgrades and rebirth controls.
 5. Collect **$250**, then stand on the highlighted **Oatmeal Raisin** purchase pad for about **0.28 seconds**. No key or held prompt is needed. It buys once, reveals the next station, and both starting recipes produce **$17 per batch** before other upgrades. Only unlocked ovens and the next purchase appear; progression continues along the same belt.
 6. In **Toppings**, select Chocolate Chip. Buy **Glaze** for $100: its value should become $6. Later, add **Sprinkles** for $350: with both toppings, its rounded value should become $7.
@@ -235,10 +235,10 @@ The speed pass speeds up baking. Bought cash resets on rebirth; permanent passes
 2. Stop any playtest before editing.
 3. If editing the production start place directly, choose **File → Publish**. If importing a new local file, choose **Publish As**, select the existing production game and its start place, and overwrite that place.
 4. Keep `CookieCorner_PlayerData_v1` and the current save code. Publishing an updated place does not itself erase player progress.
-5. In Creator Dashboard, use **Configurations → Server management → Restart Servers** and select outdated servers when the update needs everyone on the new code. In particular, restart older servers when rolling out this version's permanent-boost save format.
+5. In Creator Dashboard, use **Configurations → Server management → Restart Servers** and select outdated servers when the update needs everyone on the new code. In particular, restart older servers when rolling out this version's inventory and trade save format.
 6. Join through the Roblox app to check the published update.
 
-The current **version-5 save envelope** accepts versions **1–4** and preserves progression, receipts, quests, and audio while adding permanent paid income tiers and timed obby boosts. Earlier game versions cannot read version-5 records. Keep `CookieCorner_PlayerData_v1` and do not roll back to older save code after players have saved with this build.
+The current **version-6 save envelope** accepts versions **1–5** and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Earlier game versions cannot read version-6 records. Keep `CookieCorner_PlayerData_v1` and do not roll back to older save code after players have saved with this build.
 
 Keep these three copies in mind:
 
@@ -309,6 +309,8 @@ For live source editing, use `rojo serve default.project.json` with the Studio R
 - [ ] The chosen audience can join through the Roblox game-page link.
 - [ ] Purchases remain disabled, or the configured offers have passed the monetization checks.
 
-The place packager verifies all **40 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes your friend's OGG; upload it and set AudioConfig.MusicAssetId for background music. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
+The place packager verifies all **52 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes your friend's OGG; upload it and set AudioConfig.MusicAssetId for background music. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
 
 Official references: [Studio installation](https://create.roblox.com/docs/studio/setup), [publishing and audience requirements](https://create.roblox.com/docs/production/publishing/publish-games-and-places), [Studio DataStore access](https://create.roblox.com/docs/cloud-services/data-stores#enable-studio-access), [testing modes](https://create.roblox.com/docs/studio/testing-modes), and [server updates](https://create.roblox.com/docs/projects/update-games). Roblox's menu labels and release requirements can change; follow the current prompts if your layout differs.
+
+For the map, Home button, cookie bag, eating, mining, machines, customer sales, trading, and quest compass, follow [the cookie valley guide](VALLEY.md). Before overwriting a customized place, copy your audio/product IDs and AdminConfig username additions into the new file.

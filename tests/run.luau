@@ -776,8 +776,8 @@ test("modifier prices scale with the selected recipe and respect early-game mini
 	equal(Crafting.cost(Recipes[1], "Glaze"), 100)
 	equal(Crafting.cost(Recipes[1], "Sprinkles"), 350)
 	equal(Crafting.cost(Recipes[1], "GoldLeaf"), 12500)
-	equal(Crafting.cost(Recipes[30], "Glaze"), 140000000)
-	equal(Crafting.cost(Recipes[30], "GoldLeaf"), 1680000000)
+	equal(Crafting.cost(Recipes[30], "Glaze"), 140000100)
+	equal(Crafting.cost(Recipes[30], "GoldLeaf"), 1680012500)
 	equal(Crafting.cost(Recipes[1], "NotAnIngredient"), nil)
 end)
 
@@ -1222,6 +1222,7 @@ end)
 require("./expansion")(test, equal, near, harness, fakeStore)
 require("./conveyors")(test, equal, near)
 require("./admins")(test, equal, harness, fakeStore)
+require("./bakery_life")(test, equal, near, harness, fakeStore)
 
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then error("Cookie Corner tests failed") end

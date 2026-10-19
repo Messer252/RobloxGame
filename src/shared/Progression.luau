@@ -3,6 +3,7 @@ local Crafting = if script then require(script.Parent.CookieCrafting) else requi
 local Challenges = if script then require(script.Parent.Challenges) else require("./Challenges")
 local Boosts = if script then require(script.Parent.Boosts) else require("./Boosts")
 local AudioPreferences = if script then require(script.Parent.AudioPreferences) else require("./AudioPreferences")
+local Life = if script then require(script.Parent.BakeryLife) else require("./BakeryLife")
 
 local Progression = {}
 Progression.MAX_CASH = 1e15 -- Keep all currency integers below double precision limits.
@@ -29,6 +30,7 @@ function Progression.newData()
 		cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0,
 		permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {},
 		audio = AudioPreferences.normalize(nil), challenges = Challenges.normalize(nil), boosts = Boosts.normalize(nil),
+		life = Life.normalize(nil),
 	}
 end
 
@@ -45,6 +47,7 @@ function Progression.normalize(raw)
 	data.challenges = Challenges.normalize(raw.challenges)
 	data.boosts = Boosts.normalize(raw.boosts)
 	data.audio = AudioPreferences.normalize(raw.audio)
+	data.life = Life.normalize(raw.life)
 	if type(raw.permanent) == "table" then
 		for key, upgrade in pairs(Progression.Permanent) do
 			data.permanent[key] = integer(raw.permanent[key], 0, 0, upgrade.Max)
@@ -77,17 +80,18 @@ function Progression.multiplier(data, perks)
 	return (1 + data.permanent.Yield * 0.25) * (1 + data.rebirths * 0.15)
 		* (perks and perks.DoubleIncome and 2 or 1)
 		* Boosts.multiplier(data.boosts, perks and perks.Now or os.time())
+		* Life.production(data.life)
 end
 
 function Progression.interval(data, perks)
 	local normalInterval = math.max(0.4, 3 / ((1 + (data.level - 1) * 0.25) * (1 + data.permanent.Speed * 0.08)))
-	return normalInterval / (perks and perks.DoubleSpeed and 2 or 1)
+	return normalInterval / (perks and perks.DoubleSpeed and 2 or 1) / (1 + data.life.upgrades.Flow * 0.05)
 end
 
 function Progression.recipeValue(data, index, perks)
 	local flags = data.modifiers and data.modifiers[tostring(index)]
 	return math.min(Progression.MAX_CASH, math.floor(Recipes[index].Value * Crafting.rarity(Recipes[index]).Multiplier
-		* Crafting.multiplier(flags) * Progression.multiplier(data, perks)))
+		* Crafting.multiplier(flags) * Progression.multiplier(data, perks) * (1 + (data.life.recipeLevels[tostring(index)] or 0) * 0.2)))
 end
 
 function Progression.batchValue(data, perks)
@@ -182,6 +186,9 @@ function Progression.rebirth(data)
 	data.unlocked = 1
 	data.level = 1
 	data.modifiers = {}
+	data.life.machines = Life.normalize(nil).machines
+	data.life.recipeLevels = Life.normalize(nil).recipeLevels
+	data.life.oven = {}
 	return true, "Reborn! +" .. requirement.Reward .. " Golden Chips. Permanent upgrades are kept; recipe modifiers reset."
 end
 

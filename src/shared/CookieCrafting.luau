@@ -27,7 +27,7 @@ end
 function Crafting.cost(recipe, key)
 	local modifier = Crafting.Modifiers[key]
 	if not modifier then return nil end
-	return math.max(modifier.MinimumCost, math.floor(recipe.Cost * modifier.CostFactor))
+	return modifier.MinimumCost + math.floor(recipe.Cost * modifier.CostFactor)
 end
 
 function Crafting.multiplier(flags)

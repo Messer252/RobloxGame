@@ -27,11 +27,11 @@ Modifiers use **cookie cash**. Their prices scale with the selected recipe's ori
 
 | Topping | Added value bonus | Purchase cost |
 | --- | --- | --- |
-| Glaze | +20% | Greater of $100 or 25% of the recipe's unlock price |
-| Sprinkles | +35% | Greater of $350 or 50% of the recipe's unlock price |
-| Chocolate Drizzle | +50% | Greater of $1,000 or 90% of the recipe's unlock price |
-| Caramel Swirl | +75% | Greater of $3,000 or 150% of the recipe's unlock price |
-| Gold Leaf | +120% | Greater of $12,500 or 300% of the recipe's unlock price |
+| Glaze | +20% | $100 + 25% of the recipe's unlock price |
+| Sprinkles | +35% | $350 + 50% of the recipe's unlock price |
+| Chocolate Drizzle | +50% | $1,000 + 90% of the recipe's unlock price |
+| Caramel Swirl | +75% | $3,000 + 150% of the recipe's unlock price |
+| Gold Leaf | +120% | $12,500 + 300% of the recipe's unlock price |
 
 Cash prices are rounded down to whole currency. Buying a topping adds visible glaze, sprinkles, chocolate stripes, caramel, or gold flakes to that recipe's moving cookie models.
 
@@ -60,7 +60,7 @@ Toppings save separately for each recipe, alongside cash, baking speed, rebirths
 
 **Rebirth resets topping modifiers**, along with cash, banked earnings, recipe unlocks, and speed levels. Golden Chip upgrades, owned passes, audio choices, and [quest progress](QUESTS.md) are retained. Expand **Bakery → Golden Chips & rebirth** to review the reset before confirming.
 
-Existing versions **1–3** migrate to save envelope **version 4** without changing `CookieCorner_PlayerData_v1`. Saves retain existing progress, receipt history, toppings, and audio choices; absent fields receive defaults. Restart old servers when publishing this version so players do not land on game code that cannot open their upgraded saves.
+Existing versions **1–5** migrate to save envelope **version 6** without changing `CookieCorner_PlayerData_v1`. Saves retain existing progress, receipt history, toppings, and audio choices; absent fields receive defaults. Restart old servers when publishing this version so players do not land on game code that cannot open their upgraded saves.
 
 ## Customize the system
 
@@ -82,3 +82,5 @@ The game keeps topping data as known boolean flags under string recipe keys. Cli
 7. Check the four menu tabs, recipe arrows, and step-on recipe purchases in the mobile emulator and with a controller.
 
 Cloud tests cover calculations, all 32 topping combinations, forged requests, duplicate buys, save/rejoin, rebirth, legacy migration, and purchase-receipt reconciliation. Roblox Studio is required for the visual, input, and multiplayer checks.
+
+Cookie mastery now adds 20% value per level, with ten levels per recipe and costs scaling with its unlock price. Conveyor pickup labels show the collectible value, including mastery, packaging, and finishing; global production multipliers are separate. See [cookie valley mechanics](VALLEY.md) for mastery, machines, and inventory rules.

@@ -86,7 +86,7 @@ Roblox handles the Robux transaction, applicable fees, and creator revenue accou
 - **Permanent stage:** buy 2×, verify only 4× is offered next, then buy 4×. Rebirth and rejoin: the multiplier and next stage must persist. Retry a receipt in the storage harness and confirm no extra grant. Canceling a prompt must leave the tier unchanged.
 - **Canceled purchase:** cancel a native prompt; no cash or pass should be granted.
 - **Income pass:** confirm a purchase, then verify the income multiplier doubles and remains active after rebirth and rejoin. It should show **Owned** instead of offering another purchase.
-- **Speed pass:** verify the production interval halves. The fastest ordinary interval is 0.4 seconds; the pass permits 0.2 seconds. Decorative cookie animation frequency stays capped.
+- **Speed pass:** verify the production interval halves. The fastest ordinary interval is 0.4 seconds; the pass permits 0.2 seconds before dough Flow. Maximum Flow divides this by 1.5, reaching about 0.133 seconds. Decorative cookie animation frequency stays capped.
 - **Cash product:** confirm that the full configured amount appears and is saved. Rejoin to verify it persists. Buy the same product again and verify the second distinct purchase awards another bundle.
 - **Rebirth:** confirm that bought cash resets, both passes and permanent income tiers remain owned, and an old receipt cannot award the bundle a second time after the reset.
 - **Mobile/controller:** check the scrollable shop tab, readable prices, disabled buttons while a prompt or purchase save is pending, and Roblox's confirmation window.
@@ -99,7 +99,7 @@ These engine/transaction checks require Roblox. Cloud validation uses the in-mem
 
 `ProfileStore` saves the cash grant or permanent tier and purchase ID **together in one `UpdateAsync`**. Only a durable grant is acknowledged to Roblox. Receipts are deduplicated across retries, rebirths, and reconnects. Session tokens protect against an old server overwriting a newer session. If a write's result is uncertain, the purchase callback retries locally and freezes ordinary economy changes/saves until it reconciles. On departure, it leaves an uncertain record intact instead of replacing it with pre-purchase cash. A server crash may require a rejoin after the existing session lease expires.
 
-The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Versions 1–4 migrate to the **version-5 save envelope**, retaining receipts, progression, toppings, audio, and quests while adding permanent income tiers and timed obby bonuses. Restart outdated servers when publishing this update: earlier game versions cannot open version-5 records. Keep the new ProfileStore and existing DataStore name; do not roll back to older save code after enabling purchases.
+The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Versions 1–5 migrate to the **version-6 save envelope**, retaining receipts, progression, toppings, audio, and quests while adding inventory, dough upgrades, machines, and trade recovery. Restart outdated servers when publishing this update: earlier game versions cannot open version-6 records. Keep the new ProfileStore and existing DataStore name; do not roll back to older save code after enabling purchases.
 
 Passes use Roblox's verified server ownership APIs and purchase events. Ownership is checked on join and retried after failures; **Refresh shop** requests another check. A pass purchased outside the running server may need Roblox's cache to update or a rejoin before it appears.
 

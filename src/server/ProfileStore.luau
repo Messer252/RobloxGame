@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 5 retains paid multipliers and timed bonuses; older code must not
--- discard a paid entitlement. Existing versions migrate without a new store.
-ProfileStore.CURRENT_VERSION = 5
+-- Version 6 preserves cookie inventories, dough, machinery, and durable trade
+-- recovery references. Older writers must never drop these ownership records.
+ProfileStore.CURRENT_VERSION = 6
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0
@@ -86,6 +86,7 @@ end
 
 function ProfileStore:Save(profile, release)
 	if profile.closed or profile.lost then return false, "lost" end
+	if profile.activityLock then return false, "activity_pending" end
 	if release then
 		profile.closing = true
 		while profile.saving do self.wait(0.1) end
@@ -119,7 +120,8 @@ function ProfileStore:Save(profile, release)
 	return true
 end
 
-function ProfileStore:GrantReceipt(profile, receiptId, productId, grant)
+function ProfileStore:GrantReceipt(profile, receiptId, productId, grant, activityToken)
+	if profile.activityLock and profile.activityLock ~= activityToken then return false, "busy" end
 	if type(receiptId) ~= "string" or #receiptId == 0 or #receiptId > 200
 		or type(productId) ~= "number" or productId <= 0 or productId >= 2 ^ 53 or productId ~= math.floor(productId) then
 		return false, "invalid"

@@ -8,6 +8,8 @@ local Conveyor = require(script.Parent.ConveyorWorld)
 local Assets = require(script.Parent.AssetLibrary)
 local Presentation = require(script.Parent.Presentation)
 local StepPads = require(script.Parent.StepPads)
+local Mirror = require(script.Parent.PlotMirror)
+local Valley = require(script.Parent.ValleyWorld)
 local World = {}
 
 local function color(rgb) return Color3.fromRGB(rgb[1], rgb[2], rgb[3]) end
@@ -72,7 +74,7 @@ local function prompt(target, action, callback, objectText)
 end
 
 local function position(plot, x, y, z)
-	return plot.origin + Vector3.new(x, y, z * plot.direction)
+	return plot.origin + Vector3.new(x * (plot.mirrorX or 1), y, z * plot.direction)
 end
 
 local function frame(plot, x, y, z)
@@ -112,6 +114,8 @@ function World.refresh(plot, data, perks)
 	if reset then clearCookies(plot) end
 	plot.sign.Text = plot.owner and (plot.owner.DisplayName .. "'s Bakery") or "Unclaimed Bakery"
 	plot.claimPrompt.Enabled = plot.owner == nil
+	plot.claimPrompt.ObjectText = plot.owner and ("@" .. plot.owner.Name .. "'s bakery") or "Unclaimed bakery"
+	plot.claimText.Text = plot.owner and ("@" .. plot.owner.Name .. "'s bakery") or "Claim bakery"
 	plot.claimSurface.Color = plot.owner and plot.theme or Color3.fromRGB(129, 219, 175)
 	plot.claimSurface.Material = plot.owner and Enum.Material.SmoothPlastic or Enum.Material.Neon
 	World.updateBank(plot, data)
@@ -172,9 +176,12 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 	world.Parent = workspace
 	local stepPads = StepPads.new(world)
 	local plots = {}
-	local meadow = part("Meadow", Vector3.new(Map.Width, 1, Map.Length), Vector3.new(0, -1, 0), Color3.fromRGB(111, 166, 111), world)
-	meadow.Material = Enum.Material.Grass
-	Assets.texture(meadow, "MeadowGrass")
+	-- Four ground slabs leave an actual opening for the swimmable terrain lake.
+	for _, region in ipairs({ { -450, -355, -610, 610 }, { -215, 450, -610, 610 }, { -355, -215, -610, -425 }, { -355, -215, -315, 610 } }) do
+		local meadow = part("Meadow", Vector3.new(region[2] - region[1], 1, region[4] - region[3]), Vector3.new((region[1] + region[2]) / 2, -1, (region[3] + region[4]) / 2), Color3.fromRGB(111, 166, 111), world)
+		meadow.Material = Enum.Material.Grass
+		Assets.texture(meadow, "MeadowGrass")
+	end
 	for segment = -14, 14 do
 		Assets.prop("PathSegment", world, CFrame.new(0, 0, segment * 40))
 	end
@@ -190,6 +197,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		end
 	end
 	Presentation.world(world)
+	Valley.create(world)
 	local sculpture = Assets.cookie(1, world, CFrame.new(0, 7.6, 19) * CFrame.Angles(math.rad(75), 0, 0))
 	sculpture.Name = "Cookie Corner Monument"
 	sculpture:ScaleTo(2.9)
@@ -244,7 +252,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		local claim = prop(plot, "ClaimPad", -63, 109)
 		plot.claimSurface = claim:FindFirstChild("Claim Surface")
 		plot.claimPrompt = prompt(Assets.anchor(claim), "Claim free bakery", function(player) onClaim(player, plot) end, "Cookie Bakery")
-		label(Assets.anchor(claim), "Claim bakery", 45)
+		plot.claimText = label(Assets.anchor(claim), "Claim bakery", 65)
 		local personalSpawn = Instance.new("SpawnLocation")
 		personalSpawn.Name = "Bakery Spawn"
 		personalSpawn.Size = Vector3.new(5, 0.15, 5)
@@ -257,9 +265,14 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		personalSpawn.Duration = 0
 		personalSpawn.Parent = model
 		plot.spawn = personalSpawn
-		local collect = prop(plot, "CollectionRegister", 19, 128)
+		local collect = prop(plot, "CollectionRegister", 23, 128)
 		plot.bankText = label(Assets.anchor(collect), "Collect $0", 45)
 		prompt(Assets.anchor(collect), "Collect cash", function(player) onAction(player, "Collect", nil, plot) end, "Bakery Register")
+		local collectionPad = detail(plot, "Cash Collection Pad", Vector3.new(8, 0.15, 8), 23, 0.65, 120, Color3.fromRGB(233, 194, 92))
+		label(collectionPad, "COLLECT CASH", 35)
+		stepPads:Register(collectionPad, { Owner = function() return plot.owner end,
+			Available = function(player) return plot.owner == player and plot.data ~= nil and plot.data.bank > 0 and plot.data.cash < Progression.MAX_CASH end,
+			Activate = function(player) return onAction(player, "Collect", nil, plot) end })
 		local upgrade = prop(plot, "UpgradeConsole", -60, Layout.FirstStationZ + 6)
 		local speedPadModel = prop(plot, "ClaimPad", -60, Layout.FirstStationZ - 2)
 		speedPadModel:ScaleTo(0.6)
@@ -315,6 +328,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 			table.insert(plot.stations, station)
 		end
 		Presentation.plot(plot, slot)
+		if placement.x > 0 then Mirror.apply(plot) end
 		World.refresh(plot, nil)
 	end
 	return plots
@@ -337,6 +351,7 @@ function World.animate(plot, data, perks)
 		model:SetAttribute("CashValue", Progression.recipeValue(data, index, perks))
 		local hull = Conveyor.makePhysical(model)
 		Conveyor.track(plot, model, hull, math.floor((index - 1) / 10) + 1)
+		if World.OnCookie then World.OnCookie(plot, model, index, data) end
 		hull.AssemblyLinearVelocity = Vector3.new(0, 0, Layout.speed(Progression.interval(data, perks)) * plot.direction)
 	end
 end
