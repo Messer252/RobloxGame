@@ -1,6 +1,6 @@
 local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Catalog = require(Shared.CardCatalog)
-local Art, Tween = require(script.Parent.CardArt), game:GetService("TweenService")
+local FrameDesign, Tween = require(script.Parent.TradingCardFrame), game:GetService("TweenService")
 local Client = {}
 function Client.describe(card)
 	local parts = {}
@@ -32,7 +32,7 @@ function Client.render(player, data, row, send, panel)
 		local button = row((equipped and "✓ " or "") .. card.Name .. " • " .. card.Rarity .. " ×" .. count .. "\n" .. Client.describe(card), function() send("EquipCard", id) end)
 		button.Size = UDim2.new(1,-8,0,65)
 		button.BackgroundColor3 = Color3.fromRGB(table.unpack(Catalog.Colors[card.Rarity])):Lerp(Color3.fromRGB(40,40,35),.55)
-		local artButton = row("View " .. card.Animal .. " art & quip", function() Client.reveal(panel.Parent, id, false) end)
+		local artButton = row("View " .. card.Animal .. " card", function() Client.reveal(panel.Parent, id, false) end)
 		artButton.Size = UDim2.new(1,-8,0,30)
 	end
 end
@@ -43,35 +43,20 @@ function Client.reveal(gui, cardId, ripping)
 	if not card then return end
 	local shade = Instance.new("TextButton")
 	shade.Name, shade.Size, shade.Text, shade.BackgroundColor3, shade.BackgroundTransparency, shade.ZIndex, shade.Parent = "CardReveal", UDim2.fromScale(1,1), "", Color3.new(), .2, 50, gui
-	local frame = Instance.new("Frame")
-	frame.Size, frame.Position, frame.AnchorPoint, frame.BackgroundColor3, frame.ZIndex, frame.Parent = UDim2.fromOffset(320,470), UDim2.fromScale(.5,.5), Vector2.new(.5,.5), Color3.fromRGB(table.unpack(Catalog.Colors[card.Rarity])), 51, shade
+	local frame = FrameDesign.create(shade, card, Client.describe(card))
+	frame.Position, frame.AnchorPoint = UDim2.fromScale(.5,.5),Vector2.new(.5,.5)
 	local scale = Instance.new("UIScale")
-	scale.Scale, scale.Parent = math.min(1, workspace.CurrentCamera.ViewportSize.Y / 540, workspace.CurrentCamera.ViewportSize.X / 360), frame
-	local corner = Instance.new("UICorner"); corner.CornerRadius, corner.Parent = UDim.new(0,18), frame
-	local function text(value,y,h,size)
-		local label = Instance.new("TextLabel")
-		label.Size,label.Position,label.Text,label.TextSize = UDim2.fromOffset(292,h),UDim2.fromOffset(14,y),value,size
-		label.TextWrapped,label.BackgroundTransparency,label.TextColor3,label.Font,label.ZIndex,label.Parent = true,1,Color3.fromRGB(45,36,31),Enum.Font.GothamBold,54,frame
-		return label
-	end
-	text(card.Name,12,48,21)
-	local art = Art.mount(frame, card, UDim2.fromOffset(292,260))
-	art.Position, art.ZIndex = UDim2.fromOffset(14,64),52
-	text(card.Rarity .. " • " .. Client.describe(card),330,50,14)
-	text('“' .. card.Quip .. '”',382,45,14)
-	text("Tap anywhere to close",435,24,12)
-	if card.Rarity == "Legendary" or card.Rarity == "Mythical" then
-		local gradient = Instance.new("UIGradient")
-		gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(255,217,128)),ColorSequenceKeypoint.new(.33,Color3.fromRGB(173,231,239)),ColorSequenceKeypoint.new(.66,Color3.fromRGB(226,167,239)),ColorSequenceKeypoint.new(1,Color3.fromRGB(255,217,128))})
-		gradient.Parent = frame
-		Tween:Create(gradient,TweenInfo.new(3,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut,-1),{Rotation=360}):Play()
-	end
+	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(800,600)
+	scale.Scale, scale.Parent = math.min(1, viewport.Y / 590, viewport.X / 390),frame
+	local close = Instance.new("TextButton")
+	close.Text,close.Position,close.Size,close.BackgroundColor3,close.TextColor3,close.Font,close.TextSize,close.ZIndex,close.Parent = "CLOSE",UDim2.new(1,-35,0,-15),UDim2.fromOffset(50,30),Color3.fromRGB(30,34,41),Color3.new(1,1,1),Enum.Font.GothamBold,11,60,frame
+	close.Activated:Connect(function() shade:Destroy() end)
 	if ripping then
 		for side=0,1 do
 			local flap=Instance.new("Frame")
-			flap.Size,flap.Position,flap.BackgroundColor3,flap.ZIndex,flap.Parent=UDim2.fromScale(.5,1),UDim2.fromScale(side*.5,0),Color3.fromRGB(112,167,142),55,frame
+			flap.Size,flap.Position,flap.BackgroundColor3,flap.ZIndex,flap.Parent=UDim2.fromScale(.5,1),UDim2.fromScale(side*.5,0),Color3.fromRGB(112,167,142),58,frame
 			local label=Instance.new("TextLabel")
-			label.Text,label.Size,label.BackgroundTransparency,label.TextColor3,label.TextSize,label.ZIndex,label.Parent = side==0 and "COOKIE" or "FRIENDS",UDim2.fromScale(1,1),1,Color3.fromRGB(255,238,197),19,56,flap
+			label.Text,label.Size,label.BackgroundTransparency,label.TextColor3,label.TextSize,label.ZIndex,label.Parent = side==0 and "COOKIE" or "FRIENDS",UDim2.fromScale(1,1),1,Color3.fromRGB(255,238,197),19,59,flap
 			Tween:Create(flap,TweenInfo.new(.65,Enum.EasingStyle.Back,Enum.EasingDirection.In),{Position=UDim2.fromScale(side==0 and -.8 or 1.3,0),Rotation=side==0 and -12 or 12}):Play()
 			game:GetService("Debris"):AddItem(flap,.8)
 		end

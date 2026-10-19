@@ -1,14 +1,27 @@
-# Cookie animal card art
+# Crumbkin TCG artwork
 
-`CookieAnimals.png` is original generated artwork: an **8-column × 5-row** atlas containing all forty cookie animals, ordered exactly like `src/shared/CardCatalog.luau`. Row five contains the three legendary and five mythical animals. Higher rarities have richer backgrounds and detail; legendary/mythical card frames animate a holographic color sheen in the game.
+The forty original cookie creatures now use a hand-drawn anime TCG direction: crisp ink outlines, cel shading, action poses, themed environments, and more elaborate rare/legendary/mythical scenes. The game adds its own nameplates, rarity marks, ability boxes, flavor text, collector numbers and animated foil frames. These are original cookie creatures and an original frame design.
 
-To use the illustrated art in Roblox:
+The art is delivered in **four 5-column × 2-row illustration sheets**, ten animals per image:
 
-1. Upload **CookieAnimals.png** as a Roblox image through Studio's Asset Manager or Creator Dashboard, using the experience's creator account/group.
-2. Copy the resulting **image asset ID** into **ReplicatedStorage → CookieTycoon → CardCatalog → ArtAssetId** (replace 0).
-3. Keep `ArtColumns = 8`, `ArtRows = 5`, `ArtWidth = 1586`, and `ArtHeight = 992` unchanged.
-4. Publish and test as another player. The game crops each card from that one image; forty separate uploads are unnecessary.
+| Image | Card numbers |
+| --- | --- |
+| CookieTCG_01.png | 001–010 |
+| CookieTCG_02.png | 011–020 |
+| CookieTCG_03.png | 021–030 |
+| CookieTCG_04.png | 031–040 |
 
-Roblox requires a hosted image asset ID; a PNG inside a local Studio ZIP cannot serve as an ImageLabel texture by itself. Before the upload is configured, the card UI uses original native 3D cookie-animal previews, while names, quips, rarities, buffs, and pack mechanics still work.
+![TCG card preview](Preview.png)
 
-The atlas and the complete card/pack/economy guide are included in the Studio ZIP. Card names, flavor text, and effects are authored in CardCatalog. Art is decorative; all pack rolls, ownership, currency, and equipped bonuses are server-authoritative.
+Open **Gallery.html** in this folder, or **CardGallery.html** from the Studio ZIP, to browse the finished card designs. Keep all four PNGs beside the HTML. Search by creature name or filter by rarity.
+
+## Use the illustrated cards in Roblox
+
+1. Upload the four **CookieTCG_*.png** images through Studio Asset Manager or Creator Dashboard using the experience's creator account/group.
+2. Open **ReplicatedStorage → CookieTycoon → CardCatalog → ArtSheets**.
+3. Set each sheet's `Id = 0` to that image's numeric Roblox image asset ID. Match filenames 01 through 04; leave the supplied dimensions, grid and card ranges unchanged.
+4. Publish and test all forty crops as another account. If you configured the previous single atlas, replace it with these four uploads/IDs.
+
+Four sheets give each creature more image detail than the earlier forty-cell sheet. Roblox needs hosted image IDs; PNG files inside a local ZIP cannot supply ImageLabel textures by themselves. Native 3D previews remain available until the corresponding sheet is configured.
+
+`CardCatalog.luau` defines names, rarities, buffs, quips and sheet mapping. `TradingCardFrame.luau` draws the original TCG face. `tools/build_card_gallery.py` rebuilds the offline gallery without modifying images. Gameplay effects, pack odds, currency and saves are unchanged by this art update.

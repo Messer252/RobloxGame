@@ -1,13 +1,14 @@
 local Catalog = require(game:GetService("ReplicatedStorage").CookieTycoon.CardCatalog)
 local Art = {}
 function Art.mount(parent, card, size)
-	if type(Catalog.ArtAssetId) == "number" and Catalog.ArtAssetId > 0 then
+	local sheet, index = Catalog.art(card.Id)
+	if sheet and type(sheet.Id) == "number" and sheet.Id > 0 and sheet.Width > 0 and sheet.Height > 0 then
 		local image = Instance.new("ImageLabel")
 		image.ScaleType = Enum.ScaleType.Crop
-		image.BackgroundTransparency, image.Size, image.Image = 1, size, "rbxassetid://" .. Catalog.ArtAssetId
-		local w, h = Catalog.ArtWidth / Catalog.ArtColumns, Catalog.ArtHeight / Catalog.ArtRows
-		image.ImageRectOffset = Vector2.new(math.floor((card.Id-1)%8*w)+2, math.floor(math.floor((card.Id-1)/8)*h)+2)
-		image.ImageRectSize, image.Parent = Vector2.new(math.floor(w)-4, math.floor(h)-4), parent
+		image.BackgroundTransparency, image.Size, image.Image = 1, size, "rbxassetid://" .. sheet.Id
+		local w, h = sheet.Width / sheet.Columns, sheet.Height / sheet.Rows
+		image.ImageRectOffset = Vector2.new(math.floor(index % sheet.Columns * w) + 2, math.floor(math.floor(index / sheet.Columns) * h) + 2)
+		image.ImageRectSize, image.Parent = Vector2.new(math.floor(w) - 4, math.floor(h) - 4), parent
 		return image
 	end
 	-- Original 3D cookie-animal fallback works before the generated atlas is uploaded.

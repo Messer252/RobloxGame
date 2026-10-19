@@ -466,8 +466,13 @@ return Boosts
 		{ Name = "Celestial Bakery", Cost = 6000, Weights = { 0, 800, 3700, 4000, 1500 } },
 	},
 	Cards = {},
-	-- Upload assets/cards/CookieAnimals.png as one Roblox image and enter its ID.
-	ArtAssetId = 0, ArtColumns = 8, ArtRows = 5, ArtWidth = 1586, ArtHeight = 992,
+	-- Upload the four CookieTCG sheets as Roblox images and enter their IDs.
+	ArtSheets = {
+		{ Id = 0, File = "CookieTCG_01.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 1, Last = 10 },
+		{ Id = 0, File = "CookieTCG_02.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 11, Last = 20 },
+		{ Id = 0, File = "CookieTCG_03.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 21, Last = 30 },
+		{ Id = 0, File = "CookieTCG_04.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 31, Last = 40 },
+	},
 }
 local entries = {
 	{ "Chocolate Chip Monkey", "Monkey", "Swings by for the freshest batch.", "Cash", 0.05 },
@@ -516,6 +521,13 @@ for id, e in ipairs(entries) do
 	local effects = { [e[4]] = e[5] }
 	if e[6] then effects[e[6]] = e[7] end
 	Catalog.Cards[id] = { Id = id, Name = e[1], Animal = e[2], Quip = e[3], Rarity = rarity, Effects = effects }
+end
+function Catalog.art(cardId)
+	if type(cardId) ~= "number" or cardId % 1 ~= 0 then return nil end
+	for _, sheet in ipairs(Catalog.ArtSheets) do
+		if cardId >= sheet.First and cardId <= sheet.Last then return sheet, cardId - sheet.First end
+	end
+	return nil
 end
 return Catalog
 ]]></string>
@@ -30321,11 +30333,11 @@ function Client.start(player, remotes, gui, hud, openButton)
 	table.insert(connections, open.OnClientEvent:Connect(function(name) tab = name == "Bag" and "Bag" or (name == "Mine" and "Mine" or "People"); if name == "Gift" then pcall(function() game:GetService("StarterGui"):SetCore("SendNotification", { Title = "Cookie gift", Text = "Someone wants to give you a cookie. Accept or decline here.", Duration = 8 }) end) end; panel.Visible, shade.Visible = true, true ; render() end))
 	table.insert(connections, player:GetAttributeChangedSignal("DataReady"):Connect(function() if player:GetAttribute("DataReady") then send("Snapshot") end end))
 	send("Snapshot")
-	local compass = label(hud, "Cookie valley")
-	compass.Position, compass.Size, compass.AutomaticSize, compass.TextSize, compass.ZIndex = UDim2.fromOffset(14, 236), UDim2.new(1, -28, 0, 22), Enum.AutomaticSize.None, 11, 2
-	compass.TextScaled = true
-	local compassSize = Instance.new("UITextSizeConstraint")
-	compassSize.MinTextSize, compassSize.MaxTextSize, compassSize.Parent = 9, 12, compass
+	local status = label(hud, "Star Crumbs")
+	status.Position, status.Size, status.AutomaticSize, status.TextSize, status.ZIndex = UDim2.fromOffset(14, 236), UDim2.new(1, -28, 0, 22), Enum.AutomaticSize.None, 11, 2
+	status.TextScaled = true
+	local statusSize = Instance.new("UITextSizeConstraint")
+	statusSize.MinTextSize, statusSize.MaxTextSize, statusSize.Parent = 9, 12, status
 	local skyFolder = Instance.new("Folder")
 	skyFolder.Name, skyFolder.Parent = "Local Cookie Sun", workspace
 	local sun = Instance.new("Model")
@@ -30394,10 +30406,8 @@ function Client.start(player, remotes, gui, hud, openButton)
 		end
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not root or not camera then return end
-		local flat = camera.CFrame.LookVector
-		local heading = math.floor((math.deg(math.atan2(-flat.X, -flat.Z)) + 360) % 360)
 		local buff = player:GetAttribute("CookieBuffName") or ""
-		compass.Text = heading .. "° • " .. snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")
+		status.Text = snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")
 		if panel.Visible and tab == "Bag" and snapshot.life.oven.id then
 			local second = os.time()
 			if second ~= lastGuide then lastGuide = second ; render() end
@@ -30422,13 +30432,14 @@ return Client
             <string name="Source"><![CDATA[local Catalog = require(game:GetService("ReplicatedStorage").CookieTycoon.CardCatalog)
 local Art = {}
 function Art.mount(parent, card, size)
-	if type(Catalog.ArtAssetId) == "number" and Catalog.ArtAssetId > 0 then
+	local sheet, index = Catalog.art(card.Id)
+	if sheet and type(sheet.Id) == "number" and sheet.Id > 0 and sheet.Width > 0 and sheet.Height > 0 then
 		local image = Instance.new("ImageLabel")
 		image.ScaleType = Enum.ScaleType.Crop
-		image.BackgroundTransparency, image.Size, image.Image = 1, size, "rbxassetid://" .. Catalog.ArtAssetId
-		local w, h = Catalog.ArtWidth / Catalog.ArtColumns, Catalog.ArtHeight / Catalog.ArtRows
-		image.ImageRectOffset = Vector2.new(math.floor((card.Id-1)%8*w)+2, math.floor(math.floor((card.Id-1)/8)*h)+2)
-		image.ImageRectSize, image.Parent = Vector2.new(math.floor(w)-4, math.floor(h)-4), parent
+		image.BackgroundTransparency, image.Size, image.Image = 1, size, "rbxassetid://" .. sheet.Id
+		local w, h = sheet.Width / sheet.Columns, sheet.Height / sheet.Rows
+		image.ImageRectOffset = Vector2.new(math.floor(index % sheet.Columns * w) + 2, math.floor(math.floor(index / sheet.Columns) * h) + 2)
+		image.ImageRectSize, image.Parent = Vector2.new(math.floor(w) - 4, math.floor(h) - 4), parent
 		return image
 	end
 	-- Original 3D cookie-animal fallback works before the generated atlas is uploaded.
@@ -30476,7 +30487,7 @@ return Art
             <string name="Name">CardPacksClient</string>
             <string name="Source"><![CDATA[local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Catalog = require(Shared.CardCatalog)
-local Art, Tween = require(script.Parent.CardArt), game:GetService("TweenService")
+local FrameDesign, Tween = require(script.Parent.TradingCardFrame), game:GetService("TweenService")
 local Client = {}
 function Client.describe(card)
 	local parts = {}
@@ -30508,7 +30519,7 @@ function Client.render(player, data, row, send, panel)
 		local button = row((equipped and "✓ " or "") .. card.Name .. " • " .. card.Rarity .. " ×" .. count .. "\n" .. Client.describe(card), function() send("EquipCard", id) end)
 		button.Size = UDim2.new(1,-8,0,65)
 		button.BackgroundColor3 = Color3.fromRGB(table.unpack(Catalog.Colors[card.Rarity])):Lerp(Color3.fromRGB(40,40,35),.55)
-		local artButton = row("View " .. card.Animal .. " art & quip", function() Client.reveal(panel.Parent, id, false) end)
+		local artButton = row("View " .. card.Animal .. " card", function() Client.reveal(panel.Parent, id, false) end)
 		artButton.Size = UDim2.new(1,-8,0,30)
 	end
 end
@@ -30519,35 +30530,20 @@ function Client.reveal(gui, cardId, ripping)
 	if not card then return end
 	local shade = Instance.new("TextButton")
 	shade.Name, shade.Size, shade.Text, shade.BackgroundColor3, shade.BackgroundTransparency, shade.ZIndex, shade.Parent = "CardReveal", UDim2.fromScale(1,1), "", Color3.new(), .2, 50, gui
-	local frame = Instance.new("Frame")
-	frame.Size, frame.Position, frame.AnchorPoint, frame.BackgroundColor3, frame.ZIndex, frame.Parent = UDim2.fromOffset(320,470), UDim2.fromScale(.5,.5), Vector2.new(.5,.5), Color3.fromRGB(table.unpack(Catalog.Colors[card.Rarity])), 51, shade
+	local frame = FrameDesign.create(shade, card, Client.describe(card))
+	frame.Position, frame.AnchorPoint = UDim2.fromScale(.5,.5),Vector2.new(.5,.5)
 	local scale = Instance.new("UIScale")
-	scale.Scale, scale.Parent = math.min(1, workspace.CurrentCamera.ViewportSize.Y / 540, workspace.CurrentCamera.ViewportSize.X / 360), frame
-	local corner = Instance.new("UICorner"); corner.CornerRadius, corner.Parent = UDim.new(0,18), frame
-	local function text(value,y,h,size)
-		local label = Instance.new("TextLabel")
-		label.Size,label.Position,label.Text,label.TextSize = UDim2.fromOffset(292,h),UDim2.fromOffset(14,y),value,size
-		label.TextWrapped,label.BackgroundTransparency,label.TextColor3,label.Font,label.ZIndex,label.Parent = true,1,Color3.fromRGB(45,36,31),Enum.Font.GothamBold,54,frame
-		return label
-	end
-	text(card.Name,12,48,21)
-	local art = Art.mount(frame, card, UDim2.fromOffset(292,260))
-	art.Position, art.ZIndex = UDim2.fromOffset(14,64),52
-	text(card.Rarity .. " • " .. Client.describe(card),330,50,14)
-	text('“' .. card.Quip .. '”',382,45,14)
-	text("Tap anywhere to close",435,24,12)
-	if card.Rarity == "Legendary" or card.Rarity == "Mythical" then
-		local gradient = Instance.new("UIGradient")
-		gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(255,217,128)),ColorSequenceKeypoint.new(.33,Color3.fromRGB(173,231,239)),ColorSequenceKeypoint.new(.66,Color3.fromRGB(226,167,239)),ColorSequenceKeypoint.new(1,Color3.fromRGB(255,217,128))})
-		gradient.Parent = frame
-		Tween:Create(gradient,TweenInfo.new(3,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut,-1),{Rotation=360}):Play()
-	end
+	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(800,600)
+	scale.Scale, scale.Parent = math.min(1, viewport.Y / 590, viewport.X / 390),frame
+	local close = Instance.new("TextButton")
+	close.Text,close.Position,close.Size,close.BackgroundColor3,close.TextColor3,close.Font,close.TextSize,close.ZIndex,close.Parent = "CLOSE",UDim2.new(1,-35,0,-15),UDim2.fromOffset(50,30),Color3.fromRGB(30,34,41),Color3.new(1,1,1),Enum.Font.GothamBold,11,60,frame
+	close.Activated:Connect(function() shade:Destroy() end)
 	if ripping then
 		for side=0,1 do
 			local flap=Instance.new("Frame")
-			flap.Size,flap.Position,flap.BackgroundColor3,flap.ZIndex,flap.Parent=UDim2.fromScale(.5,1),UDim2.fromScale(side*.5,0),Color3.fromRGB(112,167,142),55,frame
+			flap.Size,flap.Position,flap.BackgroundColor3,flap.ZIndex,flap.Parent=UDim2.fromScale(.5,1),UDim2.fromScale(side*.5,0),Color3.fromRGB(112,167,142),58,frame
 			local label=Instance.new("TextLabel")
-			label.Text,label.Size,label.BackgroundTransparency,label.TextColor3,label.TextSize,label.ZIndex,label.Parent = side==0 and "COOKIE" or "FRIENDS",UDim2.fromScale(1,1),1,Color3.fromRGB(255,238,197),19,56,flap
+			label.Text,label.Size,label.BackgroundTransparency,label.TextColor3,label.TextSize,label.ZIndex,label.Parent = side==0 and "COOKIE" or "FRIENDS",UDim2.fromScale(1,1),1,Color3.fromRGB(255,238,197),19,59,flap
 			Tween:Create(flap,TweenInfo.new(.65,Enum.EasingStyle.Back,Enum.EasingDirection.In),{Position=UDim2.fromScale(side==0 and -.8 or 1.3,0),Rotation=side==0 and -12 or 12}):Play()
 			game:GetService("Debris"):AddItem(flap,.8)
 		end
@@ -30562,6 +30558,86 @@ return Client
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="764">
+          <Properties>
+            <string name="Name">TradingCardFrame</string>
+            <string name="Source"><![CDATA[-- Original TCG frame: game text stays readable and independent of illustration assets.
+local Shared = game:GetService("ReplicatedStorage").CookieTycoon
+local Catalog, Art = require(Shared.CardCatalog), require(script.Parent.CardArt)
+local Tween = game:GetService("TweenService")
+local CardFrame = {}
+function CardFrame.create(parent, card, description)
+	local rarity = Color3.fromRGB(table.unpack(Catalog.Colors[card.Rarity]))
+	local rank = table.find(Catalog.Rarities, card.Rarity) or 1
+	local frame = Instance.new("Frame")
+	frame.Name, frame.Size, frame.BackgroundColor3, frame.BorderSizePixel, frame.ZIndex, frame.Parent = "TradingCard", UDim2.fromOffset(352, 520), Color3.fromRGB(29, 32, 39), 0, 51, parent
+	local function panel(name, x, y, w, h, color, z)
+		local p = Instance.new("Frame")
+		p.Name, p.Position, p.Size, p.BackgroundColor3, p.BorderSizePixel, p.ZIndex, p.Parent = name, UDim2.fromOffset(x,y), UDim2.fromOffset(w,h), color, 0, z or 52, frame
+		return p
+	end
+	local function corner(object, radius)
+		local c = Instance.new("UICorner"); c.CornerRadius, c.Parent = UDim.new(0,radius), object
+	end
+	local function stroke(object, color, width)
+		local s = Instance.new("UIStroke"); s.Color, s.Thickness, s.Parent = color, width, object
+	end
+	local function text(value, x, y, w, h, size, color, font)
+		local t = Instance.new("TextLabel")
+		t.Position, t.Size, t.Text, t.TextSize, t.TextColor3 = UDim2.fromOffset(x,y), UDim2.fromOffset(w,h), value, size, color
+		t.BackgroundTransparency, t.TextWrapped, t.Font, t.TextXAlignment, t.ZIndex, t.Parent = 1, true, font or Enum.Font.GothamBold, Enum.TextXAlignment.Left, 56, frame
+		return t
+	end
+	local ink, cream = Color3.fromRGB(37,34,32), Color3.fromRGB(245,235,209)
+	corner(frame, 14); stroke(frame, Color3.fromRGB(14,16,20), 3)
+	local rim = panel("Foil Rim", 6,6,340,508,rarity)
+	corner(rim,10)
+	local field = panel("Card Stock",12,12,328,496,Color3.fromRGB(222,203,165),53)
+	corner(field,7)
+	local wash = Instance.new("UIGradient")
+	wash.Color, wash.Rotation, wash.Parent = ColorSequence.new(Color3.fromRGB(247,237,209),Color3.fromRGB(190,168,127)),90,field
+	panel("Nameplate",19,20,314,45,Color3.fromRGB(39,45,53),54)
+	local name = text(card.Name,27,23,273,39,20,Color3.fromRGB(255,244,216))
+	name.TextScaled = true
+	local nameSize = Instance.new("UITextSizeConstraint")
+	nameSize.MinTextSize, nameSize.MaxTextSize, nameSize.Parent = 12,21,name
+	local emblem = panel("Rarity Emblem",310,35,12,12,rarity,56)
+	emblem.Rotation = 45
+	text(string.upper(card.Animal) .. " / BAKERY COMPANION",23,67,240,20,10,ink)
+	local stars = text(string.rep("◆",rank),260,67,68,20,10,ink)
+	stars.TextXAlignment = Enum.TextXAlignment.Right
+	local artBorder = panel("Illustration Keyline",19,91,314,252,Color3.fromRGB(42,43,44),54)
+	stroke(artBorder,Color3.fromRGB(151,127,87),1)
+	local art = Art.mount(frame,card,UDim2.fromOffset(308,246))
+	art.Position, art.ZIndex = UDim2.fromOffset(22,94),55
+	panel("Rarity Ribbon",20,347,312,23,rarity,54)
+	text(string.upper(card.Rarity) .. "  •  COOKIE CORNER",27,348,298,21,11,ink)
+	local rules = panel("Ability Box",20,377,312,69,cream,54)
+	stroke(rules,Color3.fromRGB(153,130,95),1)
+	text("BAKERY AURA",28,382,292,17,11,Color3.fromRGB(102,74,38))
+	text(description,28,402,294,36,15,ink)
+	panel("Flavor Rule",22,453,308,1,Color3.fromRGB(159,137,103),54)
+	text('“' .. card.Quip .. '”',25,459,302,31,15,Color3.fromRGB(80,66,49),Enum.Font.Garamond)
+	text("CRUMBKIN  /  FIRST BATCH",23,493,230,15,9,ink)
+	local number = text(string.format("%03d / 040",card.Id),258,493,70,15,10,ink)
+	number.TextXAlignment = Enum.TextXAlignment.Right
+	if rank >= 4 then
+		local foil = Instance.new("UIGradient")
+		foil.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(245,205,105)),ColorSequenceKeypoint.new(.25,Color3.fromRGB(146,228,237)),ColorSequenceKeypoint.new(.5,Color3.fromRGB(222,154,237)),ColorSequenceKeypoint.new(.75,Color3.fromRGB(244,234,173)),ColorSequenceKeypoint.new(1,Color3.fromRGB(245,205,105))})
+		foil.Parent = rim
+		local animation = Tween:Create(foil,TweenInfo.new(5,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut,-1),{Rotation=360})
+		animation:Play()
+		frame.Destroying:Connect(function() animation:Cancel() end)
+	elseif rank == 3 then
+		local shine = Instance.new("UIGradient")
+		shine.Color,shine.Rotation,shine.Parent = ColorSequence.new(rarity,Color3.fromRGB(217,239,255)),35,rim
+	end
+	return frame
+end
+return CardFrame
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="765">
           <Properties>
             <string name="Name">VolumeSlider</string>
             <string name="Source"><![CDATA[local UserInputService = game:GetService("UserInputService")
@@ -30645,12 +30721,12 @@ return Slider
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="765">
+  <Item class="Workspace" referent="766">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>
     </Properties>
-    <Item class="Terrain" referent="766">
+    <Item class="Terrain" referent="767">
       <Properties>
         <string name="Name">Terrain</string>
         <bool name="Decoration">true</bool>

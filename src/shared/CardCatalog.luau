@@ -10,8 +10,13 @@ local Catalog = {
 		{ Name = "Celestial Bakery", Cost = 6000, Weights = { 0, 800, 3700, 4000, 1500 } },
 	},
 	Cards = {},
-	-- Upload assets/cards/CookieAnimals.png as one Roblox image and enter its ID.
-	ArtAssetId = 0, ArtColumns = 8, ArtRows = 5, ArtWidth = 1586, ArtHeight = 992,
+	-- Upload the four CookieTCG sheets as Roblox images and enter their IDs.
+	ArtSheets = {
+		{ Id = 0, File = "CookieTCG_01.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 1, Last = 10 },
+		{ Id = 0, File = "CookieTCG_02.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 11, Last = 20 },
+		{ Id = 0, File = "CookieTCG_03.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 21, Last = 30 },
+		{ Id = 0, File = "CookieTCG_04.png", Width = 1983, Height = 793, Columns = 5, Rows = 2, First = 31, Last = 40 },
+	},
 }
 local entries = {
 	{ "Chocolate Chip Monkey", "Monkey", "Swings by for the freshest batch.", "Cash", 0.05 },
@@ -60,5 +65,12 @@ for id, e in ipairs(entries) do
 	local effects = { [e[4]] = e[5] }
 	if e[6] then effects[e[6]] = e[7] end
 	Catalog.Cards[id] = { Id = id, Name = e[1], Animal = e[2], Quip = e[3], Rarity = rarity, Effects = effects }
+end
+function Catalog.art(cardId)
+	if type(cardId) ~= "number" or cardId % 1 ~= 0 then return nil end
+	for _, sheet in ipairs(Catalog.ArtSheets) do
+		if cardId >= sheet.First and cardId <= sheet.Last then return sheet, cardId - sheet.First end
+	end
+	return nil
 end
 return Catalog

@@ -127,11 +127,11 @@ function Client.start(player, remotes, gui, hud, openButton)
 	table.insert(connections, open.OnClientEvent:Connect(function(name) tab = name == "Bag" and "Bag" or (name == "Mine" and "Mine" or "People"); if name == "Gift" then pcall(function() game:GetService("StarterGui"):SetCore("SendNotification", { Title = "Cookie gift", Text = "Someone wants to give you a cookie. Accept or decline here.", Duration = 8 }) end) end; panel.Visible, shade.Visible = true, true ; render() end))
 	table.insert(connections, player:GetAttributeChangedSignal("DataReady"):Connect(function() if player:GetAttribute("DataReady") then send("Snapshot") end end))
 	send("Snapshot")
-	local compass = label(hud, "Cookie valley")
-	compass.Position, compass.Size, compass.AutomaticSize, compass.TextSize, compass.ZIndex = UDim2.fromOffset(14, 236), UDim2.new(1, -28, 0, 22), Enum.AutomaticSize.None, 11, 2
-	compass.TextScaled = true
-	local compassSize = Instance.new("UITextSizeConstraint")
-	compassSize.MinTextSize, compassSize.MaxTextSize, compassSize.Parent = 9, 12, compass
+	local status = label(hud, "Star Crumbs")
+	status.Position, status.Size, status.AutomaticSize, status.TextSize, status.ZIndex = UDim2.fromOffset(14, 236), UDim2.new(1, -28, 0, 22), Enum.AutomaticSize.None, 11, 2
+	status.TextScaled = true
+	local statusSize = Instance.new("UITextSizeConstraint")
+	statusSize.MinTextSize, statusSize.MaxTextSize, statusSize.Parent = 9, 12, status
 	local skyFolder = Instance.new("Folder")
 	skyFolder.Name, skyFolder.Parent = "Local Cookie Sun", workspace
 	local sun = Instance.new("Model")
@@ -200,10 +200,8 @@ function Client.start(player, remotes, gui, hud, openButton)
 		end
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not root or not camera then return end
-		local flat = camera.CFrame.LookVector
-		local heading = math.floor((math.deg(math.atan2(-flat.X, -flat.Z)) + 360) % 360)
 		local buff = player:GetAttribute("CookieBuffName") or ""
-		compass.Text = heading .. "° • " .. snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")
+		status.Text = snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")
 		if panel.Visible and tab == "Bag" and snapshot.life.oven.id then
 			local second = os.time()
 			if second ~= lastGuide then lastGuide = second ; render() end

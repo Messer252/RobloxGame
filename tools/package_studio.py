@@ -86,8 +86,10 @@ See CARDS-AND-EVENTS.md for the latest features, prices, and playtests.
 Rebirth clears bag cookies, conveyors, machines and decorations; cards and Star
 Crumbs survive. Entrances/registers now face the road and terrain is continuous.
 Cookie Bag > Cards has 40 animals, five earned-currency packs and two free slots.
-Upload CookieAnimals.png once as a Roblox image and set CardCatalog.ArtAssetId.
-CardGallery.html previews all artwork and quips beside the PNG in this ZIP.
+Upload CookieTCG_01.png through CookieTCG_04.png as Roblox images and set
+each matching Id in CardCatalog.ArtSheets. The compass is removed.
+CardGallery.html previews the TCG artwork, abilities and quips. Keep all four
+PNG sheets beside it when opening it in a browser.
 The optional third card-slot pass needs your own ID and a 150 Robux price in
 Creator Dashboard. It stays disabled at ID 0. See the full guide for setup.
 Meteors arrive every random 5-30 minutes; Cookie Hill is the only PvP area.
@@ -139,15 +141,20 @@ def main():
         archive.write(ROOT / "VALLEY.md", "VALLEY.md")
         archive.write(ROOT / "WORKSHOP.md", "WORKSHOP.md")
         archive.write(ROOT / "CARDS-AND-EVENTS.md", "CARDS-AND-EVENTS.md")
-        archive.write(ROOT / "assets/cards/CookieAnimals.png", "CookieAnimals.png")
+        for sheet in sorted((ROOT / "assets/cards").glob("CookieTCG_*.png")):
+            archive.write(sheet, sheet.name)
         archive.write(ROOT / "assets/cards/Gallery.html", "CardGallery.html")
+        archive.write(ROOT / "assets/cards/Preview.png", "Preview.png")
         archive.write(ROOT / "assets/cards/README.md", "CARD_ART_SETUP.md")
         archive.write(ROOT / "assets/LICENSE.txt", "ASSET_LICENSE.txt")
     with ZipFile(ARCHIVE) as archive:
         assert archive.testzip() is None, "Download ZIP failed its integrity check"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
         assert archive.read(MUSIC.name) == MUSIC.read_bytes(), "Packaged song differs from the supplied original"
-        assert archive.read("CookieAnimals.png") == (ROOT / "assets/cards/CookieAnimals.png").read_bytes(), "Card art differs from the generated atlas"
+        sheets = sorted((ROOT / "assets/cards").glob("CookieTCG_*.png"))
+        assert len(sheets) == 4, "Expected four TCG art sheets"
+        for sheet in sheets:
+            assert archive.read(sheet.name) == sheet.read_bytes(), "Card art differs from the generated sheet"
     # Keep the older local download path current too; build/ stays untracked.
     (ROOT / "build").mkdir(exist_ok=True)
     shutil.copyfile(PLACE, ROOT / "build" / PLACE.name)

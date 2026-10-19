@@ -83,7 +83,7 @@ Dough buys permanent **Mixing** (+10% production per level, 10 levels), **Flow**
 
 Obbys now detect the actual floor/platform under a character with server raycasts rather than relying on a foot-height estimate and a sometimes-delayed grounded flag. Ordered checkpoints and timing still apply. A completed run remains eligible until the bonus is applied (or a stronger existing bonus is retained), and **Claim boost / return** cannot leave before completion registers. Wait on the finish if you arrive before the minimum course time. Easy/Medium/Hard still grant +10%/+30%/+50% for five minutes; a stronger active bonus is not replaced by a weaker one.
 
-The HUD now includes a **heading compass, direction arrow, target name, and distance** for the next missing hunt item. A local guide beam points toward it. After all items are found, the guide returns to Baker Biscuit so you can claim the prize. Only your own current quest is guided.
+The compass, direction arrows, item distance markers and guide beams have been removed. Current quests use written descriptions and clues; see [the current guide](CARDS-AND-EVENTS.md).
 
 ## Save upgrade and playtest checklist
 
@@ -100,4 +100,4 @@ Automated tests cover inventory validation/capacity, values, buff expiry, costs 
 7. Finish a cookie, leave during baking, and return; verify the item is neither lost nor multiplied twice. Attempt eat/trade/sell while baking, and rebirth during a job.
 8. Sell to roaming NPCs, walk away, leave mid-conversation, and over-pitch. Check that only a successful sale consumes the cookie and that proceeds reach the collection register.
 9. With two persistent test accounts, trade, gift, decline, walk away, fill a bag, consume an offered cookie before confirming, and leave during saving. Rejoin both accounts and check each unique cookie exists in one inventory. Verify a non-admin cannot grant items or bypass proximity.
-10. Test the bag, prompts, compass, Home, and all new pages with keyboard, touch, and controller. Retest existing rebirths, paid receipts, audio settings, and admin tools.
+10. Test the bag, prompts, Home, and all new pages with keyboard, touch, and controller. Retest existing rebirths, paid receipts, audio settings, and admin tools.

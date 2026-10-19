@@ -36,11 +36,15 @@ There are **15 commons, 10 uncommons, 7 rares, 3 legendaries and 5 mythicals**. 
 
 Star Crumbs have no cash-to-crumb or Robux-to-crumb conversion. Cards/crumbs survive rebirth. Pack opening works without saving only in the explicitly labeled session-only Studio preview; published play uses durable profile transactions.
 
-## Generated artwork — one upload
+## TCG artwork and frames
 
-The ZIP includes **CookieAnimals.png**, an original 8×5 atlas containing all forty illustrations. It also includes **CardGallery.html**; keep it beside the PNG and open it in a browser to inspect the animals and their quips. Commons are cozy bakery/forest animals; rares have richer scenes; legendary/mythical fantasy creatures have more elaborate art. The game animates holographic frames on legendary/mythical cards.
+The forty cookie animals now use original **hand-drawn anime TCG illustrations** with inked contours, cel shading, action poses and richer rare/fantasy scenes. Card faces have nameplates, rarity pips, framed art, ability panels, flavor text, collector numbers, and animated foil borders for legendary/mythical cards. Names, abilities and quips remain typeset by the UI rather than baked into images.
 
-Roblox needs a hosted image ID to display a local PNG. **Upload CookieAnimals.png once as an image**, then put its image asset ID into **ReplicatedStorage → CookieTycoon → CardCatalog → ArtAssetId**. Keep the atlas dimensions/grid unchanged. The game crops individual cards automatically. Until configured, original native 3D cookie-animal previews work, with all names, buffs and quips available. This cloud environment cannot upload assets into your Roblox account.
+The ZIP includes four **CookieTCG_01.png** through **CookieTCG_04.png** sheets, ten illustrations per image in a 5×2 grid. It also includes **CardGallery.html**; keep the four images beside it and open it in a browser to search/filter the complete collection.
+
+Upload the four PNGs as Roblox images. In **ReplicatedStorage → CookieTycoon → CardCatalog → ArtSheets**, set each sheet's `Id` to its matching numeric image asset ID. Keep the supplied dimensions, grid and card ranges unchanged. These replace the earlier single CookieAnimals atlas. Native 3D previews work until the new sheet IDs are configured. This cloud environment cannot upload assets into your Roblox account.
+
+The in-game compass has been removed completely. The HUD retains Star Crumbs, active food buffs and the PvP warning, without headings or direction indicators.
 
 ## Earning Star Crumbs
 
@@ -75,7 +79,7 @@ Automated tests cover exact pack probabilities, unique buffs, equip entitlement/
 1. Test opposite plots, road-side claim/spawn/register positions, large banners, all fourteen decorations, roof/light purchases, door hinges and window fit.
 2. Rebirth with a full bag, held cookie, developed bakery, equipped cards, crumbs and food. Verify empty bag, cleared conveyors/box/decorations, retained cards/crumbs and free first-line rebuilding; rejoin too.
 3. Let terrain generation finish; walk the meadow/trails, inspect connected mountain/snow surfaces, lake, cave, forest, and nighttime cookie moon. Test eight-client/mobile performance.
-4. Upload the card atlas and inspect all forty crops, quips, reveal animation, touch/controller controls, rare art and holographic frames. Test fallback previews with ArtAssetId 0.
+4. Upload the four TCG sheets and inspect all forty crops, quips, reveal animation, touch/controller controls, rare art and holographic frames. Test fallback previews with each sheet Id set to 0.
 5. Use a separate published test experience for pack-save interruption/rejoin and the third-slot pass. Verify each charge has exactly one card and that unpaid users receive only two active slots.
 6. Finish jobs, mine ore, reach production milestones, and test the daily cap. Confirm accepting/swapping tasks, cash bundles and admin cash gifts award no crumbs.
 7. Temporarily shorten meteor scheduling only in a private test copy. Test landing, fire, three-hit participation, multiple contributors, damage cap, timeout, and rewards after a busy save.

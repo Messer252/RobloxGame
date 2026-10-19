@@ -4,13 +4,13 @@
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
-**Latest update:** [40 animal cards, five packs, Star Crumbs, meteors, Cookie Hill PvP, natural terrain, rebirth fixes, road-side entrances and expanded decoration purchases](CARDS-AND-EVENTS.md). The illustrated card atlas is included; upload it once to Roblox and set CardCatalog.ArtAssetId. Two card slots are free; the optional third-slot pass remains disabled until configured.
+**Latest update:** [40 animal cards, five packs, Star Crumbs, meteors, Cookie Hill PvP, natural terrain, rebirth fixes, road-side entrances and expanded decoration purchases](CARDS-AND-EVENTS.md). Four revised anime TCG art sheets and a searchable card gallery are included; upload the images and enter their IDs in CardCatalog.ArtSheets. The compass is removed. Two card slots are free; the optional third-slot pass remains disabled until configured.
 
 An eight-player Roblox cookie tycoon with 30 recipes, 15 baking-speed levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Each bakery has **three wide, curved feeder conveyors merging into one delivery line**, with taller rounded rails, connected flat surfaces, ovens unlocked along the lanes, and a cookie collection box at the end. Claim a free bakery to arrive beside your starter oven and first purchase; respawning returns you there while you own that plot. Bake automatically, collect earnings, and progress along the belt.
 
 Stand on your next cookie's purchase pad for about **0.28 seconds** to buy it with cookie cash; no held key is needed. Step off before buying again. The speed pad works the same way. The **Bakery** button opens four short tabs: **Bakery**, **Toppings**, **Quests**, and **Shop**. Unlock cookies or speed up production from Bakery; collect earnings at your own register or gold collection pad; expand **Golden Chips & rebirth** for permanent upgrades and rebirth confirmation.
 
-See [the full cookie valley feature guide and playtest checklist](VALLEY.md) for mirrored plots, the fast road and Home button, cookie forests, lake/waterfall, mountain scenery, day/night and the cookie sun. Pick up, eat, sell, or trade stored cookies; buy conveyor machines, mine dough, upgrade rolling pins, and follow the quest compass. Nearby conveyor cookies show their current value. Cash from production and customer sales must be collected at your own register.
+See [the full cookie valley feature guide and playtest checklist](VALLEY.md) for mirrored plots, the fast road and Home button, cookie forests, lake/waterfall, mountain scenery, day/night and the cookie sun. Pick up, eat, sell, or trade stored cookies; buy conveyor machines, mine dough, upgrade rolling pins, and follow the written quest clues. Nearby conveyor cookies show their current value. Cash from production and customer sales must be collected at your own register.
 
 The [Workshop update](WORKSHOP.md) adds a hotbar cookie bag, left-click rolling-pin mining inside a cave, paid conveyor expansion and decorations, thirty different cookie buffs, recipe-themed ovens, varied NPC personalities/appearances, free gifts with notifications, randomized activity quests without waypoints, harder obbys, admin flight, and improved mountain/waterfall/leaderboard models. New players build their first conveyor for free; old saves retain built lines.
 
@@ -118,6 +118,7 @@ StarterPlayer
     TycoonUI (LocalScript)          <- src/client/init.client.luau
       BakeryLifeClient (ModuleScript) <- src/client/BakeryLifeClient.luau
       AdminFlightClient (ModuleScript) <- src/client/AdminFlightClient.luau
+      TradingCardFrame (ModuleScript) <- src/client/TradingCardFrame.luau
       CardArt (ModuleScript) <- src/client/CardArt.luau
       CardPacksClient (ModuleScript) <- src/client/CardPacksClient.luau
       AudioController (ModuleScript) <- src/client/AudioController.luau
