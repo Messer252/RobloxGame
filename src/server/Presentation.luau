@@ -134,7 +134,7 @@ function Presentation.plot(plot, slot)
 			end
 		end
 	end
-	part(plot.model, "Center Aisle", Vector3.new(5, 0.035, 232), frame(0, 0.565, 0), theme:Lerp(cream, 0.55))
+	part(plot.model, "Bakery Walkway", Vector3.new(7, 0.035, 232), frame(-24, 0.565, 0), theme:Lerp(cream, 0.55))
 	for _, x in ipairs({ -60, -30, 0, 30, 60 }) do
 		part(plot.model, "Window Frame", Vector3.new(22, 7.6, 0.28), frame(x, 7.1, -119.9), cocoa)
 		local window = part(plot.model, "Pastel Window", Vector3.new(20.7, 6.3, 0.3), frame(x, 7.1, -119.65),

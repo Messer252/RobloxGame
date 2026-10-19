@@ -4,17 +4,21 @@
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
-A four-player Roblox cookie tycoon with 30 recipes, 15 oven levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Claim any free bakery, bake automatically, collect earnings, and unlock recipes in order. The Bakery menu lets you collect and purchase from anywhere after claiming a plot; physical pads also work.
+A four-player Roblox cookie tycoon with 30 recipes, 15 baking-speed levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Each bakery has **one long conveyor** with ovens unlocked along its side. Claim a free bakery to arrive beside your starter oven and first purchase; respawning returns you there while you own that plot. Bake automatically, collect earnings, and progress along the belt.
 
-The refreshed presentation adds warm afternoon lighting, pastel bakeries, tiled floors, string lights, windows, oven steam, a cookie monument, clearer labels, and animated menu/reward feedback. **Music** and **SFX** buttons independently control each player's audio and save their choices. An original café melody and action cues play using a bundled-chime arrangement by default; the included full music recording and nine WAV cues can be uploaded for richer playback. See [graphics and audio setup](AUDIO.md).
+Stand on your next cookie's purchase pad for about **0.28 seconds** to buy it with cookie cash; no held key is needed. Step off before buying again. The speed pad works the same way. The **Bakery** button opens four short tabs: **Bakery**, **Toppings**, **Quests**, and **Shop**. Collect, unlock cookies, or speed up production from Bakery; expand **Golden Chips & rebirth** for permanent upgrades and rebirth confirmation.
 
-Recipes now have **six rarity tiers**, from Common (1×) to Mythic (6×). In the **Cookie Workshop**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible toppings. See [rarity, modifier, and workshop details](CRAFTING.md).
+The presentation includes warm afternoon lighting, pastel bakeries, tiled floors, string lights, windows, oven steam, a cookie monument, and animated menu/reward feedback. **Music** and **SFX** buttons independently control each player's audio and save their choices. The calmer original music uses sparse chords at **66 BPM**, with a roughly **58-second** loop. A quiet bundled-chime arrangement works without audio uploads; the full recording and nine WAV cues can be uploaded for richer playback. See [graphics and audio setup](AUDIO.md).
 
-The lineup grows from chocolate chip and oatmeal raisin through peanut butter, snickerdoodle, red velvet, s'mores, matcha, birthday cake, galaxy brownie, and Golden Chocolate Chip. Each bakery has five rows of six ovens. Cookie animations are capped independently of production to keep late-game part creation bounded.
+Recipes have **six rarity tiers**, from Common (1×) to Mythic (6×). In **Toppings**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible decorations. See [rarity and topping details](CRAFTING.md).
+
+Meet **Baker Biscuit** in the plaza for four saved scavenger hunts. Find hidden baking tools and treasures, follow clues in **Quests**, then return for a cash bonus. Each hunt can be rewarded once; completed and active progress survives rebirth and rejoining. See [quests and rewards](QUESTS.md).
+
+The lineup grows from chocolate chip and oatmeal raisin through peanut butter, snickerdoodle, red velvet, s'mores, matcha, birthday cake, galaxy brownie, and Golden Chocolate Chip. Only unlocked ovens and the next purchase appear along the conveyor. Cookie animations are capped independently of production to keep late-game part creation bounded.
 
 The game includes an original **free asset pack**: 30 cookie models, 20 bakery props, and 42 seamless PNG textures. Models already power the generated bakeries and animated cookies, using native Roblox materials. See [asset previews and import instructions](assets/README.md); the original assets are CC0, including for monetized games. Optional PNG image IDs are configured in `src/server/AssetTextures.luau` after uploading the images to Roblox.
 
-The **Robux Shop** includes permanent 2× income and 2× baking-speed passes plus repeatable $10K/$100K/$1M cash bundles. Sales are disabled until you create the Roblox offers and enter their IDs. Follow the [step-by-step monetization setup](MONETIZATION.md). Roblox supplies live prices and confirmation prompts; the server verifies ownership and saves product rewards with their receipt IDs before acknowledging them.
+The **Shop** tab includes permanent 2× income and 2× baking-speed passes plus repeatable $10K/$100K/$1M cash bundles. Sales are disabled until you create the Roblox offers and enter their IDs. Follow the [step-by-step monetization setup](MONETIZATION.md). Roblox supplies live prices and confirmation prompts; the server verifies ownership and saves product rewards with their receipt IDs before acknowledging them.
 
 ## Open in Roblox Studio
 
@@ -42,6 +46,9 @@ ReplicatedStorage
     CookieCrafting (ModuleScript)   <- src/shared/CookieCrafting.luau
     AudioConfig (ModuleScript)      <- src/shared/AudioConfig.luau
     MusicScore (ModuleScript)       <- src/shared/MusicScore.luau
+    ConveyorLayout (ModuleScript)   <- src/shared/ConveyorLayout.luau
+    ChallengeCatalog (ModuleScript) <- src/shared/ChallengeCatalog.luau
+    Challenges (ModuleScript)       <- src/shared/Challenges.luau
 ServerStorage
   CookieCornerAssets (Model)        <- insert assets/models/CookieCornerAssets.rbxmx
 ServerScriptService
@@ -53,23 +60,27 @@ ServerScriptService
     AssetLibrary (ModuleScript)     <- src/server/AssetLibrary.luau
     AssetTextures (ModuleScript)    <- src/server/AssetTextures.luau
     CommerceServer (ModuleScript)   <- src/server/CommerceServer.luau
+    StepPads (ModuleScript)         <- src/server/StepPads.luau
+    ChallengeWorld (ModuleScript)   <- src/server/ChallengeWorld.luau
 StarterPlayer
   StarterPlayerScripts
     TycoonUI (LocalScript)          <- src/client/init.client.luau
       AudioController (ModuleScript) <- src/client/AudioController.luau
 ```
 
-The server generates the map and remotes. Set the experience's maximum player count to **4**, matching the number of bakeries. If more players join, they must wait for a plot to become available. Use proximity prompts with a keyboard, controller, or touch; the menu also supports touch and scrolling.
+The server generates the map and remotes. Set the experience's maximum player count to **4**, matching the number of bakeries. If more players join, they must wait for a plot to become available. Recipe and baking-speed pads purchase when their owner stands on them; claim, register, counter, NPC, and hidden-item prompts activate without a held delay using keyboard, controller, or touch. The menu supports touch and scrolling.
 
 ## Enable saving
 
 1. Publish the place to a Roblox experience. Live servers use Roblox DataStoreService automatically; no external account keys are needed.
 2. For Studio persistence checks, use a **separate published test experience** and enable **Studio Access to API Services** in its security settings. Studio can access that experience's real player data.
-3. Press Play, earn money and unlock a recipe, then stop and rejoin. Claim any free plot: your saved cash, uncollected earnings, recipes, toppings, ovens, rebirths, Golden Chips, and permanent upgrades should return.
+3. Press Play, earn money and unlock a recipe, then stop and rejoin. Claim any free plot: your saved cash, uncollected earnings, recipes, toppings, speed levels, rebirths, Golden Chips, permanent upgrades, audio preferences, and quest progress should return.
 
 `src/server/Settings.luau` selects `CookieCorner_PlayerData_v1`. Keep the same DataStore name to retain saves. Changing it starts a separate save namespace.
 
-Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after rebirth, permanent upgrades, and modifier purchases, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
+Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after important upgrades and quest changes, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
+
+The current **version-4 save envelope** accepts existing versions 1–3, preserves progression and receipt history, and adds quest state. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-4 records.
 
 For offline Studio development only, explicitly set `AllowStudioSessionOnly = true` in Settings. If DataStore access is unavailable, Studio then starts a clearly labeled temporary session that **does not save**. This fallback never writes temporary data into a saved profile and is ignored on live servers. Locked or incompatible saves do not fall back.
 
@@ -84,7 +95,7 @@ The first rebirth requires **18 unlocked recipes** and **$5 million in cash + un
 - Golden Chip reward: `5 + 2r`.
 - Each rebirth adds another 15% to the rebirth income bonus. There are 50 rebirths available.
 
-Rebirth requires confirmation and resets wallet cash, banked earnings, recipe unlocks, oven levels, and topping modifiers. It preserves rebirths, Golden Chips, owned passes, and these permanent upgrades:
+Open **Bakery → Golden Chips & rebirth** to review rebirth or buy permanent upgrades. Rebirth requires confirmation and resets wallet cash, banked earnings, recipe unlocks, baking-speed levels, and topping modifiers. It preserves rebirths, Golden Chips, owned passes, audio preferences, quest progress, and these permanent upgrades:
 
 | Upgrade | Effect | Levels | Next level cost at current level `l` |
 | --- | --- | --- | --- |
@@ -94,7 +105,7 @@ Rebirth requires confirmation and resets wallet cash, banked earnings, recipe un
 
 Batter and rebirth income factors multiply. Oven upgrades and Golden Flame speed factors multiply, with a minimum ordinary 0.4-second production interval; the optional speed pass halves that interval further. Nest Egg applies when rebirthing; purchasing it does not immediately grant cash. Currency, costs, ownership, upgrade caps, and rebirth eligibility are enforced on the server.
 
-With the rarity bonuses, the first-run simulation reaches rebirth in about 38 minutes of production with the tested recipe/speed purchase strategy, without buying toppings. This excludes travel and collection delays; it is a balance estimate, not an engine playtest.
+With the rarity bonuses, the first-run simulation reaches rebirth in about 38 minutes of production with the tested recipe/speed purchase strategy, without toppings or quest rewards. This excludes travel and collection delays; it is a balance estimate, not an engine playtest.
 
 ## Validation
 
@@ -105,7 +116,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 58 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, and music/cue bounds. They do not contact Roblox's live DataStore or payment services.
+The 77 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, and quest progress and rewards. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 
@@ -114,13 +125,17 @@ Run `python tools/build_audio.py` to regenerate the original audio and its share
 Complete these engine checks in Studio:
 
 - Claim a bakery and confirm the initial chocolate chip oven adds $5 roughly every three seconds. Collect, buy oatmeal raisin for $250, and confirm both recipes contribute $17 per batch.
-- Buy the first $500 oven upgrade and confirm the displayed interval drops to 2.4 seconds. Unlock later recipes and verify their ovens activate in the five-row layout.
+- Claim a plot and verify you arrive beside Chocolate Chip and the Oatmeal Raisin purchase pad. Reset your character and verify you return to your own bakery.
+- Stand on Oatmeal Raisin's pad with $250 and verify one purchase after about 0.28 seconds, with no held key. Remain still: the next recipe must not buy automatically. Step off and walk to the next highlighted pad to continue.
+- Stand on an unaffordable recipe pad, collect enough cash through the menu, and confirm the pad buys once when the server is ready. It must recover from a temporarily busy action without requiring another entry.
+- Buy the first $500 speed upgrade and confirm the displayed interval drops to 2.4 seconds. All ovens should feed the same long belt, with later ovens revealed in sequence.
 - In Server & Clients mode, use two players. Attempt to collect, upgrade, or unlock recipes on the other player's plot: those requests must have no effect. Leave and verify the empty plot becomes claimable without giving its new owner the departing player's progress.
 - In a private test experience, reach rebirth requirements. Review then cancel a rebirth and confirm nothing changes. Confirm a rebirth and verify the reset, 5-chip reward, and 15% income bonus. Buy a permanent upgrade, leave, rejoin, and verify the reward and upgrade persist together.
 - Stop/rejoin with both wallet cash and uncollected earnings, plus unlocked cookies and oven upgrades. Verify all saved fields restore after claiming a different plot. Check server output for save errors.
-- Check the scrolling menu, rebirth confirmation, and proximity prompts with Studio's mobile emulator and a controller.
+- Check the four tabs, collapsed Golden Chips section, rebirth confirmation, step pads, and instant prompts with Studio's mobile emulator and a controller.
 - Before enabling sales, complete the [purchase checks](MONETIZATION.md#verify-before-enabling-live-offers) using offers belonging to a separate published test experience.
-- Complete the [Cookie Workshop checks](CRAFTING.md#studio-checks) for topping visuals, per-recipe restoration, rarity labels, and the rebirth reset.
+- Complete the [Toppings checks](CRAFTING.md#studio-checks) for decoration visuals, per-recipe restoration, rarity labels, and the rebirth reset.
 - Complete the [graphics and audio checks](AUDIO.md#check-in-studio-and-roblox), including independent mute buttons, saved settings, two-client isolation, respawn, and uploaded-audio permissions if configured.
+- Complete the [quest checks](QUESTS.md), including per-player hidden items, NPC proximity, save/rejoin, once-only rewards, and rebirth persistence.
 
 Roblox Studio/Roblox servers are required for engine, multiplayer, UI, and live persistence validation; the Linux cloud environment runs the deterministic tests, static analysis, compilation, and Rojo packaging.

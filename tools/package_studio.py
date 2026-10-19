@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import shutil
 import subprocess
 from xml.etree import ElementTree as ET
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -31,17 +32,27 @@ START_HERE = """COOKIE CORNER TYCOON - OPEN IN ROBLOX STUDIO
 THE EDITOR LOOKS EMPTY?
 The scripts build the bakeries when a server starts. This is expected.
 
+PLAYING THE GAME
+Claim a free bakery at its green pad. You arrive beside the starter oven.
+Stand on the next gold cookie pad to buy it with cookie cash; no held E key.
+Open Bakery for short controls, Toppings, Quests, and the optional Robux shop.
+Talk to Baker Biscuit in the plaza to start a hidden-item hunt for a cash bonus.
+
 WANT TO PREVIEW AN UNPUBLISHED FILE IN STUDIO?
 Before pressing Play, open Explorer > ServerScriptService > Tycoon > Settings.
 Change AllowStudioSessionOnly = false to AllowStudioSessionOnly = true.
 This permits a temporary Studio preview when save data is unavailable.
-Progress marked STUDIO SESSION ONLY does not save. Stop the test and change
-the setting back to false before testing persistent saving.
+Progress marked Preview / not saved or STUDIO SESSION ONLY does not save.
+Stop the test and change the setting back to false before testing persistent saving.
 For saving inside Studio, use a separate published test experience and enable
 Studio Access to API Services in its Experience Settings > Security.
 
 FULL SETUP, SAVING, AND PUBLIC ACCESS GUIDE:
 https://github.com/Messer252/RobloxGame/blob/main/STUDIO_SETUP.md
+
+UPDATING AN EXISTING GAME
+Keep the existing DataStore name. After publishing this version, restart outdated
+servers: save formats 1-3 migrate to version 4 with quest progress preserved.
 
 OPTIONAL FULL MUSIC RECORDING / AUDIO SETUP:
 https://github.com/Messer252/RobloxGame/blob/main/AUDIO.md
@@ -83,6 +94,9 @@ def main():
     with ZipFile(ARCHIVE) as archive:
         assert archive.testzip() is None, "Download ZIP failed its integrity check"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+    # Keep the older local download path current too; build/ stays untracked.
+    (ROOT / "build").mkdir(exist_ok=True)
+    shutil.copyfile(PLACE, ROOT / "build" / PLACE.name)
     print(f"Verified {len(sources)} embedded scripts and the model pack.")
     print(f"Ready for GitHub: {PLACE.name} and {ARCHIVE.name}")
 

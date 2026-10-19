@@ -1,5 +1,6 @@
 local Recipes = if script then require(script.Parent.Recipes) else require("./Recipes")
 local Crafting = if script then require(script.Parent.CookieCrafting) else require("./CookieCrafting")
+local Challenges = if script then require(script.Parent.Challenges) else require("./Challenges")
 
 local Progression = {}
 Progression.MAX_CASH = 1e15 -- Keep all currency integers below double precision limits.
@@ -22,7 +23,11 @@ local function integer(value, default, minimum, maximum)
 end
 
 function Progression.newData()
-	return { cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0, permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {}, audio = { music = true, effects = true } }
+	return {
+		cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0,
+		permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {},
+		audio = { music = true, effects = true }, challenges = Challenges.normalize(nil),
+	}
 end
 
 -- Returns a fresh, serializable copy. Runtime fields and unknown keys never enter a save.
@@ -35,6 +40,7 @@ function Progression.normalize(raw)
 	data.level = integer(raw.level, 1, 1, Progression.MAX_OVEN_LEVEL)
 	data.rebirths = integer(raw.rebirths, 0, 0, Progression.MAX_REBIRTHS)
 	data.chips = integer(raw.chips, 0, 0, Progression.MAX_CHIPS)
+	data.challenges = Challenges.normalize(raw.challenges)
 	if type(raw.audio) == "table" then
 		for key in pairs(data.audio) do
 			if type(raw.audio[key]) == "boolean" then data.audio[key] = raw.audio[key] end

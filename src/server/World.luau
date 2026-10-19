@@ -4,8 +4,10 @@ local Debris = game:GetService("Debris")
 local Recipes = require(ReplicatedStorage.CookieTycoon.Recipes)
 local Progression = require(ReplicatedStorage.CookieTycoon.Progression)
 local Crafting = require(ReplicatedStorage.CookieTycoon.CookieCrafting)
+local Layout = require(ReplicatedStorage.CookieTycoon.ConveyorLayout)
 local Assets = require(script.Parent.AssetLibrary)
 local Presentation = require(script.Parent.Presentation)
+local StepPads = require(script.Parent.StepPads)
 local World = {}
 
 local function color(rgb) return Color3.fromRGB(rgb[1], rgb[2], rgb[3]) end
@@ -25,9 +27,9 @@ end
 
 local function label(target, text, distance)
 	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(200, 58)
-	gui.StudsOffset = Vector3.new(0, 4, 0)
-	gui.MaxDistance = distance or 48
+	gui.Size = UDim2.fromOffset(190, 46)
+	gui.StudsOffset = Vector3.new(0, 3.1, 0)
+	gui.MaxDistance = distance or 30
 	gui.LightInfluence = 0
 	gui.Parent = target
 	local textLabel = Instance.new("TextLabel")
@@ -56,13 +58,15 @@ local function prompt(target, action, callback, objectText)
 	local interaction = Instance.new("ProximityPrompt")
 	interaction.ActionText = action
 	interaction.ObjectText = objectText or target.Name
-	interaction.HoldDuration = 0.2
+	interaction.HoldDuration = 0
 	interaction.MaxActivationDistance = 12
 	interaction.RequiresLineOfSight = false
 	interaction.Parent = target
 	interaction.Triggered:Connect(function(player)
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if root and (root.Position - target.Position).Magnitude <= 16 then callback(player) end
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if root and humanoid and humanoid.Health > 0 and (root.Position - target.Position).Magnitude <= 16 then callback(player) end
 	end)
 	return interaction
 end
@@ -71,45 +75,132 @@ local function position(plot, x, y, z)
 	return plot.origin + Vector3.new(x, y, z * plot.direction)
 end
 
-local function prop(plot, name, x, z, y)
-	local pivot = CFrame.new(position(plot, x, y or 0.5, z))
+local function frame(plot, x, y, z)
+	return CFrame.new(position(plot, x, y, z))
 		* CFrame.Angles(0, plot.direction == 1 and 0 or math.pi, 0)
-	return Assets.prop(name, plot.model, pivot)
+end
+
+local function prop(plot, name, x, z, y)
+	return Assets.prop(name, plot.model, frame(plot, x, y or 0.5, z))
+end
+
+local function detail(plot, name, size, x, y, z, tint, parent)
+	local object = part(name, size, position(plot, x, y, z), tint, parent or plot.model)
+	object.CanCollide = false
+	object.CanTouch = false
+	object.CanQuery = false
+	return object
+end
+
+local function clearCookies(plot)
+	for model in pairs(plot.visuals) do
+		model:Destroy()
+		plot.visuals[model] = nil
+	end
+end
+
+local function conveyor(plot)
+	local geometry = Layout.belt()
+	-- One continuous model, with one rubber surface and two full-length rails.
+	local model = prop(plot, "Conveyor", geometry.x, geometry.z)
+	model.Name = "Cookie Conveyor"
+	local pivot = model:GetPivot()
+	local scaleX, scaleZ = geometry.width / 11.8, geometry.length / 25
+	for _, object in ipairs(model:GetDescendants()) do
+		if not object:IsA("BasePart") then continue end
+		local offset = pivot:ToObjectSpace(object.CFrame)
+		local p = offset.Position
+		local depth = (object.Name == "Leg" or object.Name == "Belt Seam") and object.Size.Z or object.Size.Z * scaleZ
+		object.Size = Vector3.new(object.Size.X * scaleX, object.Size.Y, depth)
+		object.CFrame = pivot * CFrame.new(p.X * scaleX, p.Y, p.Z * scaleZ) * offset.Rotation
+		if object.Name == "Belt Seam" then object:Destroy() end
+	end
+	for z = Layout.BeltBackZ + 4, Layout.BeltFrontZ - 4, 5 do
+		local seam = detail(plot, "Belt Seam", Vector3.new(geometry.width - 0.2, 0.045, 0.09), 0, 1.78, z,
+			Color3.fromRGB(83, 91, 96), model)
+		seam.CastShadow = false
+	end
+	for z = Layout.BeltBackZ + 20, Layout.BeltFrontZ - 20, 35 do
+		for _, x in ipairs({ -2.2, 2.2 }) do
+			local support = detail(plot, "Belt Support", Vector3.new(0.6, 0.9, 0.7), x, 0.95, z,
+				Color3.fromRGB(100, 120, 130), model)
+			support.Material = Enum.Material.Metal
+		end
+	end
+	-- Small direction arrows keep the production route readable from the walkway.
+	for z = Layout.BeltBackZ + 9, Layout.BeltFrontZ - 8, 21 do
+		for _, side in ipairs({ -1, 1 }) do
+			local arrow = detail(plot, "Conveyor Direction", Vector3.new(0.16, 0.035, 1.15), side * 0.36, 1.81, z,
+				Color3.fromRGB(225, 190, 120), model)
+			arrow.CFrame = frame(plot, side * 0.36, 1.81, z) * CFrame.Angles(0, -side * math.rad(40), 0)
+			arrow.CastShadow = false
+		end
+	end
+	plot.conveyor = model
 end
 
 function World.updateBank(plot, data)
-	plot.bankText.Text = "Collect earnings\n$" .. Progression.format(data and data.bank or 0)
+	plot.bankText.Text = "Collect $" .. Progression.format(data and data.bank or 0)
 end
 
 function World.refresh(plot, data, perks)
+	local reset = plot.lastUnlocked and (not data or data.unlocked < plot.lastUnlocked)
+	plot.data = data
+	plot.lastUnlocked = data and data.unlocked or 0
+	if reset then clearCookies(plot) end
 	plot.sign.Text = plot.owner and (plot.owner.DisplayName .. "'s Bakery") or "Unclaimed Bakery"
 	plot.claimPrompt.Enabled = plot.owner == nil
 	plot.claimSurface.Color = plot.owner and plot.theme or Color3.fromRGB(129, 219, 175)
 	plot.claimSurface.Material = plot.owner and Enum.Material.SmoothPlastic or Enum.Material.Neon
 	World.updateBank(plot, data)
-	plot.upgradePrompt.Enabled = data ~= nil and data.level < Progression.MAX_OVEN_LEVEL
-	plot.upgradeText.Text = not data and "Upgrade ovens" or data.level == Progression.MAX_OVEN_LEVEL and "Ovens MAXED!"
-		or "Oven level " .. data.level .. "\n$" .. Progression.format(Progression.ovenCost(data))
+	plot.upgradePad.Color = data and data.level < Progression.MAX_OVEN_LEVEL and Color3.fromRGB(183, 160, 229) or Color3.fromRGB(118, 114, 121)
+	plot.upgradeText.Text = not data and "Baking speed" or data.level == Progression.MAX_OVEN_LEVEL and "Speed MAX"
+		or "Faster baking\n$" .. Progression.format(Progression.ovenCost(data))
 	plot.shopPrompt.Enabled = data ~= nil
 	plot.workshopPrompt.Enabled = data ~= nil
-	local nextStation = data and plot.stations[data.unlocked + 1]
-	plot.nextMarker.Adornee = nextStation and nextStation.purchaseModel or nil
-	plot.nextMarker.Enabled = nextStation ~= nil
 	for index, station in ipairs(plot.stations) do
 		local unlocked = data ~= nil and index <= data.unlocked
-		local rarity = Crafting.rarity(Recipes[index])
 		local nextRecipe = data ~= nil and index == data.unlocked + 1
-		station.purchase.Enabled = nextRecipe
-		station.pad.Color = unlocked and plot.theme or nextRecipe and Color3.fromRGB(255, 214, 139) or Color3.fromRGB(132, 125, 120)
-		station.pad.Material = nextRecipe and Enum.Material.Neon or Enum.Material.SmoothPlastic
+		local visible = unlocked or nextRecipe or (not data and index == 1)
+		station.model.Parent = visible and plot.model or nil
+		station.purchaseModel.Parent = nextRecipe and station.model or nil
+		local rarity = Crafting.rarity(Recipes[index])
+		station.pad.Color = nextRecipe and Color3.fromRGB(255, 214, 139) or plot.theme
+		station.text.Text = Recipes[index].Name .. "\n$" .. Progression.format(Recipes[index].Cost)
+		station.ovenText.Parent.Enabled = unlocked or not data and index == 1
+		station.ovenText.Text = Recipes[index].Name
+		station.ovenText.TextColor3 = color(rarity.Color)
 		if station.steam then station.steam.Enabled = unlocked end
-		station.text.Text = (nextRecipe and "NEXT • " or index .. ". ") .. Recipes[index].Name .. "\n" .. rarity.Name .. " x" .. rarity.Multiplier
-			.. (unlocked and " • $" .. Progression.format(Progression.recipeValue(data, index, perks)) .. " / cookie" or "\nUnlock $" .. Progression.format(Recipes[index].Cost))
-		station.text.TextColor3 = unlocked and color(rarity.Color) or Color3.fromRGB(210, 210, 210)
-		station.oven.Color = unlocked and color(rarity.Color) or Color3.fromRGB(90, 96, 107)
+		station.oven.Color = unlocked and color(rarity.Color) or Color3.fromRGB(106, 112, 119)
 		station.window.Color = unlocked and Color3.fromRGB(246, 151, 61) or Color3.fromRGB(48, 59, 66)
 		station.window.Material = unlocked and Enum.Material.Neon or Enum.Material.Glass
 	end
+	local nextStation = data and plot.stations[data.unlocked + 1]
+	plot.nextMarker.Adornee = nextStation and nextStation.purchaseModel or nil
+	plot.nextMarker.Enabled = nextStation ~= nil
+end
+
+function World.spawnPlayer(player, plot)
+	if not plot or plot.owner ~= player then return end
+	-- The disabled plot spawn is a marker, outside the random neutral spawn pool.
+	-- CharacterAdded calls this scripted relocation after each plaza respawn.
+	local character = player.Character
+	if not character then return end
+	local root = character:FindFirstChild("HumanoidRootPart") or character:WaitForChild("HumanoidRootPart", 5)
+	if not root or player.Character ~= character or plot.owner ~= player or not player.Parent then return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid or humanoid.Health <= 0 then return end
+	local destination = position(plot, Layout.SpawnX, 4.1, Layout.SpawnZ)
+	local nextOven = position(plot, Layout.PadX, 4.1, Layout.station(2).z)
+	character:PivotTo(CFrame.lookAt(destination, nextOven))
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
+end
+
+function World.releasePlayer(player, plot)
+	if player.RespawnLocation == plot.spawn then player.RespawnLocation = nil end
+	plot.stepPads:ResetOwner(player)
+	clearCookies(plot)
 end
 
 function World.create(onClaim, onAction, onShop, onWorkshop)
@@ -117,6 +208,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 	local world = Instance.new("Folder")
 	world.Name = "CookieTycoonWorld"
 	world.Parent = workspace
+	local stepPads = StepPads.new(world)
 	local plots = {}
 	local meadow = part("Meadow", Vector3.new(410, 1, 590), Vector3.new(0, -1, 0), Color3.fromRGB(111, 166, 111), world)
 	meadow.Material = Enum.Material.Grass
@@ -140,6 +232,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 	sculpture.Name = "Cookie Corner Monument"
 	sculpture:ScaleTo(2.9)
 	local spawn = Instance.new("SpawnLocation")
+	spawn.Name = "Plaza Spawn"
 	spawn.Size = Vector3.new(12, 1, 12)
 	spawn.Position = Vector3.new(0, 1, 0)
 	spawn.Anchored = true
@@ -148,13 +241,13 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 	spawn.CanCollide = false
 	spawn.Duration = 0
 	spawn.Parent = world
-	label(spawn, "COOKIE CORNER\nClaim a bakery! Your progress follows you.", 95)
+	label(spawn, "COOKIE CORNER\nClaim a bakery to start", 80)
 	for slot = 1, 4 do
 		local model = Instance.new("Model")
 		model.Name = "Bakery" .. slot
 		model.Parent = world
 		local plot = {
-			model = model, stations = {}, owner = nil, visualCursor = 0,
+			model = model, stations = {}, owner = nil, data = nil, visualCursor = 0, visuals = {}, stepPads = stepPads,
 			origin = Vector3.new(slot % 2 == 0 and 98 or -98, 0, slot <= 2 and -144 or 144),
 			direction = slot <= 2 and 1 or -1,
 		}
@@ -171,49 +264,89 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		prop(plot, "BakeryFloor", 0, 0, 0)
 		prop(plot, "BakeryShell", 0, 0, 0)
 		prop(plot, "BakeryAwning", 0, 113)
-		local counter = prop(plot, "PrepCounter", 0, -116)
+		conveyor(plot)
+		local counter = prop(plot, "PrepCounter", -49, 78)
 		local worktop = counter:FindFirstChild("Texture_CounterMarble")
-		label(worktop, "Cookie Workshop\nRarities & toppings", 65)
-		plot.workshopPrompt = prompt(worktop, "Open workshop", function(player) onWorkshop(player, plot) end, "Cookie Workshop")
-		prop(plot, "IngredientBins", -24, -116)
-		prop(plot, "DoughMixer", 14, -116)
-		prop(plot, "CoolingRack", 28, -116)
+		label(worktop, "Cookie toppings", 35)
+		plot.workshopPrompt = prompt(worktop, "Open toppings", function(player) onWorkshop(player, plot) end, "Cookie Workshop")
+		prop(plot, "IngredientBins", 24, -115)
+		prop(plot, "DoughMixer", 42, -115)
+		prop(plot, "CoolingRack", 59, -115)
 		prop(plot, "Planter", -75, 102)
 		prop(plot, "Planter", 75, 102)
 		prop(plot, "WoodenFence", -64, 120)
 		prop(plot, "WoodenFence", 64, 120)
 		local sign = prop(plot, "BakerySign", 0, 120)
-		plot.sign = label(Assets.anchor(sign), "Unclaimed Bakery", 100)
+		plot.sign = label(Assets.anchor(sign), "Unclaimed Bakery", 85)
 		local claim = prop(plot, "ClaimPad", -63, 109)
 		plot.claimSurface = claim:FindFirstChild("Claim Surface")
 		plot.claimPrompt = prompt(Assets.anchor(claim), "Claim free bakery", function(player) onClaim(player, plot) end, "Cookie Bakery")
-		label(Assets.anchor(claim), "Claim bakery", 65)
-		local collect = prop(plot, "CollectionRegister", -21, 109)
-		plot.bankText = label(Assets.anchor(collect), "Collect earnings\n$0", 65)
+		label(Assets.anchor(claim), "Claim bakery", 45)
+		local personalSpawn = Instance.new("SpawnLocation")
+		personalSpawn.Name = "Bakery Spawn"
+		personalSpawn.Size = Vector3.new(5, 0.15, 5)
+		personalSpawn.CFrame = frame(plot, Layout.SpawnX, 0.66, Layout.SpawnZ)
+		personalSpawn.Anchored = true
+		personalSpawn.Enabled = false
+		personalSpawn.Transparency = 0.65
+		personalSpawn.CanCollide = false
+		personalSpawn.CanTouch = false
+		personalSpawn.Duration = 0
+		personalSpawn.Parent = model
+		plot.spawn = personalSpawn
+		local collect = prop(plot, "CollectionRegister", 12, 109)
+		plot.bankText = label(Assets.anchor(collect), "Collect $0", 45)
 		prompt(Assets.anchor(collect), "Collect cash", function(player) onAction(player, "Collect", nil, plot) end, "Bakery Register")
-		local upgrade = prop(plot, "UpgradeConsole", 21, 109)
-		plot.upgradeText = label(Assets.anchor(upgrade), "Upgrade ovens", 65)
-		plot.upgradePrompt = prompt(Assets.anchor(upgrade), "Upgrade speed", function(player) onAction(player, "UpgradeOven", nil, plot) end, "Oven Upgrades")
+		local upgrade = prop(plot, "UpgradeConsole", -46, 108)
+		local speedPadModel = prop(plot, "ClaimPad", -46, 100)
+		speedPadModel:ScaleTo(0.6)
+		plot.upgradePad = speedPadModel:FindFirstChild("Claim Surface")
+		plot.upgradeText = label(Assets.anchor(upgrade), "Baking speed", 35)
+		stepPads:Register(plot.upgradePad, {
+			Owner = function() return plot.owner end,
+			Available = function(player)
+				local data = plot.data
+				return plot.owner == player and data ~= nil and data.level < Progression.MAX_OVEN_LEVEL and data.cash >= Progression.ovenCost(data)
+			end,
+			Activate = function(player) return onAction(player, "UpgradeOven", nil, plot) end,
+		})
 		local shop = prop(plot, "RebirthPedestal", 63, 109)
-		label(Assets.anchor(shop), "Golden Chips\nRebirth & permanent upgrades", 65)
-		plot.shopPrompt = prompt(Assets.anchor(shop), "Open bakery menu", function(player) onShop(player, plot) end, "Golden Chip Shop")
+		label(Assets.anchor(shop), "Golden Chips", 40)
+		plot.shopPrompt = prompt(Assets.anchor(shop), "Open upgrades", function(player) onShop(player, plot) end, "Golden Chip Shop")
 		for index, recipe in ipairs(Recipes) do
-			local column = (index - 1) % 6
-			local row = math.floor((index - 1) / 6)
-			local x, z = -60 + column * 24, -100 + row * 40
-			local ovenModel = prop(plot, "Oven", x, z)
+			local geometry = Layout.station(index)
+			local stationModel = Instance.new("Model")
+			stationModel.Name = string.format("%02d %s", index, recipe.Name)
+			stationModel.Parent = model
+			local ovenModel = prop(plot, "Oven", geometry.x, geometry.z)
+			ovenModel:ScaleTo(geometry.scale)
+			-- Original oven doors face +Z; these ovens feed sideways onto the belt.
+			ovenModel:PivotTo(CFrame.new(position(plot, geometry.x, 0.55, geometry.z)) * CFrame.Angles(0, math.pi / 2, 0))
+			ovenModel.Parent = stationModel
 			local oven = ovenModel:FindFirstChild("RecipeBadge")
-			prop(plot, "Conveyor", x, z + 19)
-			local buyModel = prop(plot, "ClaimPad", x, z + 29, 1.4)
-			buyModel.Name = "Unlock " .. recipe.Name
-			buyModel:ScaleTo(0.7)
+			local chute = detail(plot, "Cookie Feed Tray", Vector3.new(1.1, 0.2, 2.8), -3.65, 1.63, geometry.z,
+				Color3.fromRGB(126, 143, 150), stationModel)
+			chute.Material = Enum.Material.Metal
+			local buyModel = prop(plot, "ClaimPad", geometry.padX, geometry.z, 0.55)
+			buyModel.Name = "Buy " .. recipe.Name
+			buyModel:ScaleTo(0.55)
+			buyModel.Parent = stationModel
 			local buy = buyModel:FindFirstChild("Claim Surface")
-			buy.Color = color(recipe.Color)
 			local station = {
-				oven = oven, window = ovenModel:FindFirstChild("Window"), x = x, z = z,
-				text = label(oven, recipe.Name), pad = buy, purchaseModel = buyModel, steam = Presentation.oven(ovenModel),
+				model = stationModel, ovenModel = ovenModel, oven = oven, window = ovenModel:FindFirstChild("Window"),
+				x = geometry.x, z = geometry.z, pad = buy, purchaseModel = buyModel,
+				text = label(buy, recipe.Name, 26), ovenText = label(oven, recipe.Name, 24), steam = Presentation.oven(ovenModel),
 			}
-			station.purchase = prompt(buy, "Unlock recipe", function(player) onAction(player, "BuyRecipe", index, plot) end, recipe.Name)
+			station.ovenText.Parent.StudsOffset = Vector3.new(0, 1.5, 0)
+			station.ovenText.Parent.Size = UDim2.fromOffset(160, 26)
+			stepPads:Register(buy, {
+				Owner = function() return plot.owner end,
+				Available = function(player)
+					local data = plot.data
+					return plot.owner == player and data ~= nil and index == data.unlocked + 1 and data.cash >= recipe.Cost
+				end,
+				Activate = function(player) return onAction(player, "BuyRecipe", index, plot) end,
+			})
 			table.insert(plot.stations, station)
 		end
 		Presentation.plot(plot, slot)
@@ -223,35 +356,42 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 end
 
 function World.animate(plot, data, perks)
-	-- Show at most four detailed cookies per visual batch. Income includes every oven.
-	-- Keeping animations independent of oven speed bounds replicated part creation.
-	for _ = 1, math.min(4, data.unlocked) do
+	local active = 0
+	for model in pairs(plot.visuals) do
+		if model.Parent then active += 1 else plot.visuals[model] = nil end
+	end
+	-- A strict per-bakery cap bounds models even when end-game cookies travel
+	-- the full shared belt. Economy production still includes every owned oven.
+	local count = math.min(3, data.unlocked, Layout.MaxVisualCookies - active)
+	for number = 1, count do
 		plot.visualCursor = plot.visualCursor % data.unlocked + 1
 		local index = plot.visualCursor
 		local station = plot.stations[index]
-		local start = position(plot, station.x, 2.1, station.z + 9)
+		local lane = (number - 2) * 0.55
+		local start = position(plot, lane, Layout.CookieY, station.z)
 		local flags = data.modifiers[tostring(index)]
 		local model = Assets.cookie(index, plot.model, CFrame.new(start), flags)
-		local rarity = Crafting.rarity(Recipes[index])
+		model.Name = "Conveyor " .. model.Name
+		plot.visuals[model] = true
 		local value = Progression.recipeValue(data, index, perks)
 		model:SetAttribute("CashValue", value)
-		local toppingCount = 0
-		for _, key in ipairs(Crafting.ModifierOrder) do if flags and flags[key] then toppingCount += 1 end end
-		local badge = label(model.PrimaryPart, rarity.Name .. " • $" .. Progression.format(value)
-			.. "\n" .. (toppingCount > 0 and toppingCount .. " topping upgrades" or Recipes[index].Name), 28)
-		badge.TextColor3 = color(rarity.Color)
-		badge.Parent.Size = UDim2.fromOffset(165, 44)
-		badge.Parent.StudsOffset = Vector3.new(0, 1.7, 0)
+		local distance = Layout.BeltFrontZ - station.z
+		local duration = Layout.travelDuration(station.z, Progression.interval(data, perks))
+		local badge = label(model.PrimaryPart, "$" .. Progression.format(value), 18)
+		badge.TextColor3 = color(Crafting.rarity(Recipes[index]).Color)
+		badge.Parent.Size = UDim2.fromOffset(85, 23)
+		badge.Parent.StudsOffset = Vector3.new(0, 1.35, 0)
 		for _, object in ipairs(model:GetDescendants()) do
 			if not object:IsA("BasePart") then continue end
 			object.CanCollide = false
 			object.CanTouch = false
 			object.CanQuery = false
-			TweenService:Create(object, TweenInfo.new(1.3, Enum.EasingStyle.Linear), {
-				Position = object.Position + Vector3.new(0, 0, 17 * plot.direction),
+			TweenService:Create(object, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+				Position = object.Position + Vector3.new(0, 0, distance * plot.direction),
 			}):Play()
 		end
-		Debris:AddItem(model, 1.4)
+		Debris:AddItem(model, duration + 0.1)
+		task.delay(duration + 0.15, function() plot.visuals[model] = nil end)
 	end
 end
 

@@ -10,6 +10,7 @@ local Recipes = require(shared:WaitForChild("Recipes"))
 local Progression = require(shared:WaitForChild("Progression"))
 local Crafting = require(shared:WaitForChild("CookieCrafting"))
 local Catalog = require(shared:WaitForChild("ShopCatalog"))
+local Challenges = require(shared:WaitForChild("ChallengeCatalog"))
 local remotes = shared:WaitForChild("Remotes")
 local requestAction = remotes:WaitForChild("RequestAction")
 local openShop = remotes:WaitForChild("OpenShop")
@@ -62,7 +63,7 @@ local function fixedLabel(parent, y, height, size, tint)
 end
 
 local hud = Instance.new("Frame")
-hud.Size = UDim2.new(0.94, 0, 0, 198)
+hud.Size = UDim2.new(0.94, 0, 0, 148)
 hud.Position = UDim2.fromOffset(12, 12)
 hud.BackgroundColor3 = Color3.fromRGB(53, 36, 32)
 hud.BackgroundTransparency = 0.06
@@ -70,7 +71,7 @@ hud.Parent = gui
 round(hud, 16)
 local hudStroke = finish(hud, gold)
 local hudLimit = Instance.new("UISizeConstraint")
-hudLimit.MaxSize = Vector2.new(500, 198)
+hudLimit.MaxSize = Vector2.new(420, 148)
 hudLimit.Parent = hud
 local cookieIcon = Instance.new("Frame")
 cookieIcon.Position = UDim2.fromOffset(15, 9)
@@ -89,25 +90,25 @@ for _, point in ipairs({ Vector2.new(7, 6), Vector2.new(20, 9), Vector2.new(11, 
 	chip.Parent = cookieIcon
 	round(chip, 2)
 end
-local brand = fixedLabel(hud, 8, 30, 23, gold)
+local brand = fixedLabel(hud, 8, 30, 21, gold)
 brand.Position = UDim2.fromOffset(58, 8)
 brand.Size = UDim2.new(1, -72, 0, 30)
 brand.Text = "COOKIE CORNER"
-local wallet = fixedLabel(hud, 40, 22, 17)
+local wallet = fixedLabel(hud, 38, 22, 17)
 wallet.TextScaled = true
 wallet.TextWrapped = false
 local walletTextSize = Instance.new("UITextSizeConstraint")
 walletTextSize.MinTextSize = 10
 walletTextSize.MaxTextSize = 17
 walletTextSize.Parent = wallet
-local progress = fixedLabel(hud, 65, 22, 15)
+local progress = fixedLabel(hud, 62, 18, 14)
 progress.TextScaled = true
 progress.TextWrapped = false
 local progressTextSize = Instance.new("UITextSizeConstraint")
 progressTextSize.MinTextSize = 10
 progressTextSize.MaxTextSize = 15
 progressTextSize.Parent = progress
-local saveStatus = fixedLabel(hud, 90, 19, 12)
+local saveStatus = fixedLabel(hud, 82, 16, 11)
 wallet.Text = "Loading your bakery..."
 
 local menu = Instance.new("Frame")
@@ -147,7 +148,7 @@ menuLimit.MaxSize = Vector2.new(520, 680)
 menuLimit.Parent = menu
 local title = fixedLabel(menu, 12, 30, 23, gold)
 title.Size = UDim2.new(1, -78, 0, 30)
-title.Text = "YOUR BAKERY"
+title.Text = "BAKERY"
 local menuWallet = fixedLabel(menu, 46, 30, 14)
 
 local function button(parent, text, tint)
@@ -182,23 +183,23 @@ local close = button(menu, "X")
 close.Size = UDim2.fromOffset(38, 38)
 close.Position = UDim2.new(1, -50, 0, 10)
 close.Activated:Connect(function() menu.Visible = false end)
-local toggle = button(hud, "Bakery • Workshop • Robux Shop", Color3.fromRGB(130, 87, 49))
-toggle.Position = UDim2.fromOffset(14, 115)
-toggle.Size = UDim2.new(1, -28, 0, 30)
+local toggle = button(hud, "Bakery", Color3.fromRGB(130, 87, 49))
+toggle.Position = UDim2.fromOffset(14, 106)
+toggle.Size = UDim2.new(0.44, -16, 0, 30)
 toggle.Activated:Connect(function() menu.Visible = not menu.Visible end)
-local musicToggle = button(hud, "Music: ON", Color3.fromRGB(66, 114, 100))
+local musicToggle = button(hud, "Music ON", Color3.fromRGB(66, 114, 100))
 musicToggle.Name = "MusicToggle"
-musicToggle.Position = UDim2.fromOffset(14, 154)
-musicToggle.Size = UDim2.new(0.5, -18, 0, 30)
-musicToggle.TextSize = 14
-local effectsToggle = button(hud, "SFX: ON", Color3.fromRGB(66, 114, 100))
+musicToggle.Position = UDim2.new(0.44, 4, 0, 106)
+musicToggle.Size = UDim2.new(0.28, -12, 0, 30)
+musicToggle.TextSize = 12
+local effectsToggle = button(hud, "SFX ON", Color3.fromRGB(66, 114, 100))
 effectsToggle.Name = "EffectsToggle"
-effectsToggle.Position = UDim2.new(0.5, 4, 0, 154)
-effectsToggle.Size = UDim2.new(0.5, -18, 0, 30)
-effectsToggle.TextSize = 14
+effectsToggle.Position = UDim2.new(0.72, 0, 0, 106)
+effectsToggle.Size = UDim2.new(0.28, -14, 0, 30)
+effectsToggle.TextSize = 12
 local function renderAudio()
-	musicToggle.Text = audio.music and "Music: ON" or "Music: OFF"
-	effectsToggle.Text = audio.effects and "SFX: ON" or "SFX: OFF"
+	musicToggle.Text = audio.music and "Music ON" or "Music OFF"
+	effectsToggle.Text = audio.effects and "SFX ON" or "SFX OFF"
 	musicToggle.BackgroundColor3 = audio.music and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)
 	effectsToggle.BackgroundColor3 = audio.effects and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)
 end
@@ -207,8 +208,9 @@ effectsToggle.Activated:Connect(function() audio:SetEffectsEnabled(not audio.eff
 audio.Changed.Event:Connect(renderAudio)
 renderAudio()
 local bakeryTab = button(menu, "Bakery", Color3.fromRGB(130, 87, 49))
-local robuxTab = button(menu, "Robux Shop", Color3.fromRGB(92, 66, 48))
-local workshopTab = button(menu, "Workshop", Color3.fromRGB(92, 66, 48))
+local robuxTab = button(menu, "Shop", Color3.fromRGB(92, 66, 48))
+local workshopTab = button(menu, "Toppings", Color3.fromRGB(92, 66, 48))
+local challengesTab = button(menu, "Quests", Color3.fromRGB(92, 66, 48))
 local tabBar = Instance.new("Frame")
 tabBar.Position = UDim2.fromOffset(14, 82)
 tabBar.Size = UDim2.new(1, -28, 0, 32)
@@ -219,11 +221,11 @@ tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 8)
 tabLayout.Parent = tabBar
-for index, tab in ipairs({ bakeryTab, workshopTab, robuxTab }) do
+for index, tab in ipairs({ bakeryTab, workshopTab, challengesTab, robuxTab }) do
 	tab.Parent = tabBar
 	tab.LayoutOrder = index
-	tab.Size = UDim2.new(1 / 3, -6, 1, 0)
-	tab.TextSize = 14
+	tab.Size = UDim2.new(0.25, -6, 1, 0)
+	tab.TextSize = 13
 end
 
 local scroll = Instance.new("ScrollingFrame")
@@ -256,17 +258,24 @@ local workshopScroll = scroll:Clone()
 workshopScroll.Name = "CookieWorkshop"
 workshopScroll.Visible = false
 workshopScroll.Parent = menu
+local challengesScroll = scroll:Clone()
+challengesScroll.Name = "Challenges"
+challengesScroll.Visible = false
+challengesScroll.Parent = menu
 local function showTab(tabName)
 	scroll.Visible = tabName == "Bakery"
 	workshopScroll.Visible = tabName == "Workshop"
 	shopScroll.Visible = tabName == "Robux"
-	for tab, name in pairs({ [bakeryTab] = "Bakery", [workshopTab] = "Workshop", [robuxTab] = "Robux" }) do
+	challengesScroll.Visible = tabName == "Challenges"
+	title.Text = ({ Bakery = "YOUR BAKERY", Workshop = "COOKIE TOPPINGS", Robux = "ROBUX SHOP", Challenges = "BAKER'S QUESTS" })[tabName] or "YOUR BAKERY"
+	for tab, name in pairs({ [bakeryTab] = "Bakery", [workshopTab] = "Workshop", [robuxTab] = "Robux", [challengesTab] = "Challenges" }) do
 		tab.BackgroundColor3 = name == tabName and Color3.fromRGB(130, 87, 49) or Color3.fromRGB(92, 66, 48)
 	end
 end
 bakeryTab.Activated:Connect(function() showTab("Bakery") end)
 workshopTab.Activated:Connect(function() showTab("Workshop") end)
 robuxTab.Activated:Connect(function() showTab("Robux") end)
+challengesTab.Activated:Connect(function() showTab("Challenges") end)
 local order = 0
 local function ordered(object)
 	order += 1
@@ -292,16 +301,25 @@ end
 local bakeryInfo = ordered(text(scroll, "Claim a green pad to start baking."))
 local collectButton = ordered(button(scroll, "Collect earnings", Color3.fromRGB(134, 100, 35)))
 local recipeButton = ordered(button(scroll, "Unlock next cookie"))
-local ovenButton = ordered(button(scroll, "Upgrade ovens", Color3.fromRGB(103, 82, 147)))
-ordered(text(scroll, "GOLDEN CHIPS & REBIRTH", 20, gold))
-local rebirthInfo = ordered(text(scroll, ""))
-local rebirthButton = ordered(button(scroll, "Rebirth", Color3.fromRGB(145, 94, 31)))
+local ovenButton = ordered(button(scroll, "Faster conveyor", Color3.fromRGB(103, 82, 147)))
+local goldenToggle = ordered(button(scroll, "Golden Chips & rebirth  +", Color3.fromRGB(113, 87, 39)))
+goldenToggle.Size = UDim2.new(1, 0, 0, 44)
+local goldenSection = ordered(Instance.new("Frame"))
+goldenSection.Name = "GoldenUpgrades"
+goldenSection.Size = UDim2.new(1, 0, 0, 0)
+goldenSection.AutomaticSize = Enum.AutomaticSize.Y
+goldenSection.BackgroundTransparency = 1
+goldenSection.Visible = false
+goldenSection.Parent = scroll
+list(goldenSection)
+local rebirthInfo = ordered(text(goldenSection, ""))
+local rebirthButton = ordered(button(goldenSection, "Rebirth", Color3.fromRGB(145, 94, 31)))
 local confirmation = ordered(Instance.new("Frame"))
 confirmation.Size = UDim2.new(1, 0, 0, 0)
 confirmation.AutomaticSize = Enum.AutomaticSize.Y
 confirmation.BackgroundTransparency = 1
 confirmation.Visible = false
-confirmation.Parent = scroll
+confirmation.Parent = goldenSection
 list(confirmation)
 local confirmationText = text(confirmation, "")
 confirmationText.LayoutOrder = 1
@@ -311,19 +329,22 @@ local cancelButton = button(confirmation, "Keep baking")
 cancelButton.LayoutOrder = 3
 cancelButton.Size = UDim2.new(1, 0, 0, 40)
 local confirmCount
+goldenToggle.Activated:Connect(function()
+	goldenSection.Visible = not goldenSection.Visible
+	goldenToggle.Text = "Golden Chips & rebirth  " .. (goldenSection.Visible and "−" or "+")
+	if not goldenSection.Visible then confirmation.Visible = false end
+end)
 
-ordered(text(scroll, "PERMANENT UPGRADES", 20, gold))
-ordered(text(scroll, "Spend Golden Chips here. These upgrades survive every rebirth. Each rebirth also adds +15% income."))
+ordered(text(goldenSection, "KEEP FOREVER", 16, gold))
 local permanentButtons = {}
 for _, key in ipairs(Progression.PermanentOrder) do
-	local upgradeButton = ordered(button(scroll, "", Color3.fromRGB(113, 87, 39)))
-	upgradeButton.Size = UDim2.new(1, 0, 0, 82)
+	local upgradeButton = ordered(button(goldenSection, "", Color3.fromRGB(113, 87, 39)))
+	upgradeButton.Size = UDim2.new(1, 0, 0, 72)
 	permanentButtons[key] = upgradeButton
 	upgradeButton.Activated:Connect(function() requestAction:FireServer("UpgradePermanent", key) end)
 end
 
-ordered(text(workshopScroll, "COOKIE WORKSHOP", 20, gold))
-ordered(text(workshopScroll, "Choose a recipe and add toppings with cookie cash. Each purchase upgrades all future cookies of that recipe. Toppings stack and reset on rebirth."))
+ordered(text(workshopScroll, "Upgrade this recipe's future cookies. Toppings stack; reset on rebirth.", 13))
 local selectedRecipe = 1
 local lastWorkshopRebirth
 local selector = ordered(Instance.new("Frame"))
@@ -339,43 +360,46 @@ local recipeTitle = fixedLabel(selector, 0, 50, 17)
 recipeTitle.Position = UDim2.fromOffset(50, 0)
 recipeTitle.Size = UDim2.new(1, -100, 0, 50)
 recipeTitle.TextXAlignment = Enum.TextXAlignment.Center
-local workshopDetails = ordered(text(workshopScroll, "", 16))
-local toppingSummary = ordered(text(workshopScroll, ""))
+local workshopDetails = ordered(text(workshopScroll, "", 18, gold))
+local toppingSummary = ordered(text(workshopScroll, "", 13))
 local modifierButtons = {}
 for _, key in ipairs(Crafting.ModifierOrder) do
 	local definition = Crafting.Modifiers[key]
 	local rgb = definition.Color
 	local addButton = ordered(button(workshopScroll, definition.Name, Color3.fromRGB(rgb[1] * 0.35, rgb[2] * 0.35, rgb[3] * 0.35)))
-	addButton.Size = UDim2.new(1, 0, 0, 76)
+	addButton.Size = UDim2.new(1, 0, 0, 56)
 	modifierButtons[key] = addButton
 	addButton.Activated:Connect(function()
 		requestAction:FireServer("BuyModifier", { Recipe = selectedRecipe, Modifier = key })
 	end)
 end
-ordered(text(workshopScroll, "RARITY TIERS", 18, gold))
-for _, key in ipairs(Crafting.RarityOrder) do
-	local rarity = Crafting.Rarities[key]
-	ordered(text(workshopScroll, rarity.Name .. "  •  x" .. rarity.Multiplier .. " base value", 15, Color3.fromRGB(table.unpack(rarity.Color))))
-end
-ordered(text(workshopScroll, "Each recipe has a fixed rarity. Topping bonuses add together, then multiply with rarity, Golden Batter, rebirth bonuses, and the income pass. Each cookie's final value is rounded down to whole cash."))
 
-ordered(text(shopScroll, "ROBUX SHOP", 20, gold))
-ordered(text(shopScroll, "Optional upgrades. Roblox shows the final price and asks you to confirm every purchase. You can keep playing without buying anything."))
+local challengeName = ordered(text(challengesScroll, "Baker Biscuit", 21, gold))
+local challengeHint = ordered(text(challengesScroll, "Find Baker Biscuit in the plaza."))
+local challengeProgress = ordered(text(challengesScroll, "", 17, gold))
+local challengeItems = {}
+for index = 1, 3 do
+	local row = ordered(text(challengesScroll, "", 15))
+	table.insert(challengeItems, row)
+end
+local challengeButton = ordered(button(challengesScroll, "Visit Baker Biscuit", Color3.fromRGB(66, 114, 100)))
+local challengeStatus = ordered(text(challengesScroll, "", 13))
+challengeButton.Activated:Connect(function() requestAction:FireServer("ChallengeAction") end)
+
+ordered(text(shopScroll, "Optional. Roblox confirms every purchase and its final price.", 13))
 local shopStatus = ordered(text(shopScroll, "Loading shop...", 15, gold))
-ordered(text(shopScroll, "PERMANENT PASSES", 18, gold))
-ordered(text(shopScroll, "Buy once. Pass benefits stay when you leave or rebirth."))
+ordered(text(shopScroll, "PASSES • KEEP FOREVER", 16, gold))
 local shopRows = {}
 local priceMetadata = {}
 local pricesLoading = false
 local function shopRow(kind, key, entry)
 	local purchaseButton = ordered(button(shopScroll, entry.Name, Color3.fromRGB(101, 113, 65)))
-	purchaseButton.Size = UDim2.new(1, 0, 0, kind == "Pass" and 112 or 94)
+	purchaseButton.Size = UDim2.new(1, 0, 0, 70)
 	table.insert(shopRows, { Kind = kind, Key = key, Entry = entry, Button = purchaseButton })
 	purchaseButton.Activated:Connect(function() requestPurchase:FireServer(kind, key) end)
 end
 for _, key in ipairs(Catalog.PassOrder) do shopRow("Pass", key, Catalog.Passes[key]) end
-ordered(text(shopScroll, "COOKIE CASH BUNDLES", 18, gold))
-ordered(text(shopScroll, "Repeatable purchases add the exact cash shown. This cash is spent like earned cash and resets on rebirth; it does not award Golden Chips directly."))
+ordered(text(shopScroll, "CASH • RESETS ON REBIRTH", 16, gold))
 for _, key in ipairs(Catalog.ProductOrder) do shopRow("Product", key, Catalog.Products[key]) end
 local refreshShopButton = ordered(button(shopScroll, "Refresh shop", Color3.fromRGB(109, 75, 59)))
 refreshShopButton.Size = UDim2.new(1, 0, 0, 42)
@@ -463,13 +487,78 @@ local function enable(target, enabled)
 	target.TextTransparency = enabled and 0 or 0.4
 end
 
+local function renderChallenges(ready, purchasePending)
+	local index = player:GetAttribute("ChallengeIndex") or 1
+	local challenge = Challenges.Challenges[index]
+	local active = player:GetAttribute("ChallengeActive") == true
+	local mask = player:GetAttribute("ChallengeFound") or 0
+	local nearNPC = player:GetAttribute("NearChallengeNPC") == true
+	if player:GetAttribute("ChallengeComplete") == true or not challenge then
+		challengeName.Text = "Excellent detective!"
+		challengeHint.Text = "You found all of Baker Biscuit's hidden treasures."
+		challengeProgress.Text = "All quests complete"
+		for _, row in ipairs(challengeItems) do row.Visible = false end
+		challengeButton.Text = "All done!"
+		challengeStatus.Text = "Completed quests stay complete after rebirth."
+		enable(challengeButton, false)
+		return
+	end
+	challengeName.Text = challenge.Name
+	challengeHint.Text = challenge.Hint
+	local found = 0
+	for itemIndex, row in ipairs(challengeItems) do
+		local item = Challenges.Items[challenge.Items[itemIndex]]
+		row.Visible = active and item ~= nil
+		if item then
+			local collected = bit32.band(mask, bit32.lshift(1, itemIndex - 1)) ~= 0
+			if collected then found += 1 end
+			row.Text = (collected and "✓ " or "○ ") .. item.Name .. (collected and "" or "\n" .. item.Hint)
+			row.TextColor3 = collected and Color3.fromRGB(151, 218, 182) or cream
+		end
+	end
+	challengeProgress.Text = "$" .. Progression.format(challenge.Reward) .. " reward"
+		.. (active and "  •  " .. found .. "/" .. #challenge.Items .. " found" or "")
+	local canClaim = active and found == #challenge.Items
+	if not ready then challengeButton.Text = "Loading..."
+	elseif not nearNPC then challengeButton.Text = "Visit Baker Biscuit"
+	elseif not active then challengeButton.Text = "Start quest"
+	elseif canClaim then challengeButton.Text = "Claim $" .. Progression.format(challenge.Reward)
+	else challengeButton.Text = "Find " .. (#challenge.Items - found) .. " more" end
+	enable(challengeButton, ready and not purchasePending and nearNPC and (not active or canClaim))
+	challengeStatus.Text = active and (canClaim and "Return to Baker Biscuit in the plaza." or "Find each hidden item and interact with it.")
+		or "Visit Baker Biscuit in the plaza to begin."
+end
+
+-- Quest props are shared world instances; hide collected and inactive items
+-- locally so every player can finish their own hunt without affecting others.
+local function refreshChallengeItems()
+	local world = workspace:FindFirstChild("CookieTycoonWorld")
+	local questWorld = world and world:FindFirstChild("Challenges")
+	local hidden = questWorld and questWorld:FindFirstChild("HiddenItems")
+	if not hidden then return end
+	local current = player:GetAttribute("ChallengeIndex") or 1
+	local active = player:GetAttribute("ChallengeActive") == true
+	local mask = player:GetAttribute("ChallengeFound") or 0
+	for _, model in ipairs(hidden:GetChildren()) do
+		local questIndex = model:GetAttribute("ChallengeQuestIndex")
+		local definition = Challenges.Challenges[questIndex]
+		local itemIndex = definition and table.find(definition.Items, model:GetAttribute("ChallengeItemId"))
+		local visible = active and questIndex == current and itemIndex ~= nil
+			and bit32.band(mask, bit32.lshift(1, itemIndex - 1)) == 0
+		for _, descendant in ipairs(model:GetDescendants()) do
+			if descendant:IsA("BasePart") then descendant.LocalTransparencyModifier = visible and 0 or 1
+			elseif descendant:IsA("ProximityPrompt") or descendant:IsA("BillboardGui") or descendant:IsA("PointLight") then descendant.Enabled = visible end
+		end
+	end
+end
+
 local saveMessages = {
-	Loading = "Loading saved progress...",
-	Saved = "Progress saved • Autosaves every 45 seconds",
-	Saving = "Saving progress...",
-	SaveFailed = "Save delayed • Reconnecting automatically...",
-	SessionOnly = "STUDIO SESSION ONLY • Progress will not save",
-	PurchasePending = "Saving your purchase • Please wait...",
+	Loading = "Loading...",
+	Saved = "Saved",
+	Saving = "Saving...",
+	SaveFailed = "Save delayed • retrying",
+	SessionOnly = "Preview • not saved",
+	PurchasePending = "Saving purchase...",
 }
 local function render()
 	local data = currentData()
@@ -483,47 +572,49 @@ local function render()
 		lastWorkshopRebirth = data.rebirths
 	end
 	wallet.Text = "Cash $" .. format(data.cash) .. "  |  Ready $" .. format(data.bank)
-	progress.Text = data.unlocked .. "/" .. #Recipes .. " cookies  •  " .. data.rebirths .. " rebirths  •  " .. data.chips .. " Golden Chips"
-	menuWallet.Text = "$" .. format(data.cash) .. " wallet  •  $" .. format(data.bank) .. " bank  •  " .. data.chips .. " Golden Chips"
+	progress.Text = data.unlocked .. "/" .. #Recipes .. " cookies  •  " .. data.chips .. " Golden Chips"
+	menuWallet.Text = "$" .. format(data.cash) .. "  •  " .. data.chips .. " Golden Chips"
 	local status = player:GetAttribute("DataStatus") or "Loading"
 	saveStatus.Text = saveMessages[status] or status
 	saveStatus.TextColor3 = (status == "SaveFailed" or status == "SessionOnly") and gold or cream
 	if not ready then
-		bakeryInfo.Text = "Loading your saved bakery before you can play..."
+		bakeryInfo.Text = "Loading your bakery..."
 	elseif purchasePending then
-		bakeryInfo.Text = "Saving your purchase. Bakery controls will resume automatically when it is confirmed."
+		bakeryInfo.Text = "Saving purchase..."
 	elseif not ownsBakery then
-		bakeryInfo.Text = "Claim any free bakery on a green pad. Your saved recipes and upgrades come with you. If all four are taken, wait for a plot to open."
+		bakeryInfo.Text = "Claim a free bakery at a green pad."
 	else
-		bakeryInfo.Text = string.format("%d/%d recipes • Oven level %d/%d\n$%s per batch every %.2fs • %.2fx global income\nUse the Workshop to raise each recipe's value.",
-			data.unlocked, #Recipes, data.level, Progression.MAX_OVEN_LEVEL, format(Progression.batchValue(data, data.perks)), Progression.interval(data, data.perks), Progression.multiplier(data, data.perks))
+		bakeryInfo.Text = string.format("$%s per batch  •  Every %.2fs",
+			format(Progression.batchValue(data, data.perks)), Progression.interval(data, data.perks))
 	end
 	collectButton.Text = "Collect $" .. format(data.bank)
 	enable(collectButton, canManage and data.bank > 0 and data.cash < Progression.MAX_CASH)
 	local nextRecipe = Recipes[data.unlocked + 1]
-	recipeButton.Text = nextRecipe and ("Unlock " .. nextRecipe.Name .. "\n" .. Crafting.rarity(nextRecipe).Name .. " • $" .. format(nextRecipe.Cost)) or "All 30 cookies unlocked!"
+	recipeButton.Text = nextRecipe and (nextRecipe.Name .. "  •  $" .. format(nextRecipe.Cost) .. "\nUnlock next cookie") or "All 30 cookies unlocked!"
 	enable(recipeButton, canManage and nextRecipe ~= nil and data.cash >= (nextRecipe and nextRecipe.Cost or 0))
 	local ovenMax = data.level >= Progression.MAX_OVEN_LEVEL
-	ovenButton.Text = ovenMax and "Ovens MAXED!" or ("Upgrade all ovens to level " .. (data.level + 1) .. "\n$" .. format(Progression.ovenCost(data)))
+	ovenButton.Text = ovenMax and "Conveyor speed maxed!" or ("Faster conveyor  •  $" .. format(Progression.ovenCost(data)) .. "\nSpeed level " .. data.level .. " → " .. (data.level + 1))
 	enable(ovenButton, canManage and not ovenMax and data.cash >= Progression.ovenCost(data))
 	local requirement = Progression.rebirthRequirement(data)
 	local rebirthMax = data.rebirths >= Progression.MAX_REBIRTHS
 	local canRebirth = canManage and not rebirthMax and data.unlocked >= requirement.Recipes and data.cash + data.bank >= requirement.Cash
-	rebirthInfo.Text = rebirthMax and "You completed all 50 rebirths! Keep building your ultimate bakery."
-		or string.format("Rebirth #%d earns %d Golden Chips.\nRecipes: %d/%d required\nCash + bank: $%s / $%s\nReset cash, uncollected earnings, recipes, oven levels, and recipe modifiers. Keep Golden Chips and permanent upgrades.",
+	rebirthInfo.Text = rebirthMax and "All 50 rebirths completed!"
+		or string.format("Rebirth #%d  •  +%d Golden Chips\n%d/%d cookies  •  $%s/$%s cash + ready",
 			data.rebirths + 1, requirement.Reward, data.unlocked, requirement.Recipes, format(data.cash + data.bank), format(requirement.Cash))
-	rebirthButton.Text = rebirthMax and "Maximum rebirths reached" or "Review rebirth  •  +" .. requirement.Reward .. " Golden Chips"
+	rebirthButton.Text = rebirthMax and "Rebirths complete" or "Review rebirth"
 	enable(rebirthButton, canRebirth)
 	if confirmation.Visible then
 		if data.rebirths ~= confirmCount or not ownsBakery then confirmation.Visible = false end
-		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips? Your cash, bank, recipe unlocks, oven levels, and topping modifiers will reset. Golden Chips, permanent upgrades, rebirth bonuses, and owned passes stay."
+		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, ready earnings, cookies, conveyor levels and toppings.\nKeep: Golden Chips, permanent upgrades, quests and passes."
 		enable(confirmButton, canRebirth)
 	end
 	for key, upgradeButton in pairs(permanentButtons) do
 		local upgrade = Progression.Permanent[key]
 		local cost = Progression.permanentCost(data, key)
+		local effect = key == "Yield" and "+25% income" or key == "Speed" and "+8% baking speed"
+			or "$" .. format(500 * math.min(upgrade.Max, data.permanent[key] + 1) ^ 2) .. " after rebirth"
 		upgradeButton.Text = upgrade.Name .. "  " .. data.permanent[key] .. "/" .. upgrade.Max .. "\n"
-			.. (cost and cost .. " Golden Chips" or "MAXED") .. " • " .. upgrade.Description
+			.. (cost and cost .. " chips • " .. effect or "MAXED")
 		enable(upgradeButton, canManage and cost ~= nil and data.chips >= (cost or math.huge))
 	end
 	local selected = Recipes[selectedRecipe]
@@ -532,20 +623,17 @@ local function render()
 	local unlocked = selectedRecipe <= data.unlocked
 	recipeTitle.Text = selectedRecipe .. "/" .. #Recipes .. " • " .. selected.Name
 	recipeTitle.TextColor3 = Color3.fromRGB(table.unpack(rarity.Color))
-	workshopDetails.Text = rarity.Name .. " rarity • x" .. rarity.Multiplier .. " base value"
-		.. "\nBase $" .. format(selected.Value) .. "  •  Toppings x" .. string.format("%.2f", Crafting.multiplier(flags))
-		.. "  •  Global income x" .. string.format("%.2f", Progression.multiplier(data, data.perks))
-		.. "\n" .. (unlocked and "Value: $" .. format(Progression.recipeValue(data, selectedRecipe, data.perks)) .. " per cookie"
-			or "Locked • Unlock this recipe for $" .. format(selected.Cost))
-	toppingSummary.Text = "Applied: " .. Crafting.summary(flags)
+	workshopDetails.Text = rarity.Name .. "  •  " .. (unlocked and "$" .. format(Progression.recipeValue(data, selectedRecipe, data.perks)) .. " / cookie"
+		or "Unlock for $" .. format(selected.Cost))
+	toppingSummary.Text = "Toppings: " .. Crafting.summary(flags)
 	enable(previousCookie, selectedRecipe > 1)
 	enable(nextCookie, selectedRecipe < #Recipes)
 	for key, addButton in pairs(modifierButtons) do
 		local definition = Crafting.Modifiers[key]
 		local cost = Crafting.cost(selected, key)
 		local applied = flags and flags[key] == true
-		addButton.Text = definition.Name .. "  +" .. math.floor(definition.Bonus * 100 + 0.5) .. "% value\n"
-			.. (applied and "Applied to this recipe" or "$" .. format(cost) .. (unlocked and " to add" or " • Unlock recipe first"))
+		addButton.Text = definition.Name .. "  +" .. math.floor(definition.Bonus * 100 + 0.5) .. "%\n"
+			.. (applied and "✓ Added" or "$" .. format(cost) .. (unlocked and "" or " • Recipe locked"))
 		enable(addButton, canManage and unlocked and not applied and data.cash >= cost)
 	end
 	local commerceReady = ready and player:GetAttribute("CommerceReady") == true
@@ -563,24 +651,26 @@ local function render()
 		elseif metadata.State ~= "Ready" then priceLine = "Currently unavailable"
 		else priceLine = "R$ " .. metadata.Price .. (row.Kind == "Pass" and " • Buy once" or " • Repeatable") end
 		if row.Kind == "Pass" then
-			row.Button.Text = row.Entry.Name .. "\n" .. priceLine .. "\n" .. row.Entry.Description
+			row.Button.Text = row.Entry.Name .. "\n" .. priceLine
 		else
-			row.Button.Text = row.Entry.Name .. " • $" .. format(row.Entry.Cash) .. "\n" .. priceLine .. "\nCash resets on rebirth."
+			row.Button.Text = "$" .. format(row.Entry.Cash) .. " Cookie Cash\n" .. priceLine
 		end
 		local ownershipReady = row.Kind ~= "Pass" or player:GetAttribute("PassesReady") == true
 		enable(row.Button, commerceReady and not purchasePending and not promptOpen and not owned and offer ~= nil
 			and ownershipReady and metadata ~= nil and metadata.State == "Ready")
 	end
-	if purchasePending then shopStatus.Text = "Saving your purchase. Please wait; rewards are being confirmed."
-	elseif not configured then shopStatus.Text = "The Robux shop is coming soon. Keep baking for free!"
+	if purchasePending then shopStatus.Text = "Saving purchase..."
+	elseif not configured then shopStatus.Text = "Coming soon • Keep baking for free!"
 	elseif not ready then shopStatus.Text = "Loading your bakery..."
-	elseif not commerceReady then shopStatus.Text = "Purchases are unavailable in this play session."
-	elseif promptOpen then shopStatus.Text = "Finish or cancel the Roblox purchase window to continue."
+	elseif not commerceReady then shopStatus.Text = "Purchases unavailable this session."
+	elseif promptOpen then shopStatus.Text = "Finish the Roblox purchase window."
 	else
-		shopStatus.Text = "Passes: " .. (data.perks.DoubleIncome and "2x income active" or "standard income")
-			.. " • " .. (data.perks.DoubleSpeed and "2x baking speed active" or "standard baking speed")
+		shopStatus.Text = "Active: " .. (data.perks.DoubleIncome and "2x income" or "standard income")
+			.. " • " .. (data.perks.DoubleSpeed and "2x speed" or "standard speed")
 	end
 	enable(refreshShopButton, not pricesLoading and not purchasePending and not promptOpen)
+	renderChallenges(ready, purchasePending)
+	refreshChallengeItems()
 end
 
 local lastPriceRefresh = -math.huge
@@ -636,7 +726,7 @@ nextCookie.Activated:Connect(function()
 	render()
 end)
 openShop.OnClientEvent:Connect(function(tabName)
-	if tabName == "Workshop" or tabName == "Bakery" then showTab(tabName) end
+	if tabName == "Workshop" or tabName == "Bakery" or tabName == "Challenges" or tabName == "Robux" then showTab(tabName) end
 	menu.Visible = true
 end)
 
@@ -667,6 +757,9 @@ end
 cash.Changed:Connect(scheduleRender)
 player.AttributeChanged:Connect(scheduleRender)
 player:GetAttributeChangedSignal("NoticeId"):Connect(showNotice)
+workspace.DescendantAdded:Connect(function(descendant)
+	if descendant:GetAttribute("ChallengeItemId") ~= nil or descendant:FindFirstAncestor("HiddenItems") then scheduleRender() end
+end)
 render()
 showNotice()
 refreshPrices()

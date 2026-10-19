@@ -2,7 +2,7 @@
 
 This guide takes you from the supplied game file to a published, playable Roblox game. You do not need a terminal, Rojo, or any plugins when using the ready-made place file.
 
-The place includes all game scripts, 30 cookie models, 20 bakery props, rarities, toppings, Golden Chip rebirths, and progress saving. Robux purchases remain disabled until you configure your own offers.
+The place includes all game scripts, 30 cookie models, 20 bakery props, one long conveyor per bakery, rarities, toppings, Golden Chip rebirths, NPC scavenger hunts, calm music, and progress saving. Robux purchases remain disabled until you configure your own offers.
 
 ## 1. Download the game and install Studio
 
@@ -34,7 +34,7 @@ The ready-to-open place and game ZIP are available at the **top level of this Gi
        TycoonUI
    ```
 
-**An empty-looking map before Play is expected.** The server builds the plaza, four bakeries, ovens, and purchase pads when a game session starts. The reusable models are stored in ServerStorage until then.
+**An empty-looking map before Play is expected.** The server builds the plaza, four bakeries with long conveyors, ovens, purchase pads, and Baker Biscuit's hidden items when a game session starts. The reusable models are stored in ServerStorage until then.
 
 You do not need to insert the models again or upload the PNG textures to make the supplied place work.
 
@@ -53,7 +53,7 @@ The default game requires a successful save-data connection before letting a pla
 
 5. Start a player playtest using the toolbar's **Play** button. Depending on your Studio version, select **Test** or **Play** in the testing dropdown; do not choose **Run**, which does not create your player.
 6. Wait for the world to load, claim a bakery, and try the controls in step 6 below.
-7. The HUD should say **STUDIO SESSION ONLY** when the temporary fallback is being used. That session's progress does **not** save, and purchases are disabled.
+7. The HUD should say **Preview • not saved** when the temporary fallback is being used. You may also see a **STUDIO SESSION ONLY** notice. That session's progress does **not** save, and purchases are disabled.
 8. Click **Stop**. In Settings, change the line back to:
 
    ```lua
@@ -72,7 +72,7 @@ Make script changes while the playtest is stopped. Ordinary edits made inside a 
 4. Suggested name: **Cookie Corner Tycoon**.
 5. Suggested description:
 
-   > Build your own cookie bakery! Unlock 30 recipes, discover rarer cookies, add glaze and sprinkles, upgrade your ovens, and rebirth for Golden Chips. Your bakery progress saves between visits.
+   > Build your own cookie conveyor! Unlock 30 recipes, add glaze and sprinkles, upgrade your bakery, and rebirth for Golden Chips. Help Baker Biscuit find hidden treasures for bonus cash. Your progress saves between visits.
 
 6. Complete the initial **Save/Create** dialog. Keep the game restricted to yourself or invited testers while checking it. If Studio shows release or audience options, leave access restricted until step 9.
 7. Wait for Studio to confirm the upload succeeded.
@@ -131,33 +131,34 @@ When you finish, reopen the intended production game using Creator Dashboard's *
 
 You can do these checks in the temporary preview, the published Studio test copy, or the Roblox app as an authorized player.
 
-1. Walk to an unclaimed bakery's green claim pad. Use the **Claim free bakery** prompt; on a keyboard the displayed key is normally **E**.
-2. Your Chocolate Chip oven starts baking automatically. A fresh profile earns **$5 per batch about every three seconds** before upgrades.
+1. Walk to an unclaimed bakery's green claim pad. Use the **Claim free bakery** prompt; on a keyboard, tap the displayed key (normally **E**) once. There is no held delay.
+2. Claiming moves you beside your free Chocolate Chip oven and the first cookie purchase. Your bakery has **one long conveyor** with ovens along its side. Chocolate Chip starts automatically; a fresh profile earns **$5 per batch about every three seconds** before upgrades.
 3. Use the register's **Collect cash** prompt to move earnings into your wallet. Waiting builds uncollected earnings; it does not spend or collect them for you.
-4. Open **Bakery • Workshop • Robux Shop**. The Bakery tab also lets you collect and buy upgrades without walking back to each pad.
-5. Collect **$250** and unlock **Oatmeal Raisin**. Both starting recipes together produce **$17 per batch** before other upgrades.
-6. In **Workshop**, select Chocolate Chip. Buy **Glaze** for $100: its value should become $6. Later, add **Sprinkles** for $350: with both toppings, its rounded value should become $7.
-7. Check that toppings apply to the selected recipe, and that the button changes to **Applied** after a purchase. Other recipes have separate topping purchases.
-8. Buy the first **$500 oven upgrade** and check that the batch interval changes from 3 to 2.4 seconds.
-9. Browse later recipes to see the higher rarity tiers and their value bonuses. These are fixed recipe rarities, not random drops.
-10. Open Robux Shop. **Coming soon** is correct while the five offer IDs are still `0`.
-11. Check **Output** for script errors and save warnings.
+4. Open **Bakery**. The four tabs are **Bakery**, **Toppings**, **Quests**, and **Shop**. Bakery lets you collect and buy upgrades without walking back to each pad. **Golden Chips & rebirth** expands the permanent upgrades and rebirth controls.
+5. Collect **$250**, then stand on the highlighted **Oatmeal Raisin** purchase pad for about **0.28 seconds**. No key or held prompt is needed. It buys once, reveals the next station, and both starting recipes produce **$17 per batch** before other upgrades. Only unlocked ovens and the next purchase appear; progression continues along the same belt.
+6. In **Toppings**, select Chocolate Chip. Buy **Glaze** for $100: its value should become $6. Later, add **Sprinkles** for $350: with both toppings, its rounded value should become $7.
+7. Check that toppings apply to the selected recipe, and that its button changes to **✓ Added** after a purchase. Other recipes have separate topping purchases.
+8. Buy the first **$500 speed upgrade**, using **Faster conveyor** in Bakery or standing on your physical speed pad. Check that the batch interval changes from 3 to 2.4 seconds. Step off and re-enter a physical pad before buying another level; remaining on it must not repeatedly spend your cash.
+9. Browse later recipes to see the higher rarity tiers and their value bonuses. These are fixed recipe rarities, not random drops. Reset your character and check that you respawn beside your own starter oven while you own the bakery.
+10. Visit **Baker Biscuit** in the plaza, use his talk prompt, and press **Start quest**. Check **Quests** for clues, find the three hidden items, then return to claim the cash reward. The tracker opens anywhere; accepting and claiming require standing near Biscuit. See [the quest guide](QUESTS.md).
+11. Open **Shop**. **Coming soon** is correct while the five offer IDs are still `0`.
+12. Check **Output** for script errors and save warnings.
 
-Below the Bakery button, **Music: ON/OFF** and **SFX: ON/OFF** control your audio independently. Try both, then verify their choices return after a persistent rejoin. See [graphics and audio setup](AUDIO.md) to use the included full café recording and WAV effects; the default build plays a lighter chime arrangement without requiring your own audio IDs.
+Beside the Bakery button, **Music ON/OFF** and **SFX ON/OFF** control your audio independently. The music is a sparse, calm **66 BPM** arrangement with a roughly **58.18-second** loop. Try both controls, then verify their choices return after a persistent rejoin. See [graphics and audio setup](AUDIO.md) to use the included full recording and WAV effects; the default build plays a quieter chime arrangement without requiring your own audio IDs.
 
-For a longer progression test, the first rebirth needs **18 recipes** and **$5 million in wallet cash plus uncollected earnings**. Cancel the confirmation once to check that nothing resets. On a confirmed rebirth, expect **5 Golden Chips**, reset cash/recipes/ovens/toppings, and preserved permanent Golden Chip upgrades. Owned passes also survive rebirth.
+For a longer progression test, expand **Bakery → Golden Chips & rebirth**. The first rebirth needs **18 recipes** and **$5 million in wallet cash plus uncollected earnings**. Cancel the confirmation once to check that nothing resets. On a confirmed rebirth, expect **5 Golden Chips**, reset cash/recipes/speed/toppings, and preserved permanent Golden Chip upgrades. Owned passes, audio preferences, and quest progress also survive rebirth. Claimed quest cash follows the normal cash reset, and completed hunts do not become repeatable.
 
 ## 7. Verify that leaving and rejoining restores progress
 
-Use a persistent session, not one labeled **STUDIO SESSION ONLY**. The best final check is in the regular Roblox app:
+Use a persistent session, not one labeled **Preview • not saved**. The best final check is in the regular Roblox app:
 
 1. In Creator Dashboard, copy your game's Roblox URL from its options menu, or open its Roblox details page.
 2. Sign in as the creator or another player with access and press the green **Play** button. This launches the Roblox app. Keep access restricted while testing.
-3. Claim a bakery, collect some cash, unlock a recipe, and buy a topping or oven upgrade.
+3. Claim a bakery, collect some cash, unlock a recipe, and buy a topping or speed upgrade. Accept a quest and find one item too.
 4. Leave some earnings uncollected too, so you can check both balances.
 5. Wait roughly **60 seconds** to allow an autosave and check the HUD for a successful saved status.
 6. Leave the game normally, then join the **same experience with the same account**.
-7. Claim any available bakery. Your wallet, saved uncollected earnings, recipes, toppings, ovens, rebirths, Golden Chips, and permanent upgrades should return.
+7. Claim any available bakery. Your wallet, saved uncollected earnings, recipes, toppings, speed levels, rebirths, Golden Chips, and permanent upgrades should return. Verify your audio choices and active quest's found items too.
 
 You must claim a plot on every visit; the plot itself is not permanently reserved. Income starts after claiming, and there is **no offline income** while logged off.
 
@@ -168,10 +169,10 @@ If the game says your bakery is still open in another server, close the other se
 1. In Studio's testing dropdown, select **Server & Clients**, choose **2** clients, then start the test.
 2. Have each player claim a different bakery.
 3. Confirm that collecting or buying on someone else's plot has no effect on their money or upgrades.
-4. Buy a topping for one player and check that the other player's cookies do not change.
-5. Have one player leave and confirm that their plot becomes available to claim.
+4. Buy a topping for one player and check that the other player's cookies do not change. Have both accept the same quest, then find an item as one player: the second player's item and progress must remain available.
+5. Reset a character and confirm it returns to its owner's bakery. Have one player leave and confirm that their plot becomes available to claim without retaining that player's progress.
 6. End the whole test session using **End Session** / **Cleanup**.
-7. Use Studio's **Device Simulator** to check the menu on a phone-sized screen. Check scrolling, workshop arrows, and touch prompts. If you plan to enable consoles, test controller input too.
+7. Use Studio's **Device Simulator** to check the menu on a phone-sized screen. Check all four tabs, scrolling, topping arrows, the collapsed Golden Chips section, step-on purchase pads, and instant prompts. If you plan to enable consoles, test controller input too.
 
 Use the published test experience with Studio API access for saved multiplayer tests. The temporary preview can also be used when API access is unavailable. With API access disabled and the fallback left false, the test players will be unable to load their profiles.
 
@@ -232,10 +233,10 @@ The speed pass speeds up baking. Bought cash resets on rebirth; permanent passes
 2. Stop any playtest before editing.
 3. If editing the production start place directly, choose **File → Publish**. If importing a new local file, choose **Publish As**, select the existing production game and its start place, and overwrite that place.
 4. Keep `CookieCorner_PlayerData_v1` and the current save code. Publishing an updated place does not itself erase player progress.
-5. In Creator Dashboard, use **Configurations → Server management → Restart Servers** and select outdated servers when the update needs everyone on the new code. In particular, restart older servers when rolling out this version's rarity/topping save format.
+5. In Creator Dashboard, use **Configurations → Server management → Restart Servers** and select outdated servers when the update needs everyone on the new code. In particular, restart older servers when rolling out this version's quest save format.
 6. Join through the Roblox app to check the published update.
 
-Earlier game versions cannot read the current version-3 save format. Do not roll back to older save code after players have saved with this build.
+The current **version-4 save envelope** accepts versions **1–3** and preserves existing progression and receipt history while adding quest state. Earlier game versions cannot read version-4 records. Keep `CookieCorner_PlayerData_v1` and do not roll back to older save code after players have saved with this build.
 
 Keep these three copies in mind:
 
@@ -256,12 +257,15 @@ Edits made only in Studio do not automatically update GitHub. A GitHub push does
 | No character or player menu | Start a player **Test/Play** session instead of **Run**. |
 | “Your bakery could not load” in Studio | Publish a separate test experience and enable Studio API access, or use the explicitly temporary preview in step 3. Read Output for the actual error. |
 | “Your bakery could not load” in the Roblox app | Check service status/errors and rejoin. The Studio API toggle does not control live-server saving. Do not delete saved data to fix access errors. |
-| “STUDIO SESSION ONLY” | Progress will not save in that temporary session. Use a persistent test experience or the Roblox app for saving checks. |
+| “Preview • not saved” / “STUDIO SESSION ONLY” | Progress will not save in that temporary session. Use a persistent test experience or the Roblox app for saving checks. |
 | “Your bakery is still open in another server” | Close other sessions, wait up to three minutes, and rejoin. |
 | “Your save needs a compatible game version” | Join a server running the latest game code; restart outdated servers. Keep the current ProfileStore and the existing DataStore name. |
 | No money is being produced | Claim a free bakery. Collect the accumulated earnings into your wallet before buying. |
 | Progress appears missing | Use the same Roblox account and experience, claim a bakery, and confirm the DataStore name has not changed. Temporary preview progress and test-experience saves are separate. |
-| The Robux Shop says “Coming soon” | Expected until you create your own offers and configure their IDs. |
+| A cookie pad does not purchase | Collect cash into your wallet, stand on your own highlighted next-cookie pad for about 0.28 seconds, and step off before trying another purchase. You cannot buy on another player's plot. |
+| Only one or two ovens appear | Expected at the start: future stations reveal in order as you unlock recipes along the belt. |
+| “Visit Baker Biscuit” on a quest button | The tracker works anywhere, but starting and claiming require being near Biscuit in the plaza. |
+| The Shop says “Coming soon” | Expected until you create your own offers and configure their IDs. |
 | Friends cannot join | Check release completion, audience permissions, friends restrictions, age/region eligibility, and the exact game-page link. |
 | A PNG is missing | Check the uploaded image ID, creator permissions, and processing/moderation status. The game can use native materials without it. |
 | The live game still has old features | Publish the intended start place, restart outdated servers, and rejoin. Saving locally or pushing GitHub alone does not publish. |
@@ -288,11 +292,14 @@ For live source editing, use `rojo serve default.project.json` with the Studio R
 - [ ] The complete place is published to the intended production start place.
 - [ ] Maximum Players is 4.
 - [ ] Claiming, baking, collecting, recipe unlocks, and toppings work.
+- [ ] Claiming and respawning place the owner beside the starter oven; one long conveyor serves every station.
+- [ ] Step-on purchases trigger once per entry and cannot spend another player's cash.
+- [ ] NPC hunts, per-player hidden items, and once-only rewards work and persist.
 - [ ] Leaving and rejoining in the Roblox app restores progress.
 - [ ] Multiplayer ownership and target-device controls have been checked.
 - [ ] The chosen audience can join through the Roblox game-page link.
 - [ ] Purchases remain disabled, or the configured offers have passed the monetization checks.
 
-The packaged place has been checked against all 17 source scripts and includes the model pack and built-in music score. The optional WAV recordings are supplied separately in the repository and free-assets ZIP; upload them and configure AudioConfig to use those recordings in Roblox. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
+The place packager verifies all **22 source scripts**, the model pack, and the built-in music score. The optional WAV recordings are supplied separately in the repository and free-assets ZIP; upload them and configure AudioConfig to use those recordings in Roblox. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
 
 Official references: [Studio installation](https://create.roblox.com/docs/studio/setup), [publishing and audience requirements](https://create.roblox.com/docs/production/publishing/publish-games-and-places), [Studio DataStore access](https://create.roblox.com/docs/cloud-services/data-stores#enable-studio-access), [testing modes](https://create.roblox.com/docs/studio/testing-modes), and [server updates](https://create.roblox.com/docs/projects/update-games). Roblox's menu labels and release requirements can change; follow the current prompts if your layout differs.

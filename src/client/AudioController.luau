@@ -46,16 +46,21 @@ function AudioController.start(player, requestAction)
 	self.musicGroup = group("Music", self.folder)
 	self.effectsGroup = group("Effects", self.folder)
 	local equalizer = Instance.new("EqualizerSoundEffect")
-	equalizer.HighGain = -8
-	equalizer.MidGain = -2
-	equalizer.Parent = self.musicGroup
+	equalizer.Name = "WarmSampler"
+	equalizer.HighGain = -40
+	equalizer.MidGain = -18
+	equalizer.LowGain = -2
+	-- Filter only the local sampler; the optional original recording is already mixed.
 	for index = 1, 20 do
 		local isMusic = index <= 12
+		local voiceSound = sound("Chime" .. index, Config.BundledChime, isMusic and self.musicGroup or self.effectsGroup, self.folder)
+		if isMusic then equalizer:Clone().Parent = voiceSound end
 		self.voices[index] = {
-			sound = sound("Chime" .. index, Config.BundledChime, isMusic and self.musicGroup or self.effectsGroup, self.folder),
+			sound = voiceSound,
 			generation = 0,
 		}
 	end
+	equalizer:Destroy()
 	for name, id in pairs(Config.Effects) do
 		local uri = assetId(id)
 		if uri then self.samples[name] = sound(name, uri, self.effectsGroup, self.folder) end
@@ -117,6 +122,7 @@ function AudioController:_stopVoices(music)
 	for index = music and 1 or 13, music and 12 or 20 do
 		local voice = self.voices[index]
 		voice.generation += 1
+		if voice.attack then voice.attack:Cancel() end
 		if voice.fade then voice.fade:Cancel() end
 		voice.sound:Stop()
 	end
@@ -135,17 +141,25 @@ function AudioController:_tone(midi, duration, volume, music)
 	local voice = self.voices[cursor]
 	voice.generation += 1
 	local generation = voice.generation
+	if voice.attack then voice.attack:Cancel() end
 	if voice.fade then voice.fade:Cancel() end
 	voice.sound:Stop()
 	voice.sound.PlaybackSpeed = 2 ^ ((midi - Config.ChimeMidi) / 12)
-	voice.sound.Volume = volume
+	voice.sound.Volume = music and 0 or volume
 	voice.sound.TimePosition = 0
 	voice.sound:Play()
-	task.delay(math.max(0.03, duration - 0.06), function()
+	if music then
+		-- Remove the ping's sharp onset and let the low notes bloom quietly.
+		voice.attack = TweenService:Create(voice.sound, TweenInfo.new(Config.MusicAttackSeconds), { Volume = volume })
+		voice.attack:Play()
+	end
+	local release = music and Config.MusicReleaseSeconds or 0.06
+	task.delay(math.max(0.03, duration - release), function()
 		if not self.alive or voice.generation ~= generation then return end
-		voice.fade = TweenService:Create(voice.sound, TweenInfo.new(0.06), { Volume = 0 })
+		if voice.attack then voice.attack:Cancel() end
+		voice.fade = TweenService:Create(voice.sound, TweenInfo.new(release), { Volume = 0 })
 		voice.fade:Play()
-		task.delay(0.07, function()
+		task.delay(release + 0.01, function()
 			if self.alive and voice.generation == generation then voice.sound:Stop() end
 		end)
 	end)

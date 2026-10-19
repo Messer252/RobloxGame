@@ -7,6 +7,9 @@ local Rewards = require("../src/shared/PurchaseRewards")
 local Crafting = require("../src/shared/CookieCrafting")
 local Score = require("../src/shared/MusicScore")
 local AudioConfig = require("../src/shared/AudioConfig")
+local Challenges = require("../src/shared/Challenges")
+local ChallengeCatalog = require("../src/shared/ChallengeCatalog")
+local Layout = require("../src/shared/ConveyorLayout")
 local passed, failed = 0, 0
 
 local function equal(actual, expected)
@@ -506,7 +509,7 @@ test("legacy saves migrate without losing cash or progress and acquire an empty 
 	local profile = assert(manager:Load(20, "server-A"))
 	same(profile.data, data)
 	same(profile.receipts, {})
-	equal(store.records.Player_20.Version, 3)
+	equal(store.records.Player_20.Version, ProfileStore.CURRENT_VERSION)
 end)
 
 test("one atomic receipt write saves the reward and purchase ID before success", function()
@@ -832,7 +835,7 @@ test("per-recipe topping purchases and their increased values restore after leav
 	equal(restored.data.modifiers["11"].Sprinkles, true)
 	equal(restored.data.modifiers["1"].Sprinkles, nil)
 	equal(Progression.recipeValue(restored.data, 11), value)
-	equal(store.records.Player_40.Version, 3)
+	equal(store.records.Player_40.Version, ProfileStore.CURRENT_VERSION)
 end)
 
 test("rebirth clears recipe modifiers but preserves Golden Chips, upgrades, and verified perks", function()
@@ -850,7 +853,7 @@ test("rebirth clears recipe modifiers but preserves Golden Chips, upgrades, and 
 	equal(Progression.recipeValue(data, 1, perks), 17)
 end)
 
-test("version-2 purchase saves migrate to version 3 with receipt history intact", function()
+test("version-2 purchase saves migrate to the current format with receipt history intact", function()
 	local store = fakeStore()
 	local data = Progression.newData()
 	data.cash, data.unlocked, data.modifiers = 4567, 7, nil
@@ -862,7 +865,7 @@ test("version-2 purchase saves migrate to version 3 with receipt history intact"
 	same(profile.data.modifiers, {})
 	assert(manager:GrantReceipt(profile, "old-paid-bundle", 123, grantCash))
 	equal(profile.data.cash, 4567)
-	equal(store.records.Player_41.Version, 3)
+	equal(store.records.Player_41.Version, ProfileStore.CURRENT_VERSION)
 end)
 
 test("uncertain paid cash commits preserve crafted recipes when reconciled and rejoined", function()
@@ -951,14 +954,14 @@ test("a paid cash transaction retains saved audio choices and its receipt", func
 end)
 
 test("music and action cues have bounded pitches, levels, and ordered timing", function()
-	assert(Score.BPM >= 60 and Score.BPM <= 140)
+	assert(Score.BPM >= 60 and Score.BPM <= 72)
 	equal(Score.Beats, 64)
-	assert(#Score.Notes > 100)
+	assert(#Score.Notes >= 24 and #Score.Notes <= 64)
 	local last = -1
 	for _, note in ipairs(Score.Notes) do
 		assert(note[1] >= last and note[1] < Score.Beats)
-		assert(note[2] >= 36 and note[2] <= 96)
-		assert(note[3] > 0 and note[3] <= 4)
+		assert(note[2] >= 36 and note[2] <= 67)
+		assert(note[3] > 0 and note[3] <= 8)
 		assert(note[4] > 0 and note[4] <= 1)
 		last = note[1]
 	end
@@ -972,6 +975,196 @@ test("music and action cues have bounded pitches, levels, and ordered timing", f
 			last = note[1]
 		end
 	end
+end)
+
+test("one straight belt contains all 30 compact stations inside the bakery", function()
+	equal(Layout.StationCount, #Recipes)
+	local belt = Layout.belt()
+	equal(belt.x, 0)
+	equal(belt.length, Layout.BeltFrontZ - Layout.BeltBackZ)
+	assert(belt.length <= 240 and belt.width > 3.55)
+	local previous
+	for index = 1, #Recipes do
+		local station = assert(Layout.station(index))
+		assert(station.z >= Layout.BeltBackZ and station.z <= Layout.BeltFrontZ)
+		assert(math.abs(station.x) + 14.5 * station.scale / 2 < 82)
+		if previous then
+			equal(station.x, previous.x)
+			near(previous.z - station.z, Layout.StationSpacing)
+			assert(Layout.StationSpacing > 14.5 * station.scale)
+		end
+		previous = station
+	end
+	equal(Layout.station(0), nil)
+	equal(Layout.station(31), nil)
+	equal(Layout.station(1.2), nil)
+	assert(Layout.MaxVisualCookies <= 12)
+end)
+
+test("the starter oven and first paid recipe are beside personal spawn", function()
+	local first, nextRecipe = Layout.station(1), Layout.station(2)
+	local function distance(x, z)
+		return math.sqrt((x - Layout.SpawnX) ^ 2 + (z - Layout.SpawnZ) ^ 2)
+	end
+	assert(distance(first.x, first.z) <= 9)
+	assert(distance(nextRecipe.padX, nextRecipe.z) <= 9)
+end)
+
+test("pad footprint validation rejects nearby, flying, and out-of-bounds feet", function()
+	assert(Layout.insidePad(0, 0, 0, 5, 2))
+	assert(Layout.insidePad(2.4, 0.8, 0.9, 5, 2))
+	assert(not Layout.insidePad(2.6, 0, 0, 5, 2))
+	assert(not Layout.insidePad(0, 0, 1.1, 5, 2))
+	assert(not Layout.insidePad(0, 3, 0, 5, 2))
+	assert(not Layout.insidePad(0, -3, 0, 5, 2))
+end)
+
+test("step-on purchasing waits briefly and fires at most once per pad entry", function()
+	local state, fired = Layout.step(nil, 0, true, true)
+	assert(not fired)
+	state, fired = Layout.step(state, Layout.StepDwell / 2, true, true)
+	assert(not fired)
+	state, fired = Layout.step(state, Layout.StepDwell, true, true)
+	assert(fired)
+	for tick = 1, 5 do
+		state, fired = Layout.step(state, Layout.StepDwell + tick, true, true)
+		assert(not fired)
+	end
+	state, fired = Layout.step(state, 9, false, true)
+	equal(state, nil)
+	assert(not fired)
+	state = Layout.step(state, 10, true, true)
+	state, fired = Layout.step(state, 10 + Layout.StepDwell + .01, true, true)
+	assert(fired)
+end)
+
+test("unavailable step pads never buy and can buy once funds become available", function()
+	local state = Layout.step(nil, 0, true, false)
+	local fired
+	state, fired = Layout.step(state, 1, true, false)
+	assert(not fired)
+	state, fired = Layout.step(state, 2, true, true)
+	assert(fired)
+	state, fired = Layout.step(state, 3, true, true)
+	assert(not fired)
+end)
+
+test("a server-throttled pad attempt retries but a successful purchase stays latched", function()
+	local state = Layout.step(nil, 0, true, true)
+	local fired
+	state, fired = Layout.step(state, 1, true, true)
+	assert(fired)
+	state = Layout.resolveStep(state, false)
+	state, fired = Layout.step(state, 1.2, true, false) -- Controller cooldown is still active.
+	assert(not fired)
+	state, fired = Layout.step(state, 2, true, true)
+	assert(fired)
+	state = Layout.resolveStep(state, true)
+	state, fired = Layout.step(state, 3, true, true)
+	assert(not fired)
+	equal(Layout.resolveStep(nil, false), nil)
+end)
+
+test("conveyor movement speeds up with production upgrades and remains bounded", function()
+	local far = Layout.station(30).z
+	local data = Progression.newData()
+	local initial = Layout.travelDuration(far, Progression.interval(data))
+	data.cash = 500
+	assert(Progression.upgradeOven(data))
+	local upgraded = Layout.travelDuration(far, Progression.interval(data))
+	assert(upgraded < initial)
+	local pass = Layout.travelDuration(far, Progression.interval(data, { DoubleSpeed = true }))
+	assert(pass < upgraded)
+	assert(Layout.travelDuration(Layout.BeltFrontZ, 0.2) >= 0.65)
+	assert(Layout.travelDuration(Layout.BeltBackZ, 999) <= 9.5)
+end)
+
+require("./challenges")(test, equal)
+
+test("version-3 saves retain money, toppings, audio, and receipt history when quests migrate", function()
+	local store = fakeStore()
+	local data = Progression.newData()
+	data.cash, data.bank, data.unlocked, data.level = 1400, 70, 4, 2
+	data.modifiers["1"] = { Glaze = true }
+	data.audio.music = false
+	data.challenges = nil
+	store.records.Player_820 = { Version = 3, Data = data, Receipts = { earlier = 9123 } }
+	local manager = harness(store)
+	local profile = assert(manager:Load(820, "quest-migration"))
+	equal(profile.data.cash, 1400)
+	equal(profile.data.bank, 70)
+	equal(profile.data.unlocked, 4)
+	equal(profile.data.level, 2)
+	equal(profile.data.modifiers["1"].Glaze, true)
+	equal(profile.data.audio.music, false)
+	equal(profile.data.challenges.index, 1)
+	equal(profile.data.challenges.active, false)
+	equal(profile.receipts.earlier, 9123)
+	equal(store.records.Player_820.Version, 4)
+end)
+
+test("partial discoveries restore after rejoin and the hunt reward cannot be replayed", function()
+	local store = fakeStore()
+	local manager = harness(store)
+	local profile = assert(manager:Load(821, "hunt-first"))
+	assert(Challenges.interact(profile.data, Progression.MAX_CASH))
+	local first = ChallengeCatalog.Challenges[1]
+	assert(Challenges.find(profile.data, first.Items[1]))
+	assert(manager:Save(profile, true))
+	profile = assert(manager:Load(821, "hunt-return"))
+	equal(Challenges.count(profile.data.challenges), 1)
+	assert(not Challenges.find(profile.data, first.Items[1]))
+	for index = 2, #first.Items do assert(Challenges.find(profile.data, first.Items[index])) end
+	assert(Challenges.interact(profile.data, Progression.MAX_CASH))
+	equal(profile.data.cash, first.Reward)
+	equal(profile.data.challenges.index, 2)
+	assert(manager:Save(profile, true))
+	profile = assert(manager:Load(821, "hunt-claimed"))
+	assert(Challenges.interact(profile.data, Progression.MAX_CASH)) -- Starts hunt 2; awards nothing.
+	equal(profile.data.cash, first.Reward)
+	assert(not Challenges.find(profile.data, first.Items[1]))
+	assert(not Challenges.interact(profile.data, Progression.MAX_CASH))
+	equal(profile.data.cash, first.Reward)
+end)
+
+test("rebirth keeps current hunt discoveries and earlier completion", function()
+	local data = Progression.newData()
+	assert(Challenges.interact(data, Progression.MAX_CASH))
+	for _, id in ipairs(ChallengeCatalog.Challenges[1].Items) do assert(Challenges.find(data, id)) end
+	assert(Challenges.interact(data, Progression.MAX_CASH))
+	assert(Challenges.interact(data, Progression.MAX_CASH))
+	local item = ChallengeCatalog.Challenges[2].Items[1]
+	assert(Challenges.find(data, item))
+	data.cash, data.unlocked = 5000000, 18
+	assert(Progression.rebirth(data))
+	equal(data.challenges.index, 2)
+	equal(data.challenges.active, true)
+	equal(data.challenges.found[item], true)
+	equal(Challenges.count(data.challenges), 1)
+end)
+
+test("uncertain cash receipts preserve hunt progress during reconciliation", function()
+	local store = fakeStore()
+	local manager = harness(store)
+	local profile = assert(manager:Load(822, "quest-receipt"))
+	assert(Challenges.interact(profile.data, Progression.MAX_CASH))
+	local item = ChallengeCatalog.Challenges[1].Items[1]
+	assert(Challenges.find(profile.data, item))
+	store.commitErrorsRemaining = 3
+	local function grant(data)
+		data.cash += 10000
+		return true
+	end
+	assert(not manager:GrantReceipt(profile, "quest-paid-once", 9123, grant))
+	assert(profile.transacting)
+	assert(manager:GrantReceipt(profile, "quest-paid-once", 9123, grant))
+	equal(profile.data.cash, 10000)
+	equal(profile.data.challenges.found[item], true)
+	assert(manager:Save(profile, true))
+	profile = assert(manager:Load(822, "quest-receipt-rejoin"))
+	equal(profile.data.cash, 10000)
+	equal(profile.data.challenges.found[item], true)
+	equal(profile.receipts["quest-paid-once"], 9123)
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

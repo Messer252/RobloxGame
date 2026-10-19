@@ -1,15 +1,15 @@
 {
   "license": "CC0-1.0",
   "title": "Cookie Corner Caf\u00e9",
-  "bpm": 90,
+  "bpm": 66,
   "beats": 64,
   "files": [
     {
       "file": "CookieCornerCafe.wav",
-      "seconds": 42.66665625,
+      "seconds": 58.1818125,
       "sampleRate": 32000,
       "channels": 2,
-      "sha256": "a54e23c4a1711eededd256cee979324d88d66a3da99c3ace3167cab1f3a49dff"
+      "sha256": "d0f0fb551abf39293b0f1590de727777c4b763f6442cc21434e7ede558af1153"
     },
     {
       "file": "Click.wav",

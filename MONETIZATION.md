@@ -11,9 +11,9 @@ Under **Monetization → Passes**, create these two passes and put them on sale 
 | Pass | What the player receives | Code entry |
 | --- | --- | --- |
 | 2x Cookie Income | Permanent 2× cookie production earnings; stacks with rarity, toppings, Golden Batter, and rebirth bonuses | `Passes.DoubleIncome.Id` |
-| 2x Baking Speed | Permanent 2× oven production speed; works even with fully upgraded ovens | `Passes.DoubleSpeed.Id` |
+| 2x Baking Speed | Permanent 2× production speed along the conveyor; works even with fully upgraded baking speed | `Passes.DoubleSpeed.Id` |
 
-These are one-time purchases. The speed pass affects **cookie baking**, not walking speed. Neither pass doubles purchased cash bundles or Golden Chip rewards. Both stay owned through rebirth and rejoin.
+These are one-time purchases. The speed pass affects **cookie production frequency**, not walking speed or cookie travel time. Neither pass doubles purchased cash bundles, quest cash rewards, or Golden Chip rewards. Both stay owned through rebirth and rejoin.
 
 Under **Monetization → Developer Products**, create these three products and set prices you choose:
 
@@ -54,7 +54,7 @@ If you edit the files through Rojo/GitHub, sync them into Studio with Rojo or re
 ## 3. Publish and check the shop
 
 1. Publish the updated place to **the same experience that owns the offers**. Restart old servers when rolling out this version.
-2. Join the game, open **Bakery • Workshop • Robux Shop**, then select **Robux Shop**. Configured offers should show prices fetched from Roblox. Unconfigured offers stay **Coming soon**.
+2. Join the game, open **Bakery**, then select the **Shop** tab. Configured offers should show prices fetched from Roblox. Unconfigured offers stay **Coming soon**. The compact sections identify passes as **KEEP FOREVER** and cash as **RESETS ON REBIRTH**.
 3. The game fetches prices on each player's client, supporting Roblox's regional/personalized pricing. The native Roblox purchase window shows the final price and asks for confirmation. Set and change Robux prices in Creator Dashboard; there are no hardcoded Robux prices in the scripts.
 4. In a separate published test experience, configure test offers belonging to that experience and check the native purchase flow before enabling production sales. Purchases in the live Roblox client can spend real Robux. Use Roblox's available testing tools/modes when checking prompts in Studio; do not treat a closed prompt as proof that a receipt or live entitlement was delivered.
 
@@ -79,7 +79,7 @@ These engine/transaction checks require Roblox. Cloud validation uses the in-mem
 
 `ProfileStore` saves the cash grant and purchase ID **together in one `UpdateAsync`**. Only a durable grant is acknowledged to Roblox. Receipts are deduplicated across retries, rebirths, and reconnects. Session tokens protect against an old server overwriting a newer session. If a write's result is uncertain, the purchase callback retries locally and freezes ordinary economy changes/saves until it reconciles. On departure, it leaves an uncertain record intact instead of replacing it with pre-purchase cash. A server crash may require a rejoin after the existing session lease expires.
 
-The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Existing version-1 and version-2 records migrate to the **version-3 save envelope**, retaining receipt history and adding per-recipe topping data while preserving progression. Earlier game versions cannot open version-3 records; keep the new ProfileStore when updating the game. Do not roll back to the original save code after enabling purchases.
+The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Existing version-1, version-2, and version-3 records migrate to the **version-4 save envelope**, retaining receipt history, progression, toppings, and audio preferences while adding quest state. Restart outdated servers when publishing this update: earlier game versions cannot open version-4 records. Keep the new ProfileStore and existing DataStore name; do not roll back to older save code after enabling purchases.
 
 Passes use Roblox's verified server ownership APIs and purchase events. Ownership is checked on join and retried after failures; **Refresh shop** requests another check. A pass purchased outside the running server may need Roblox's cache to update or a rejoin before it appears.
 

@@ -7,9 +7,11 @@ local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Progression = require(shared.Progression)
 local Recipes = require(shared.Recipes)
 local Crafting = require(shared.CookieCrafting)
+local Challenges = require(shared.Challenges)
 local ProfileStore = require(script.ProfileStore)
 local Settings = require(script.Settings)
 local World = require(script.World)
+local ChallengeWorld = require(script.ChallengeWorld)
 local CommerceServer = require(script.CommerceServer)
 
 local remotes = Instance.new("Folder")
@@ -60,6 +62,10 @@ local function sync(player, state)
 	player:SetAttribute("GoldenChips", data.chips)
 	player:SetAttribute("MusicEnabled", data.audio.music)
 	player:SetAttribute("EffectsEnabled", data.audio.effects)
+	player:SetAttribute("ChallengeIndex", data.challenges.index)
+	player:SetAttribute("ChallengeActive", data.challenges.active)
+	player:SetAttribute("ChallengeFound", Challenges.encode(data.challenges))
+	player:SetAttribute("ChallengeComplete", Challenges.isComplete(data.challenges))
 	for key, level in pairs(data.permanent) do player:SetAttribute(key .. "Level", level) end
 	for index = 1, #Recipes do
 		player:SetAttribute("RecipeModifiers_" .. index, Crafting.encode(data.modifiers[tostring(index)]))
@@ -107,11 +113,29 @@ local commerce = CommerceServer.start({
 	end,
 }, requestPurchase, refreshPasses)
 
-local allowedActions = { Collect = true, BuyRecipe = true, BuyModifier = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true, SetAudioPreferences = true }
+local allowedActions = { Collect = true, BuyRecipe = true, BuyModifier = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true, SetAudioPreferences = true, ChallengeAction = true }
 local function onAction(player, action, argument, sourcePlot)
 	if type(action) ~= "string" or not allowedActions[action] then return end
 	local state = usable(player)
 	if not state then return end
+	if action == "ChallengeAction" then
+		local now = os.clock()
+		if now - (state.lastChallengeAction or -math.huge) < 0.5 then return end
+		state.lastChallengeAction = now
+		if not ChallengeWorld.IsNearNPC(player) then
+			notify(player, "Visit Baker Biscuit in the plaza to start or finish a hunt.")
+			return
+		end
+		local success, message, reward = Challenges.interact(state.data, Progression.MAX_CASH)
+		if success then
+			sync(player, state)
+			if state.plot then World.updateBank(state.plot, state.data) end
+			state.nextSave = math.min(state.nextSave, now + 2)
+			feedback:FireClient(player, (reward or 0) > 0 and "Collect" or "Claim")
+		end
+		if message then notify(player, message) end
+		return
+	end
 	if action == "SetAudioPreferences" then
 		if type(argument) ~= "table" or type(argument.music) ~= "boolean" or type(argument.effects) ~= "boolean" then return end
 		local now = os.clock()
@@ -164,6 +188,7 @@ local function onAction(player, action, argument, sourcePlot)
 	end
 	if not success and message then feedback:FireClient(player, "Error") end
 	if message then notify(player, message) end
+	return success == true
 end
 
 World.create(function(player, plot)
@@ -179,6 +204,7 @@ World.create(function(player, plot)
 	state.nextBake = os.clock() + Progression.interval(state.data, state.perks)
 	player:SetAttribute("HasBakery", true)
 	World.refresh(plot, state.data, state.perks)
+	task.spawn(World.spawnPlayer, player, plot)
 	feedback:FireClient(player, "Claim")
 	notify(player, "Bakery claimed! Your saved recipes and upgrades are restored.")
 end, onAction, function(player, plot)
@@ -187,6 +213,19 @@ end, onAction, function(player, plot)
 end, function(player, plot)
 	local state = usable(player)
 	if state and state.plot == plot and plot.owner == player then openShop:FireClient(player, "Workshop") end
+end)
+
+ChallengeWorld.create(workspace:WaitForChild("CookieTycoonWorld"), function(player)
+	if usable(player) then openShop:FireClient(player, "Challenges") end
+end, function(player, itemId)
+	local state = usable(player)
+	if not state then return end
+	local success, message = Challenges.find(state.data, itemId)
+	if not success then return end
+	sync(player, state)
+	state.nextSave = math.min(state.nextSave, os.clock() + 2)
+	feedback:FireClient(player, "BuyModifier")
+	notify(player, message)
 end)
 
 requestAction.OnServerEvent:Connect(function(player, action, argument)
@@ -199,6 +238,7 @@ local function addPlayer(player)
 	player:SetAttribute("DataReady", false)
 	player:SetAttribute("DataStatus", "Loading")
 	player:SetAttribute("HasBakery", false)
+	player:SetAttribute("NearChallengeNPC", false)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
 	stats.Parent = player
@@ -236,6 +276,9 @@ local function addPlayer(player)
 		nextSave = os.clock() + Settings.AutosaveSeconds + math.random() * 5,
 	}
 	sessions[player] = state
+	state.characterConnection = player.CharacterAdded:Connect(function()
+		if not state.closing and state.plot then task.spawn(World.spawnPlayer, player, state.plot) end
+	end)
 	pendingLoads[player] = nil
 	sync(player, state)
 	player:SetAttribute("DataStatus", profile.sessionOnly and "SessionOnly" or "Saved")
@@ -248,9 +291,11 @@ local function closePlayer(player)
 	local state = sessions[player]
 	if not state or state.closing then return end
 	state.closing = true
+	if state.characterConnection then state.characterConnection:Disconnect() end
 	player:SetAttribute("DataReady", false)
 	if state.plot then
 		local plot = state.plot
+		World.releasePlayer(player, plot)
 		state.plot = nil
 		plot.owner = nil
 		World.refresh(plot, nil)
@@ -264,9 +309,13 @@ Players.PlayerRemoving:Connect(closePlayer)
 for _, player in ipairs(Players:GetPlayers()) do task.spawn(addPlayer, player) end
 
 task.spawn(function()
+	local nextNPCCheck = 0
 	while not shuttingDown do
 		local now = os.clock()
+		local checkNPC = now >= nextNPCCheck
+		if checkNPC then nextNPCCheck = now + 0.5 end
 		for player, state in pairs(sessions) do
+			if checkNPC and not state.closing then player:SetAttribute("NearChallengeNPC", ChallengeWorld.IsNearNPC(player)) end
 			if usable(player) and state.plot and now >= state.nextBake then
 				local interval = Progression.interval(state.data, state.perks)
 				local batches = math.min(5, math.floor((now - state.nextBake) / interval) + 1)

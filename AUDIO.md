@@ -15,7 +15,7 @@ Music waits for the profile to load, so a returning player who muted it does not
 
 ## Included original audio
 
-`assets/audio` contains an original **42.67-second, 90 BPM** café loop and nine short cues. The recording combines soft keys, a bell melody, bass, and quiet percussion. All recordings are stereo 32 kHz, 16-bit PCM WAV files under Roblox's upload limits. The music has a continuous loop boundary.
+`assets/audio` contains an original **58.18-second, 66 BPM** café loop and nine short cues. Its 36-note score combines warm sustained chords, low bass, and occasional soft keys, with space between phrases. There is no percussion or busy bell pattern. All recordings are stereo 32 kHz, 16-bit PCM WAV files under Roblox's upload limits. The music has a continuous loop boundary.
 
 | File | Use |
 | --- | --- |
@@ -34,13 +34,15 @@ The composition and recordings are original and **CC0**, including commercial us
 
 ## Playback before uploading audio
 
-All audio asset IDs start at `0`. In that configuration, the client plays a lighter arrangement of the original melody and bass, plus the action cues, by pitching Roblox's bundled `electronicpingshort.wav` chime. That arrangement uses the same musical score but does not reproduce the mixed WAV's instruments or percussion.
+All audio asset IDs start at `0`. In that configuration, the client plays the sparse music score and action cues by pitching Roblox's bundled `electronicpingshort.wav` chime. The music uses lower notes, a quiet volume, a gentle fade-in, and strong treble filtering to soften the sample's sharp attack. The filter applies only to background sampler voices; the nine action cues retain their short, distinct sounds.
+
+This softened default works immediately without uploading anything. It follows the same 36-note score, although a pitched sample cannot reproduce the recording's warm sustained instruments.
 
 The game references the chime installed with Roblox; it does not redistribute that sample. No Creator Store music IDs or private third-party audio are required. If a client cannot load the bundled chime, upload the supplied recordings as described below. The game continues running if audio cannot load.
 
 ## Use the full mixed recording in Roblox
 
-Uploading the music once gives the game the full keys/bass/percussion version. You can upload the sound effects too, or keep their default chime arrangement.
+Uploading the music once gives the game the full warm keys, sustained chords, and bass recording. You can upload the sound effects too, or keep their default chime arrangement. The Music ON/OFF and SFX ON/OFF preferences work with either playback method.
 
 1. Download the included WAV files from `assets/audio` on GitHub, or extract the updated free-assets ZIP supplied in the chat.
 2. Open the **published** experience in Studio, then open **Asset Manager** from **Window** or **Home**.
@@ -59,7 +61,7 @@ Uploading the music once gives the game the full keys/bass/percussion version. Y
 8. For each uploaded sound effect, replace the matching zero under `Effects` with its audio asset ID. For example, `Collect.wav` maps to `Effects.Collect`. Leave other entries at `0` to keep their default arrangement.
 9. Publish to the same experience, start a new session, and check playback. A configured recording is used once it loads; the chime arrangement covers playback while an uploaded recording is unavailable.
 
-You can adjust `MusicVolume` and `EffectsVolume` in AudioConfig; values between `0` and `1` are sensible starting points. Changing `ChimeMidi` retunes only the built-in sampler. Roblox's master volume still applies to everything.
+You can adjust `MusicVolume` and `EffectsVolume` in AudioConfig; values between `0` and `1` are sensible starting points. Music defaults to `0.24`. `MusicAttackSeconds` (`0.18`) and `MusicReleaseSeconds` (`0.35`) soften the built-in music sampler; they do not alter uploaded recordings or sound effects. Changing `ChimeMidi` retunes the built-in sampler. Roblox's master volume still applies to everything.
 
 No audio has been uploaded to your Roblox account on your behalf. A `.wav` on GitHub or your computer cannot be played directly by a published Roblox game; uploaded recordings need Roblox asset IDs and experience permissions.
 
@@ -70,7 +72,7 @@ No audio has been uploaded to your Roblox account on your behalf. A `.wav` on Gi
 - `src/client/init.client.luau`: HUD styling, audio buttons, menu animation, and reward bursts.
 - `src/client/AudioController.luau`: local music scheduling, voice pools, cues, mute controls, and preference submission.
 - `src/shared/AudioConfig.luau`: uploaded audio IDs, volumes, and bundled sample tuning.
-- `src/shared/MusicScore.luau`: generated melody/bass and cue timing.
+- `src/shared/MusicScore.luau`: generated sparse chord/melody score and cue timing.
 - `tools/build_audio.py`: original composition and synthesis; run with Python 3 and NumPy to regenerate the recordings and Luau score.
 
 Audio is local to each client. Music and SFX have separate SoundGroups. The sampler reuses a fixed pool of 12 music voices and 8 effect voices, skips stale notes after a frame stall, and cancels queued cues when effects are muted. One music scheduler is used per player; toggling does not start extra loops.

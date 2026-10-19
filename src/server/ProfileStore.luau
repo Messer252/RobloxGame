@@ -2,9 +2,13 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
+-- Version 4 retains scavenger-hunt completion, preventing older code from
+-- discarding its reward history. Existing versions migrate without a new store.
+ProfileStore.CURRENT_VERSION = 4
 
 local function validRecord(current)
-	if type(current) ~= "table" or (current.Version ~= 1 and current.Version ~= 2 and current.Version ~= 3) or type(current.Data) ~= "table" then return false end
+	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0
+		or current.Version < 1 or current.Version > ProfileStore.CURRENT_VERSION or type(current.Data) ~= "table" then return false end
 	if current.Receipts ~= nil and type(current.Receipts) ~= "table" then return false end
 	if current.Version >= 2 and current.Receipts == nil then return false end
 	for id, productId in pairs(current.Receipts or {}) do
@@ -64,7 +68,7 @@ function ProfileStore:Load(userId, token)
 			end
 		end
 		return {
-			Version = 3,
+			Version = ProfileStore.CURRENT_VERSION,
 			Data = self.copy(current and current.Data),
 			Receipts = receiptsCopy(current and current.Receipts),
 			Session = { Id = token, ExpiresAt = self.clock() + self.lease },
@@ -100,7 +104,7 @@ function ProfileStore:Save(profile, release)
 			return nil
 		end
 		return {
-			Version = 3, Data = snapshot, Receipts = receiptsCopy(current.Receipts),
+			Version = ProfileStore.CURRENT_VERSION, Data = snapshot, Receipts = receiptsCopy(current.Receipts),
 			Session = if release then nil else { Id = profile.token, ExpiresAt = self.clock() + self.lease },
 			UpdatedAt = self.clock(),
 		}
@@ -160,7 +164,7 @@ function ProfileStore:GrantReceipt(profile, receiptId, productId, grant)
 			ledger[receiptId] = productId
 		end
 		return {
-			Version = 3, Data = data, Receipts = ledger,
+			Version = ProfileStore.CURRENT_VERSION, Data = data, Receipts = ledger,
 			Session = { Id = profile.token, ExpiresAt = self.clock() + self.lease }, UpdatedAt = self.clock(),
 		}
 	end)

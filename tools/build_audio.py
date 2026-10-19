@@ -1,7 +1,7 @@
 """Compose and synthesize original CC0 café music and game cues.
 
 Python 3 + NumPy. No recordings, downloaded samples, or external instruments.
-The same score is exported to Luau for the game's built-in chime arrangement.
+The same sparse score is exported to Luau for the game's softened local sampler.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "assets/audio"
 RATE = 32000
-BPM = 90
+BPM = 66
 BEATS = 64
 SECONDS_PER_BEAT = 60 / BPM
 
@@ -34,28 +34,20 @@ CUES = {
 
 
 def score():
-    # Cmaj7 / Am7 / Fmaj7 / G6, with an original two-phrase melody.
-    chords = [(48, 60, 64, 67, 71), (45, 57, 60, 64, 67),
-              (41, 57, 60, 64, 69), (43, 55, 59, 62, 67)]
-    melody = [
-        (76, 79, 83, 79, 76, 74), (72, 76, 79, 76, 74, 72),
-        (77, 81, 84, 81, 79, 76), (74, 79, 83, 81, 79, 74),
-        (79, 83, 86, 83, 79, 76), (76, 79, 84, 83, 79, 76),
-        (77, 81, 84, 86, 84, 81), (79, 74, 71, 74, 76, 79),
-        (76, 79, 84, 83, 79, 76), (72, 76, 81, 79, 76, 72),
-        (77, 81, 84, 81, 79, 77), (74, 79, 83, 86, 83, 79),
-        (79, 83, 84, 83, 79, 76), (76, 79, 81, 79, 76, 72),
-        (77, 81, 79, 77, 76, 74), (74, 71, 67, 71, 74, 79),
-    ]
+    # Warm C / Am / F / G voicings change only once every eight beats.
+    # No percussion or bright bell ostinato: leave space between gentle phrases.
+    chords = [(48, 55, 64), (45, 52, 60), (41, 48, 57), (43, 50, 59)]
+    melody = [67, 64, 65, 62, 64, 60, 65, 62]
     notes = []
-    for bar in range(16):
-        beat = bar * 4
-        root, *voicing = chords[bar % 4]
-        for offset, pitch in enumerate(voicing):
-            notes.append((beat + offset * .035, pitch, 3.6, .16, "keys"))
-        notes.extend([(beat, root, 1.3, .30, "bass"), (beat + 2, root + 7, 1.1, .23, "bass")])
-        for offset, pitch in zip((.5, 1, 1.5, 2.5, 3, 3.5), melody[bar]):
-            notes.append((beat + offset, pitch, .42 if offset != 3.5 else .48, .30, "bell"))
+    for phrase in range(8):
+        beat = phrase * 8
+        root, fifth, third = chords[phrase % 4]
+        notes.extend([(beat, root, 6.0, .24, "bass"),
+                      (beat + .14, fifth, 5.7, .18, "keys"),
+                      (beat + .30, third, 5.4, .15, "keys"),
+                      (beat + 3.8, melody[phrase], 1.7, .17, "keys")])
+        if phrase % 2 == 0:
+            notes.append((beat + 6.0, third, 1.3, .12, "keys"))
     return sorted(notes)
 
 
@@ -63,17 +55,17 @@ def tone(midi, seconds, instrument):
     t = np.arange(max(1, round(seconds * RATE))) / RATE
     hz = 440 * 2 ** ((midi - 69) / 12)
     if instrument == "bass":
-        signal = np.sin(2 * np.pi * hz * t) + .18 * np.sin(2 * np.pi * hz * 2 * t)
-        envelope = (1 - np.exp(-t * 70)) * np.exp(-t * 3.5)
+        signal = np.sin(2 * np.pi * hz * t) + .09 * np.sin(2 * np.pi * hz * 2 * t)
+        envelope = (1 - np.exp(-t * 5)) * np.exp(-t * .38)
     elif instrument == "keys":
-        signal = (np.sin(2 * np.pi * hz * t) + .22 * np.sin(2 * np.pi * hz * 2 * t)
-                  + .08 * np.sin(2 * np.pi * hz * 3 * t))
-        envelope = (1 - np.exp(-t * 90)) * np.exp(-t * 1.8)
+        signal = (np.sin(2 * np.pi * hz * t) + .12 * np.sin(2 * np.pi * hz * 2 * t)
+                  + .025 * np.sin(2 * np.pi * hz * 3 * t))
+        envelope = (1 - np.exp(-t * 9)) * np.exp(-t * .65)
     else:
         signal = (np.sin(2 * np.pi * hz * t) + .24 * np.sin(2 * np.pi * hz * 2 * t) * np.exp(-t * 10)
                   + .06 * np.sin(2 * np.pi * hz * 3 * t))
         envelope = (1 - np.exp(-t * 220)) * np.exp(-t * 5)
-    release = np.minimum(1, (seconds - t) / .035)
+    release = np.minimum(1, (seconds - t) / (.4 if instrument in ("bass", "keys") else .035))
     return signal * envelope * np.maximum(0, release)
 
 
@@ -111,19 +103,8 @@ def main():
     buffer = np.zeros((round(BEATS * SECONDS_PER_BEAT * RATE), 2))
     for beat, midi, length, gain, instrument in notes:
         sample = tone(midi, length * SECONDS_PER_BEAT, instrument)
-        pan = -.18 if instrument == "keys" else .18 if instrument == "bell" else 0
+        pan = -.12 if instrument == "keys" else 0
         add(buffer, sample, beat * SECONDS_PER_BEAT, gain, pan, wrap=True)
-        if instrument == "bell":
-            add(buffer, sample, (beat + .75) * SECONDS_PER_BEAT, gain * .16, -pan, wrap=True)
-    rng = np.random.default_rng(127)
-    for beat in range(BEATS):
-        t = np.arange(round(.22 * RATE)) / RATE
-        kick = np.sin(2 * np.pi * (48 * t + 55 * (1 - np.exp(-t * 35)) / 35)) * np.exp(-t * 24)
-        add(buffer, kick, beat * SECONDS_PER_BEAT, .10 if beat % 2 == 0 else .055, wrap=True)
-        t = np.arange(round(.07 * RATE)) / RATE
-        noise = rng.uniform(-1, 1, len(t))
-        hat = (noise - np.roll(noise, 1)) * np.exp(-t * 70)
-        add(buffer, hat, (beat + .5) * SECONDS_PER_BEAT, .016, .3, wrap=True)
     records = [write_wav("CookieCornerCafe.wav", buffer)]
     for name, cue in CUES.items():
         length = max(start + duration for start, _, duration, _ in cue) + .12
@@ -134,10 +115,7 @@ def main():
 
     module = ["-- Generated by tools/build_audio.py; original CC0 composition.", "return {",
               f"\tBPM = {BPM},", f"\tBeats = {BEATS},", "\tNotes = {"]
-    for beat, midi, length, gain, instrument in notes:
-        # The bundled sampler is deliberately sparser than the mixed recording.
-        if instrument == "keys":
-            continue
+    for beat, midi, length, gain, _ in notes:
         module.append(f"\t\t{{ {beat:g}, {midi}, {length:g}, {gain:g} }},")
     module.extend(["\t},", "\tCues = {"])
     for name, cue in CUES.items():

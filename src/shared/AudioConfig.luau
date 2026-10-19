@@ -1,9 +1,11 @@
 -- Optional: upload assets/audio/*.wav to Roblox and enter YOUR audio asset IDs.
--- Zero uses a local arrangement of MusicScore played with a bundled Roblox chime.
+-- Zero uses a sparse, softened local arrangement; no audio uploads are required.
 -- Uploaded audio must be approved and permitted for this experience.
 return {
 	MusicAssetId = 0,
-	MusicVolume = 0.34,
+	MusicVolume = 0.24,
+	MusicAttackSeconds = 0.18,
+	MusicReleaseSeconds = 0.35,
 	EffectsVolume = 0.55,
 	BundledChime = "rbxasset://sounds/electronicpingshort.wav",
 	ChimeMidi = 72,
