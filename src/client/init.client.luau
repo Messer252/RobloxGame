@@ -10,6 +10,7 @@ local Recipes = require(shared:WaitForChild("Recipes"))
 local Progression = require(shared:WaitForChild("Progression"))
 local Crafting = require(shared:WaitForChild("CookieCrafting"))
 local Catalog = require(shared:WaitForChild("ShopCatalog"))
+local Boosts = require(shared:WaitForChild("Boosts"))
 local Challenges = require(shared:WaitForChild("ChallengeCatalog"))
 local remotes = shared:WaitForChild("Remotes")
 local requestAction = remotes:WaitForChild("RequestAction")
@@ -63,7 +64,7 @@ local function fixedLabel(parent, y, height, size, tint)
 end
 
 local hud = Instance.new("Frame")
-hud.Size = UDim2.new(0.94, 0, 0, 148)
+hud.Size = UDim2.new(0.94, 0, 0, 172)
 hud.Position = UDim2.fromOffset(12, 12)
 hud.BackgroundColor3 = Color3.fromRGB(53, 36, 32)
 hud.BackgroundTransparency = 0.06
@@ -71,7 +72,7 @@ hud.Parent = gui
 round(hud, 16)
 local hudStroke = finish(hud, gold)
 local hudLimit = Instance.new("UISizeConstraint")
-hudLimit.MaxSize = Vector2.new(420, 148)
+hudLimit.MaxSize = Vector2.new(420, 172)
 hudLimit.Parent = hud
 local cookieIcon = Instance.new("Frame")
 cookieIcon.Position = UDim2.fromOffset(15, 9)
@@ -207,6 +208,10 @@ musicToggle.Activated:Connect(function() audio:SetMusicEnabled(not audio.music) 
 effectsToggle.Activated:Connect(function() audio:SetEffectsEnabled(not audio.effects) end)
 audio.Changed.Event:Connect(renderAudio)
 renderAudio()
+local boostStatus = fixedLabel(hud, 143, 19, 12, gold)
+boostStatus.TextScaled = true
+local boostTextSize = Instance.new("UITextSizeConstraint")
+boostTextSize.MinTextSize, boostTextSize.MaxTextSize, boostTextSize.Parent = 10, 12, boostStatus
 local bakeryTab = button(menu, "Bakery", Color3.fromRGB(130, 87, 49))
 local robuxTab = button(menu, "Shop", Color3.fromRGB(92, 66, 48))
 local workshopTab = button(menu, "Toppings", Color3.fromRGB(92, 66, 48))
@@ -399,8 +404,15 @@ local function shopRow(kind, key, entry)
 	purchaseButton.Activated:Connect(function() requestPurchase:FireServer(kind, key) end)
 end
 for _, key in ipairs(Catalog.PassOrder) do shopRow("Pass", key, Catalog.Passes[key]) end
+ordered(text(shopScroll, "PERMANENT INCOME • NEXT STAGE", 16, gold))
+ordered(text(shopScroll, "Stacks with passes. Stays after rebirth.", 13))
+for _, key in ipairs(Catalog.ProductOrder) do
+	if Catalog.Products[key].BoostTier then shopRow("Product", key, Catalog.Products[key]) end
+end
 ordered(text(shopScroll, "CASH • RESETS ON REBIRTH", 16, gold))
-for _, key in ipairs(Catalog.ProductOrder) do shopRow("Product", key, Catalog.Products[key]) end
+for _, key in ipairs(Catalog.ProductOrder) do
+	if Catalog.Products[key].Cash then shopRow("Product", key, Catalog.Products[key]) end
+end
 local refreshShopButton = ordered(button(shopScroll, "Refresh shop", Color3.fromRGB(109, 75, 59)))
 refreshShopButton.Size = UDim2.new(1, 0, 0, 42)
 
@@ -470,6 +482,12 @@ local function currentData()
 		perks = {
 			DoubleIncome = player:GetAttribute("DoubleIncomeOwned") == true,
 			DoubleSpeed = player:GetAttribute("DoubleSpeedOwned") == true,
+			Now = math.floor(workspace:GetServerTimeNow()),
+		},
+		boosts = {
+			paidTier = player:GetAttribute("PaidBoostTier") or 0,
+			obbyBonus = player:GetAttribute("ObbyBonus") or 0,
+			obbyExpires = player:GetAttribute("ObbyExpires") or 0,
 		},
 		modifiers = {},
 	}
@@ -567,6 +585,10 @@ local function render()
 	local purchasePending = player:GetAttribute("PurchasePending") == true
 	local canManage = ownsBakery and not purchasePending
 	local format = Progression.format
+	local remaining = math.max(0, data.boosts.obbyExpires - data.perks.Now)
+	boostStatus.Text = "Permanent income x" .. Boosts.paidMultiplier(data.boosts)
+		.. (remaining > 0 and string.format(" • Obby +%d%% %d:%02d", math.floor(data.boosts.obbyBonus * 100), math.floor(remaining / 60), remaining % 60)
+			or " • Obbys in the east meadow")
 	if lastWorkshopRebirth ~= data.rebirths then
 		selectedRecipe = math.min(selectedRecipe, data.unlocked)
 		lastWorkshopRebirth = data.rebirths
@@ -643,14 +665,17 @@ local function render()
 		local offer = Catalog.offer(row.Kind, row.Key)
 		configured = configured or offer ~= nil
 		local metadata = priceMetadata[row.Kind .. ":" .. row.Key]
+		local tier = row.Entry.BoostTier
+		row.Button.Visible = not tier or tier == data.boosts.paidTier + 1 or (data.boosts.paidTier == Boosts.MaxPaidTier and tier == Boosts.MaxPaidTier)
 		local owned = row.Kind == "Pass" and player:GetAttribute(row.Key .. "Owned") == true
+			or tier ~= nil and data.boosts.paidTier >= tier
 		local priceLine
 		if owned then priceLine = "Owned • Permanent"
 		elseif not offer then priceLine = "Coming soon"
 		elseif not metadata or metadata.State == "Loading" then priceLine = "Checking price..."
 		elseif metadata.State ~= "Ready" then priceLine = "Currently unavailable"
-		else priceLine = "R$ " .. metadata.Price .. (row.Kind == "Pass" and " • Buy once" or " • Repeatable") end
-		if row.Kind == "Pass" then
+		else priceLine = "R$ " .. metadata.Price .. (tier and " • Permanent" or row.Kind == "Pass" and " • Buy once" or " • Repeatable") end
+		if row.Kind == "Pass" or tier then
 			row.Button.Text = row.Entry.Name .. "\n" .. priceLine
 		else
 			row.Button.Text = "$" .. format(row.Entry.Cash) .. " Cookie Cash\n" .. priceLine
@@ -757,6 +782,12 @@ end
 cash.Changed:Connect(scheduleRender)
 player.AttributeChanged:Connect(scheduleRender)
 player:GetAttributeChangedSignal("NoticeId"):Connect(showNotice)
+task.spawn(function()
+	while gui.Parent do
+		task.wait(1)
+		scheduleRender()
+	end
+end)
 workspace.DescendantAdded:Connect(function(descendant)
 	if descendant:GetAttribute("ChallengeItemId") ~= nil or descendant:FindFirstAncestor("HiddenItems") then scheduleRender() end
 end)

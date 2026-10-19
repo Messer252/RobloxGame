@@ -3,16 +3,21 @@ local Layout = {
 	StationCount = 30,
 	StationSpacing = 7,
 	FirstStationZ = 102,
-	OvenX = -6.8,
+	OvenX = -42.8,
 	OvenScale = 0.45,
-	PadX = -15.5,
-	SpawnX = -14,
+	PadX = -51.5,
+	SpawnX = -50,
 	SpawnZ = 99,
 	BeltWidth = 6.2,
-	BeltFrontZ = 112,
-	BeltBackZ = -112,
-	CookieY = 2.1,
-	CookieSpeed = 24,
+	BeltFrontZ = 106,
+	BeltBackZ = 20,
+	MainStartZ = 118,
+	MainEndZ = 126,
+	BoxZ = 134,
+	BeltTop = 4.4,
+	LaneXs = { -36, 0, 36 },
+	CookieY = 4.78,
+	CookieSpeed = 12,
 	MaxVisualCookies = 10,
 	StepDwell = 0.28,
 	StepCooldown = 0.8,
@@ -20,8 +25,24 @@ local Layout = {
 
 function Layout.station(index)
 	if type(index) ~= "number" or index % 1 ~= 0 or index < 1 or index > Layout.StationCount then return nil end
-	return { x = Layout.OvenX, z = Layout.FirstStationZ - (index - 1) * Layout.StationSpacing,
-		padX = Layout.PadX, scale = Layout.OvenScale }
+	local lane = math.floor((index - 1) / 10) + 1
+	local laneX = Layout.LaneXs[lane]
+	return { x = laneX - 6.8, z = Layout.FirstStationZ - ((index - 1) % 10) * Layout.StationSpacing,
+		padX = laneX - 15.5, scale = Layout.OvenScale, lane = lane, laneX = laneX }
+end
+
+function Layout.speed(interval)
+	return math.clamp(Layout.CookieSpeed * 3 / math.max(0.2, interval or 3), 12, 22)
+end
+
+function Layout.segments()
+	local result = {}
+	for _, x in ipairs(Layout.LaneXs) do
+		table.insert(result, { ax = x, az = Layout.BeltBackZ, bx = x, bz = Layout.BeltFrontZ, rails = true })
+		table.insert(result, { ax = x, az = Layout.BeltFrontZ, bx = 0, bz = Layout.MainStartZ, rails = true, railInset = 3 })
+	end
+	table.insert(result, { ax = 0, az = Layout.MainStartZ, bx = 0, bz = Layout.MainEndZ, rails = true })
+	return result
 end
 
 function Layout.belt()
@@ -31,9 +52,8 @@ end
 
 function Layout.travelDuration(z, interval)
 	local cadence = type(interval) == "number" and interval > 0 and interval < math.huge and interval or 3
-	local speedFactor = 3 / cadence
 	local distance = math.max(0, Layout.BeltFrontZ - z)
-	return math.clamp(distance / (Layout.CookieSpeed * speedFactor), 0.65, 9.5)
+	return math.clamp(distance / Layout.speed(cadence), 0.65, 9.5)
 end
 
 -- The point is the character's feet, expressed in the pad's own coordinate frame.

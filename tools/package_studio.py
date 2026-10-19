@@ -25,7 +25,7 @@ START_HERE = """COOKIE CORNER TYCOON - OPEN IN ROBLOX STUDIO
    Roblox account. Keep access restricted while testing.
    For an existing game, use File > Publish As, select that game's start place,
    and overwrite it after backing up anything you want to keep.
-5. Set Maximum Players to 4 in the start place's settings.
+5. Set Maximum Players to 8 in the start place's settings.
 6. Open the published game's Roblox page as its owner and click Play.
    Saving works automatically in the Roblox app once the place is published.
 
@@ -52,7 +52,9 @@ https://github.com/Messer252/RobloxGame/blob/main/STUDIO_SETUP.md
 
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
-servers: save formats 1-3 migrate to version 4 with quest progress preserved.
+servers: save formats 1-4 migrate to version 5 with quest progress and receipts preserved.
+Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
+Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 
 OPTIONAL FULL MUSIC RECORDING / AUDIO SETUP:
 https://github.com/Messer252/RobloxGame/blob/main/AUDIO.md

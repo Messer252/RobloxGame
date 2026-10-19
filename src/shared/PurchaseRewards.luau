@@ -1,5 +1,6 @@
 -- Pure reward calculation. The server supplies the configured amount and limit.
 local Rewards = {}
+local Boosts = if script then require(script.Parent.Boosts) else require("./Boosts")
 type CashData = { cash: number, bank: number }
 
 function Rewards.canFitCash(data: CashData, amount: number, limit: number)
@@ -13,6 +14,11 @@ function Rewards.cash(data: CashData, amount: number, limit: number)
 	data.cash += walletAmount
 	data.bank += amount - walletAmount
 	return true
+end
+
+function Rewards.product(data, product, limit)
+	if product.BoostTier ~= nil then return Boosts.grantPaid(data, product.BoostTier) end
+	return Rewards.cash(data, product.Cash, limit)
 end
 
 return Rewards

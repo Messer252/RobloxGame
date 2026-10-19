@@ -87,11 +87,11 @@ function Presentation.world(world)
 		if object:IsA("BasePart") and object.Name == "Lamp" then light(object, 0.6, 20) end
 	end
 	for _, x in ipairs({ -14.6, 14.6 }) do
-		part(world, "Cream Path Border", Vector3.new(0.7, 0.25, 520), CFrame.new(x, 0.15, 0), cream, Enum.Material.Concrete)
+		part(world, "Cream Path Border", Vector3.new(0.7, 0.25, 1140), CFrame.new(x, 0.15, 0), cream, Enum.Material.Concrete)
 	end
-	for _, x in ipairs({ -235, 235 }) do
+	for _, x in ipairs({ -485, 485 }) do
 		for index = -2, 2 do
-			local hill = part(world, "Pastel Meadow Hill", Vector3.new(105, 70, 118), CFrame.new(x, -19, index * 145),
+			local hill = part(world, "Pastel Meadow Hill", Vector3.new(105, 70, 118), CFrame.new(x, -19, index * 285),
 				Color3.fromRGB(139 + (index % 2) * 9, 177, 132), Enum.Material.Grass)
 			hill.Shape = Enum.PartType.Ball
 		end
@@ -111,7 +111,7 @@ function Presentation.world(world)
 end
 
 function Presentation.plot(plot, slot)
-	local theme = themes[slot]
+	local theme = themes[(slot - 1) % #themes + 1]
 	plot.theme = theme
 	for _, object in ipairs(plot.model:GetDescendants()) do
 		if not object:IsA("BasePart") then continue end

@@ -82,6 +82,10 @@ function Commerce:Prompt(player, kind, key)
 		self.context.Notify(player, "This item is not available yet.")
 		return
 	end
+	if kind == "Product" and offer.BoostTier and offer.BoostTier ~= state.data.boosts.paidTier + 1 then
+		self.context.Notify(player, "Buy the next permanent income stage shown in the shop.")
+		return
+	end
 	state.lastShopPrompt = os.clock()
 	-- Set this before any yielding ownership request, preventing overlapping prompts.
 	local prompt = { Kind = kind, Id = offer.Id }
@@ -109,7 +113,7 @@ function Commerce:Prompt(player, kind, key)
 			return
 		end
 	else
-		if not Rewards.canFitCash(state.data, offer.Cash, Progression.MAX_CASH) then
+		if offer.Cash and not Rewards.canFitCash(state.data, offer.Cash, Progression.MAX_CASH) then
 			cancel("Spend some cookie cash before buying another bundle.")
 			return
 		end
@@ -136,14 +140,15 @@ function Commerce:_fulfill(player, state, receipt, product)
 	while player.Parent == Players and not self.context.IsClosing() do
 		if self:_state(player) ~= state or state.profile.sessionOnly then return PENDING end
 		local ok, reason, detail = self.context.Profiles:GrantReceipt(state.profile, receipt.PurchaseId, receipt.ProductId, function(data)
-			return Rewards.cash(data, product.Cash, Progression.MAX_CASH)
+			return Rewards.product(data, product, Progression.MAX_CASH)
 		end)
 		if ok then
 			if self.context.GetState(player) == state and not state.closing then
 				state.nextSave = os.clock() + self.context.AutosaveSeconds
 				self.context.Refresh(player, state)
 				if reason ~= "duplicate" then
-					self.context.Notify(player, "$" .. Progression.format(product.Cash) .. " cookie cash purchased and saved! Cash resets on rebirth.")
+					self.context.Notify(player, product.BoostTier and (2 ^ product.BoostTier .. "x permanent cookie income saved! Survives rebirth.")
+						or "$" .. Progression.format(product.Cash) .. " cookie cash purchased and saved! Cash resets on rebirth.")
 				end
 			end
 			return GRANTED -- The cash AND receipt ID are now durable in the same record.
@@ -180,7 +185,7 @@ function Commerce:ProcessReceipt(receipt)
 	-- retired. New/ungranted receipts still need their original product mapping.
 	if state.profile.receipts[receipt.PurchaseId] == receipt.ProductId then return GRANTED end
 	local product = Catalog.resolve("Product", receipt.ProductId)
-	if not product or not Catalog.validId(product.Cash) or product.Cash > Progression.MAX_CASH then
+	if not product or not Catalog.validProduct(product) then
 		warn("Cookie Corner: unconfigured product receipt " .. tostring(receipt.ProductId) .. "; it remains pending.")
 		return PENDING
 	end

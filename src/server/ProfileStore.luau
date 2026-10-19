@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 4 retains scavenger-hunt completion, preventing older code from
--- discarding its reward history. Existing versions migrate without a new store.
-ProfileStore.CURRENT_VERSION = 4
+-- Version 5 retains paid multipliers and timed bonuses; older code must not
+-- discard a paid entitlement. Existing versions migrate without a new store.
+ProfileStore.CURRENT_VERSION = 5
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0

@@ -977,7 +977,7 @@ test("music and action cues have bounded pitches, levels, and ordered timing", f
 	end
 end)
 
-test("one straight belt contains all 30 compact stations inside the bakery", function()
+test("three feeder lanes contain all 30 compact stations inside the bakery", function()
 	equal(Layout.StationCount, #Recipes)
 	local belt = Layout.belt()
 	equal(belt.x, 0)
@@ -988,7 +988,7 @@ test("one straight belt contains all 30 compact stations inside the bakery", fun
 		local station = assert(Layout.station(index))
 		assert(station.z >= Layout.BeltBackZ and station.z <= Layout.BeltFrontZ)
 		assert(math.abs(station.x) + 14.5 * station.scale / 2 < 82)
-		if previous then
+		if previous and previous.lane == station.lane then
 			equal(station.x, previous.x)
 			near(previous.z - station.z, Layout.StationSpacing)
 			assert(Layout.StationSpacing > 14.5 * station.scale)
@@ -1100,7 +1100,7 @@ test("version-3 saves retain money, toppings, audio, and receipt history when qu
 	equal(profile.data.challenges.index, 1)
 	equal(profile.data.challenges.active, false)
 	equal(profile.receipts.earlier, 9123)
-	equal(store.records.Player_820.Version, 4)
+	equal(store.records.Player_820.Version, ProfileStore.CURRENT_VERSION)
 end)
 
 test("partial discoveries restore after rejoin and the hunt reward cannot be replayed", function()
@@ -1166,6 +1166,8 @@ test("uncertain cash receipts preserve hunt progress during reconciliation", fun
 	equal(profile.data.challenges.found[item], true)
 	equal(profile.receipts["quest-paid-once"], 9123)
 end)
+
+require("./expansion")(test, equal, near, harness, fakeStore)
 
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then error("Cookie Corner tests failed") end

@@ -1,6 +1,7 @@
 local Recipes = if script then require(script.Parent.Recipes) else require("./Recipes")
 local Crafting = if script then require(script.Parent.CookieCrafting) else require("./CookieCrafting")
 local Challenges = if script then require(script.Parent.Challenges) else require("./Challenges")
+local Boosts = if script then require(script.Parent.Boosts) else require("./Boosts")
 
 local Progression = {}
 Progression.MAX_CASH = 1e15 -- Keep all currency integers below double precision limits.
@@ -26,7 +27,7 @@ function Progression.newData()
 	return {
 		cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0,
 		permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {},
-		audio = { music = true, effects = true }, challenges = Challenges.normalize(nil),
+		audio = { music = true, effects = true }, challenges = Challenges.normalize(nil), boosts = Boosts.normalize(nil),
 	}
 end
 
@@ -41,6 +42,7 @@ function Progression.normalize(raw)
 	data.rebirths = integer(raw.rebirths, 0, 0, Progression.MAX_REBIRTHS)
 	data.chips = integer(raw.chips, 0, 0, Progression.MAX_CHIPS)
 	data.challenges = Challenges.normalize(raw.challenges)
+	data.boosts = Boosts.normalize(raw.boosts)
 	if type(raw.audio) == "table" then
 		for key in pairs(data.audio) do
 			if type(raw.audio[key]) == "boolean" then data.audio[key] = raw.audio[key] end
@@ -77,6 +79,7 @@ end
 function Progression.multiplier(data, perks)
 	return (1 + data.permanent.Yield * 0.25) * (1 + data.rebirths * 0.15)
 		* (perks and perks.DoubleIncome and 2 or 1)
+		* Boosts.multiplier(data.boosts, perks and perks.Now or os.time())
 end
 
 function Progression.interval(data, perks)
@@ -86,13 +89,13 @@ end
 
 function Progression.recipeValue(data, index, perks)
 	local flags = data.modifiers and data.modifiers[tostring(index)]
-	return math.floor(Recipes[index].Value * Crafting.rarity(Recipes[index]).Multiplier
-		* Crafting.multiplier(flags) * Progression.multiplier(data, perks))
+	return math.min(Progression.MAX_CASH, math.floor(Recipes[index].Value * Crafting.rarity(Recipes[index]).Multiplier
+		* Crafting.multiplier(flags) * Progression.multiplier(data, perks)))
 end
 
 function Progression.batchValue(data, perks)
 	local total = 0
-	for index = 1, data.unlocked do total += Progression.recipeValue(data, index, perks) end
+	for index = 1, data.unlocked do total = math.min(Progression.MAX_CASH, total + Progression.recipeValue(data, index, perks)) end
 	return total
 end
 

@@ -1,7 +1,8 @@
--- Original part-built NPC and treasures. All discovery callbacks originate
+-- A standard Roblox character and original treasures. Discovery callbacks originate
 -- from alive characters beside the actual server-owned item, never a client ID.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Catalog = require(ReplicatedStorage.CookieTycoon.ChallengeCatalog)
+local BakerAvatar = require(script.Parent.BakerAvatar)
 local ChallengeWorld = {}
 local npcRoot = nil
 local cooldowns = setmetatable({}, { __mode = "k" })
@@ -59,58 +60,30 @@ local function interaction(target, action, name, callback)
 end
 
 local function createNPC(parent, onTalk)
-	local model = Instance.new("Model")
-	model.Name = Catalog.NPCName
-	model.Parent = parent
-	local pos = Catalog.NPCPosition
-	local base = CFrame.new(pos[1], pos[2], pos[3])
-	local function add(name, size, x, y, z, tint, shape, rotation)
-		return piece(model, name, size, base * CFrame.new(x, y, z) * (rotation or CFrame.new()), tint, shape)
-	end
-	npcRoot = add("HumanoidRootPart", Vector3.new(2, 2, 1), 0, 2.7, 0, cream)
-	npcRoot.Transparency = 1
-	model.PrimaryPart = npcRoot
-	local apron = Color3.fromRGB(143, 182, 162)
-	local skin = Color3.fromRGB(221, 170, 116)
-	add("Left Boot", Vector3.new(0.7, 0.6, 1), -0.47, 0.45, 0.15, cocoa)
-	add("Right Boot", Vector3.new(0.7, 0.6, 1), 0.47, 0.45, 0.15, cocoa)
-	add("Left Leg", Vector3.new(0.65, 1.3, 0.7), -0.47, 1.25, 0, cocoa)
-	add("Right Leg", Vector3.new(0.65, 1.3, 0.7), 0.47, 1.25, 0, cocoa)
-	add("Chef Shirt", Vector3.new(2.1, 2.0, 1.1), 0, 2.6, 0, cream)
-	add("Apron", Vector3.new(1.5, 1.7, 0.12), 0, 2.42, 0.61, apron)
-	add("Apron Pocket", Vector3.new(0.75, 0.45, 0.15), 0, 2.15, 0.72, Color3.fromRGB(114, 158, 137))
-	add("Left Sleeve", Vector3.new(0.65, 1.3, 0.75), -1.35, 2.8, 0, cream)
-	add("Left Hand", Vector3.new(0.6, 0.65, 0.6), -1.35, 1.9, 0, skin, Enum.PartType.Ball)
-	add("Waving Sleeve", Vector3.new(0.65, 1.3, 0.75), 1.4, 3.0, 0, cream, nil, CFrame.Angles(0, 0, math.rad(-35)))
-	add("Waving Hand", Vector3.new(0.65, 0.65, 0.65), 1.85, 3.8, 0, skin, Enum.PartType.Ball)
-	add("Head", Vector3.new(1.7, 1.7, 1.6), 0, 4.4, 0, skin, Enum.PartType.Ball)
-	for _, x in ipairs({ -0.32, 0.32 }) do
-		add("Eye", Vector3.new(0.14, 0.2, 0.08), x, 4.55, 0.77, cocoa, Enum.PartType.Ball)
-		add("Blush", Vector3.new(0.3, 0.16, 0.05), x * 1.6, 4.22, 0.72, Color3.fromRGB(224, 142, 119), Enum.PartType.Ball)
-	end
-	add("Smile", Vector3.new(0.35, 0.09, 0.07), 0, 4.12, 0.79, cocoa)
-	add("Chef Hat Band", Vector3.new(0.35, 1.8, 1.8), 0, 5.2, 0, cream, Enum.PartType.Cylinder, CFrame.Angles(0, 0, math.pi / 2))
-	for _, x in ipairs({ -0.5, 0, 0.5 }) do
-		add("Chef Hat Puff", Vector3.new(1.15, 1.1, 1.1), x, 5.67, 0, cream, Enum.PartType.Ball)
-	end
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "BakerName"
-	billboard.Size = UDim2.fromOffset(190, 50)
-	billboard.StudsOffset = Vector3.new(0, 4.5, 0)
-	billboard.MaxDistance = 55
-	billboard.Parent = npcRoot
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.Text = Catalog.NPCName .. "\nHunts & cash rewards"
-	text.TextColor3 = cream
-	text.TextStrokeColor3 = cocoa
-	text.TextStrokeTransparency = 0.15
-	text.Font = Enum.Font.GothamBold
-	text.TextSize = 16
-	text.Parent = billboard
-	interaction(npcRoot, "Talk", Catalog.NPCName, onTalk)
-	return model
+	local current
+	BakerAvatar.create(function(model)
+		if not parent.Parent then
+			model:Destroy()
+			return
+		end
+		model.Name = Catalog.NPCName
+		local pos = Catalog.NPCPosition
+		model:PivotTo(CFrame.lookAt(Vector3.new(pos[1], pos[2] + 3, pos[3]), Vector3.new(0, pos[2] + 3, 0)))
+		model.Parent = parent
+		npcRoot = model:FindFirstChild("HumanoidRootPart")
+		interaction(npcRoot, "Talk", Catalog.NPCName, onTalk)
+		local gui = Instance.new("BillboardGui")
+		gui.Size, gui.StudsOffset, gui.MaxDistance = UDim2.fromOffset(180, 44), Vector3.new(0, 3.8, 0), 55
+		gui.Parent = npcRoot
+		local label = Instance.new("TextLabel")
+		label.Size, label.BackgroundTransparency = UDim2.fromScale(1, 1), 1
+		label.Text, label.Font, label.TextSize = Catalog.NPCName .. "\nTreasure hunts", Enum.Font.GothamBold, 16
+		label.TextColor3, label.TextStrokeTransparency = cream, 0.25
+		label.Parent = gui
+		if current then current:Destroy() end
+		current = model
+	end)
+	return current
 end
 
 local function createTreasure(parent, itemId, questIndex, onFound)
@@ -131,17 +104,33 @@ local function createTreasure(parent, itemId, questIndex, onFound)
 	model.PrimaryPart = root
 	local vertical = CFrame.Angles(0, 0, math.pi / 2)
 	if item.Kind == "Spoon" then
-		add("Spoon Handle", Vector3.new(0.25, 0.16, 2.0), 0, 0, -0.5, tint, nil, nil, Enum.Material.Metal)
-		add("Spoon Bowl", Vector3.new(1, 0.22, 1.2), 0, 0, 0.9, tint, Enum.PartType.Ball, nil, Enum.Material.Metal)
-	elseif item.Kind == "Cube" then
-		add("Sugar", Vector3.new(1.45, 1.45, 1.45), 0, 0, 0, tint, nil, nil, Enum.Material.Sand)
-		for index = 1, 5 do add("Sugar Crystal", Vector3.new(0.18, 0.12, 0.2), (index % 3 - 1) * 0.4, 0.76, (index % 2 - 0.5) * 0.6, cream) end
-	elseif item.Kind == "Whisk" then
-		add("Pink Handle", Vector3.new(0.4, 0.4, 1.4), 0, 0, -0.7)
-		for index = -1, 1 do
-			add("Whisk Wire", Vector3.new(0.12, 0.12, 1.3), index * 0.3, 0, 0.45, cream, nil, CFrame.Angles(0, math.rad(index * 18), 0), Enum.Material.Metal)
+		local handle = add("Polished Spoon Handle", Vector3.new(1.8, 0.18, 0.18), 0, 0, -0.65, tint, Enum.PartType.Cylinder, CFrame.Angles(0, math.pi / 2, 0), Enum.Material.Metal)
+		handle.Reflectance = 0.3
+		add("Spoon Bowl Base", Vector3.new(0.85, 0.1, 1.15), 0, 0, 0.8, tint, Enum.PartType.Ball, nil, Enum.Material.Metal)
+		for index = 1, 16 do
+			local angle = index * math.pi / 8
+			local rim = add("Rounded Spoon Rim", Vector3.new(0.25, 0.14, 0.25), math.cos(angle) * 0.42, 0.07, 0.8 + math.sin(angle) * 0.56, tint, Enum.PartType.Ball, nil, Enum.Material.Metal)
+			rim.Reflectance = 0.25
 		end
-		add("Whisk Tip", Vector3.new(0.7, 0.12, 0.13), 0, 0, 1.1, cream, nil, nil, Enum.Material.Metal)
+	elseif item.Kind == "Cube" then
+		add("Sugar Cube", Vector3.new(1.35, 1.35, 1.35), 0, 0, 0, Color3.fromRGB(250, 247, 235), nil, nil, Enum.Material.Sand)
+		for index = 1, 28 do
+			local x, z = math.sin(index * 19.7) * 0.59, math.cos(index * 11.3) * 0.59
+			add("Fine Sugar Grain", Vector3.new(0.1, 0.07, 0.1), x, 0.69, z, cream, nil, CFrame.Angles(0, index, 0))
+		end
+	elseif item.Kind == "Whisk" then
+		add("Rounded Pink Handle", Vector3.new(1.3, 0.34, 0.34), 0, 0, -0.7, tint, Enum.PartType.Cylinder, CFrame.Angles(0, math.pi / 2, 0))
+		local silver = Color3.fromRGB(195, 209, 213)
+		for loop = 0, 2 do
+			local rotation = CFrame.Angles(0, 0, loop * math.pi / 3)
+			for index = 1, 16 do
+				local a, b = (index - 1) * math.pi / 8, index * math.pi / 8
+				local p1 = rotation * Vector3.new(math.sin(a) * 0.44, 0, math.cos(a) * 0.8 + 0.65)
+				local p2 = rotation * Vector3.new(math.sin(b) * 0.44, 0, math.cos(b) * 0.8 + 0.65)
+				local wire = piece(model, "Curved Whisk Wire", Vector3.new(0.06, 0.06, (p2 - p1).Magnitude), base * CFrame.lookAt((p1 + p2) / 2, p2), silver, nil, Enum.Material.Metal)
+				wire.Reflectance = 0.25
+			end
+		end
 	elseif item.Kind == "RollingPin" then
 		add("Rolling Pin Body", Vector3.new(2.2, 0.9, 0.9), 0, 0, 0, tint, Enum.PartType.Cylinder, nil, Enum.Material.Wood)
 		for _, x in ipairs({ -1.45, 1.45 }) do add("Handle", Vector3.new(0.7, 0.35, 0.35), x, 0, 0, cocoa, Enum.PartType.Cylinder, nil, Enum.Material.Wood) end

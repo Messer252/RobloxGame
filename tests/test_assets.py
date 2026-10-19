@@ -65,7 +65,7 @@ class AssetPackTests(unittest.TestCase):
         world = (ROOT / "src/server/World.luau").read_text()
         requested = set(re.findall(r'prop\(plot, "([^"]+)"', world))
         requested.update(re.findall(r'Assets\.prop\("([^"]+)"', world))
-        self.assertEqual(requested, props)
+        self.assertLessEqual(requested, props)  # The physical belts replace the optional Conveyor prop.
         oven = next(item for item in self.folders["Props"].findall("Item") if name(item) == "Oven")
         self.assertIn("RecipeBadge", {name(item) for item in oven.findall("Item")})
         self.assertIn("Window", {name(item) for item in oven.findall("Item")})

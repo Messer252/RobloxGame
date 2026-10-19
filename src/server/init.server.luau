@@ -8,10 +8,13 @@ local Progression = require(shared.Progression)
 local Recipes = require(shared.Recipes)
 local Crafting = require(shared.CookieCrafting)
 local Challenges = require(shared.Challenges)
+local Boosts = require(shared.Boosts)
 local ProfileStore = require(script.ProfileStore)
 local Settings = require(script.Settings)
 local World = require(script.World)
 local ChallengeWorld = require(script.ChallengeWorld)
+local ObbyWorld = require(script.ObbyWorld)
+local PlazaExtras = require(script.PlazaExtras)
 local CommerceServer = require(script.CommerceServer)
 
 local remotes = Instance.new("Folder")
@@ -66,6 +69,9 @@ local function sync(player, state)
 	player:SetAttribute("ChallengeActive", data.challenges.active)
 	player:SetAttribute("ChallengeFound", Challenges.encode(data.challenges))
 	player:SetAttribute("ChallengeComplete", Challenges.isComplete(data.challenges))
+	player:SetAttribute("PaidBoostTier", data.boosts.paidTier)
+	player:SetAttribute("ObbyBonus", data.boosts.obbyBonus)
+	player:SetAttribute("ObbyExpires", data.boosts.obbyExpires)
 	for key, level in pairs(data.permanent) do player:SetAttribute(key .. "Level", level) end
 	for index = 1, #Recipes do
 		player:SetAttribute("RecipeModifiers_" .. index, Crafting.encode(data.modifiers[tostring(index)]))
@@ -228,6 +234,19 @@ end, function(player, itemId)
 	notify(player, message)
 end)
 
+ObbyWorld.create(workspace.CookieTycoonWorld, function(player, difficulty)
+	local state = sessions[player]
+	if not state or state.closing then return end
+	-- Queue a server-validated finish while a purchase is saving. Mutating the
+	-- profile during a receipt transaction could discard either reward.
+	local pending = state.pendingObby
+	if not pending or Boosts.ObbyBonuses[difficulty] >= Boosts.ObbyBonuses[pending.difficulty] then
+		state.pendingObby = { difficulty = difficulty, completed = os.time() }
+	end
+end, notify)
+
+PlazaExtras.create(workspace.CookieTycoonWorld, function(player) return sessions[player] end)
+
 requestAction.OnServerEvent:Connect(function(player, action, argument)
 	onAction(player, action, argument, nil)
 end)
@@ -316,6 +335,19 @@ task.spawn(function()
 		if checkNPC then nextNPCCheck = now + 0.5 end
 		for player, state in pairs(sessions) do
 			if checkNPC and not state.closing then player:SetAttribute("NearChallengeNPC", ChallengeWorld.IsNearNPC(player)) end
+			if usable(player) and state.pendingObby then
+				local pending = state.pendingObby
+				state.pendingObby = nil
+				if os.time() < pending.completed + Boosts.Duration then
+					local success, message = Boosts.awardObby(state.data, pending.difficulty, pending.completed)
+					if success then
+						sync(player, state)
+						state.nextSave = math.min(state.nextSave, now + 2)
+						feedback:FireClient(player, "UpgradePermanent")
+					end
+					if message then notify(player, message) end
+				end
+			end
 			if usable(player) and state.plot and now >= state.nextBake then
 				local interval = Progression.interval(state.data, state.perks)
 				local batches = math.min(5, math.floor((now - state.nextBake) / interval) + 1)
