@@ -108,7 +108,7 @@ return function(test, equal, near)
 	test("off-belt cookies and cookies over the outlet lip are released to gravity", function()
 		equal(Routing.drive(paths[1], -60, 90, 0, 12), nil)
 		equal(Routing.drive(paths[2], 0, Layout.MainEndZ, 0, 22), nil)
-		local drive = Routing.drive(paths[1], -36, 40, 0, 12)
+		local drive = Routing.drive(paths[1], Layout.LaneXs[1], 40, 0, 12)
 		assert(drive and drive.vz > 0)
 		near(math.sqrt(drive.vx^2 + drive.vz^2), 12)
 	end)
@@ -116,11 +116,11 @@ return function(test, equal, near)
 	test("oven counters stay outside the thicker rails and first purchases remain near spawn", function()
 		for index = 1, Layout.StationCount do
 			local station = Layout.station(index)
-			local outerRail = station.laneX - Layout.BeltWidth / 2 - Layout.RailThickness - 0.15
-			assert(station.x + 3 < outerRail)
+			local outerRail = station.laneX + Layout.BeltWidth / 2 + Layout.RailThickness + 0.15
+			assert(station.x - 3 > outerRail)
 			assert(station.z + 3.3 < Layout.BeltFrontZ)
 		end
 		local nextRecipe = Layout.station(2)
-		assert(math.sqrt((nextRecipe.padX - Layout.SpawnX)^2 + (nextRecipe.z - Layout.SpawnZ)^2) < 9)
+		assert(math.sqrt((nextRecipe.padX - Layout.SpawnX)^2 + (nextRecipe.z - Layout.SpawnZ)^2) < 24)
 	end)
 end

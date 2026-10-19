@@ -21,6 +21,7 @@ function Commerce:_syncPerks(player, state)
 	if self.context.GetState(player) ~= state or state.closing then return end
 	player:SetAttribute("DoubleIncomeOwned", state.perks.DoubleIncome == true)
 	player:SetAttribute("DoubleSpeedOwned", state.perks.DoubleSpeed == true)
+	player:SetAttribute("ThirdCardSlotOwned", state.perks.ThirdCardSlot == true)
 	player:SetAttribute("PassesReady", state.passesReady == true)
 	state.nextBake = math.min(state.nextBake, os.clock() + Progression.interval(state.data, state.perks))
 	self.context.Refresh(player, state)

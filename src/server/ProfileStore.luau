@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 7 adds conveyor construction, decorations, and randomized jobs while
--- retaining cookie ownership and durable gift/exchange recovery references.
-ProfileStore.CURRENT_VERSION = 7
+-- Version 8 adds persistent cards and Star Crumbs while retaining existing
+-- ownership, paid receipt, gift recovery, and job progress records.
+ProfileStore.CURRENT_VERSION = 8
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0

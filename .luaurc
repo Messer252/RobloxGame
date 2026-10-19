@@ -1,4 +1,4 @@
 {
   "languageMode": "nonstrict",
-  "globals": ["game", "script", "workspace", "task", "warn", "Instance", "Enum", "Color3", "CFrame", "Vector2", "Vector3", "UDim", "UDim2", "TweenInfo", "ColorSequence", "ColorSequenceKeypoint", "NumberSequence", "NumberSequenceKeypoint", "NumberRange", "PhysicalProperties", "Random", "RaycastParams"]
+  "globals": ["game", "script", "workspace", "task", "warn", "Instance", "Enum", "Color3", "CFrame", "Vector2", "Vector3", "UDim", "UDim2", "TweenInfo", "ColorSequence", "ColorSequenceKeypoint", "NumberSequence", "NumberSequenceKeypoint", "NumberRange", "PhysicalProperties", "Random", "RaycastParams", "Region3"]
 }

@@ -2,6 +2,7 @@ local Recipes = if script then require(script.Parent.Recipes) else require("./Re
 local Crafting = if script then require(script.Parent.CookieCrafting) else require("./CookieCrafting")
 local Polish = if script then require(script.Parent.BakeryPolish) else require("./BakeryPolish")
 local Contracts = if script then require(script.Parent.BakeryContracts) else require("./BakeryContracts")
+local Cards = if script then require(script.Parent.CardEconomy) else require("./CardEconomy")
 local Life = { MaxCurrency = 1e15, MaxInventory = 40, OvenSeconds = 20 }
 Life.Machines = { Packager = { Cost = 25000, Bonus = 0.25 }, Boxer = { Cost = 250000, Bonus = 0.5 }, FinishingOven = { Cost = 2500000, Bonus = 0 } }
 Life.PinCosts = { 0, 5000, 50000, 500000, 5000000 }
@@ -25,7 +26,7 @@ end
 function Life.normalize(raw)
 	raw = type(raw) == "table" and raw or {}
 	local data = { inventory = {}, dough = integer(raw.dough, 0, 0, 1e9), pin = integer(raw.pin, 1, 1, 5),
-		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "", belt = integer(raw.belt, 0, 0, 3), decorations = {}, contract = Contracts.normalize(raw.contract) }
+		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "", belt = integer(raw.belt, 0, 0, 3), decorations = {}, contract = Contracts.normalize(raw.contract), cards = Cards.normalize(raw.cards), shopName = type(raw.shopName) == "string" and string.sub(raw.shopName, 1, 60) or "" }
 	for key in pairs(Polish.Decorations) do data.decorations[key] = type(raw.decorations) == "table" and raw.decorations[key] == true or false end
 	local seen = {}
 	if type(raw.inventory) == "table" then
@@ -55,7 +56,7 @@ function Life.available(data, id)
 end
 function Life.value(cookie)
 	local recipe = Recipes[cookie.recipe]
-	return math.floor(recipe.Value * Crafting.rarity(recipe).Multiplier * Crafting.multiplier(Crafting.decode(cookie.mask))
+	return math.floor(recipe.Value * Crafting.rarity(recipe).Multiplier * Crafting.multiplier(Crafting.decode(cookie.mask), cookie.recipe)
 		* (1 + (cookie.quality or 0) * 0.2) * (cookie.wrapped and 1.25 or 1) * (cookie.boxed and 1.5 or 1) * (cookie.baked and 3 or 1))
 end
 function Life.add(data, cookie)

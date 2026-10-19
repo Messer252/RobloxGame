@@ -99,7 +99,7 @@ These engine/transaction checks require Roblox. Cloud validation uses the in-mem
 
 `ProfileStore` saves the cash grant or permanent tier and purchase ID **together in one `UpdateAsync`**. Only a durable grant is acknowledged to Roblox. Receipts are deduplicated across retries, rebirths, and reconnects. Session tokens protect against an old server overwriting a newer session. If a write's result is uncertain, the purchase callback retries locally and freezes ordinary economy changes/saves until it reconciles. On departure, it leaves an uncertain record intact instead of replacing it with pre-purchase cash. A server crash may require a rejoin after the existing session lease expires.
 
-The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Versions 1–6 migrate to the **version-7 save envelope**, retaining receipts, progression, toppings, audio, and quests while adding inventory, dough upgrades, machines, and trade recovery. Restart outdated servers when publishing this update: earlier game versions cannot open version-7 records. Keep the new ProfileStore and existing DataStore name; do not roll back to older save code after enabling purchases.
+The existing `CookieCorner_PlayerData_v1` DataStore name is retained. Versions 1–7 migrate to the **version-8 save envelope**, retaining receipts, progression, toppings, audio, and quests while adding inventory, dough upgrades, machines, and trade recovery. Restart outdated servers when publishing this update: earlier game versions cannot open version-8 records. Keep the new ProfileStore and existing DataStore name; do not roll back to older save code after enabling purchases.
 
 Passes use Roblox's verified server ownership APIs and purchase events. Ownership is checked on join and retried after failures; **Refresh shop** requests another check. A pass purchased outside the running server may need Roblox's cache to update or a rejoin before it appears.
 
@@ -110,3 +110,7 @@ When retiring a cash product, remove its key from `ProductOrder` to hide its but
 To stop offering a pass, hide its key from `PassOrder` but keep its original ID in `Passes` so existing owners continue receiving their permanent benefit.
 
 Official references: [passes](https://create.roblox.com/docs/production/monetization/passes), [developer products](https://create.roblox.com/docs/production/monetization/developer-products), and [MarketplaceService.ProcessReceipt](https://create.roblox.com/docs/reference/engine/classes/MarketplaceService#ProcessReceipt).
+
+## Optional third animal-card slot
+
+Create a permanent **Third Card Slot** game pass for the same experience, set its price to **150 Robux**, and enter the ID in `ShopCatalog.Passes.ThirdCardSlot.Id`. It is disabled at ID 0. Two slots are always free; the server verifies ownership before counting a third card. Pack currency is earned in play and has no direct Robux/cash conversion. Each pack displays exact rarity odds. See [card setup and economy](CARDS-AND-EVENTS.md).

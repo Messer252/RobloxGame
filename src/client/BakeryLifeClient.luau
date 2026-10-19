@@ -1,11 +1,13 @@
 local Players, Lighting, RunService = game:GetService("Players"), game:GetService("Lighting"), game:GetService("RunService")
 local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Life, Recipes, Progression, Polish = require(Shared.BakeryLife), require(Shared.Recipes), require(Shared.Progression), require(Shared.BakeryPolish)
+local CardUI = require(script.Parent.CardPacksClient)
 local Client = {}
 function Client.start(player, remotes, gui, hud, openButton)
 	local action, stateRemote, open = remotes:WaitForChild("LifeAction"), remotes:WaitForChild("LifeState"), remotes:WaitForChild("OpenLife")
-	local snapshot, tab = { life = Life.normalize(nil) }, "Bag"
-	local connections = {}
+	local snapshot, tab, renameDraft = { life = Life.normalize(nil) }, "Bag", ""
+	local connections, pendingRender = {}, false
+	CardUI.start(remotes, gui)
 	local shade = Instance.new("TextButton")
 	shade.Size, shade.Text, shade.BackgroundTransparency, shade.BackgroundColor3, shade.ZIndex, shade.Visible, shade.Parent = UDim2.fromScale(1, 1), "", 0.35, Color3.new(), 25, false, gui
 	local panel = Instance.new("Frame")
@@ -39,13 +41,13 @@ function Client.start(player, remotes, gui, hud, openButton)
 	layout.Padding, layout.SortOrder, layout.Parent = UDim.new(0, 9), Enum.SortOrder.LayoutOrder, scroll
 	local function send(name, argument) action:FireServer(name, argument) end
 	local render
-	for index, name in ipairs({ "Bag", "Mine", "Machines", "People" }) do
+	for index, name in ipairs({ "Bag", "Mine", "Machines", "People", "Cards" }) do
 		local b = button(panel, name, function() tab = name ; render() end)
-		b.Position, b.Size = UDim2.new((index - 1) * 0.25, 4, 0, 53), UDim2.new(0.25, -8, 0, 34)
+		b.Position, b.Size = UDim2.new((index - 1) * 0.2, 4, 0, 53), UDim2.new(0.2, -8, 0, 34)
 	end
 	render = function()
 		for _, child in ipairs(scroll:GetChildren()) do if child ~= layout then child:Destroy() end end
-		header.Text = ({ Bag = "COOKIE BAG", Mine = "DOUGH MINE", Machines = "BAKERY MACHINES", People = "COOKIES & COMPANY" })[tab]
+		header.Text = ({ Bag = "COOKIE BAG", Mine = "DOUGH MINE", Machines = "BAKERY MACHINES", People = "COOKIES & COMPANY", Cards = "COOKIE ANIMAL CARDS" })[tab]
 		local count = 0
 		local function row(text, callback)
 			count += 1
@@ -56,7 +58,9 @@ function Client.start(player, remotes, gui, hud, openButton)
 		end
 		local data = snapshot.life
 		if snapshot.busy then row("Saving cookie exchange. Please wait...") end
-		if tab == "Bag" then
+		if tab == "Cards" then
+			CardUI.render(player, data.cards, row, send, panel)
+		elseif tab == "Bag" then
 			row(#data.inventory .. "/" .. Life.capacity(data) .. " cookies • Hold a conveyor cookie's pickup prompt to store it.")
 			if snapshot.held then row("Eat held cookie • recipe buff + cookie skin", function() send("Eat", snapshot.held) end) end
 			if data.oven.id then row("Finishing oven: " .. math.max(0, data.oven.ready - os.time()) .. "s remaining") end
@@ -79,9 +83,17 @@ function Client.start(player, remotes, gui, hud, openButton)
 			end
 		elseif tab == "Machines" then
 			row("Visit the pads beside your own conveyor to build, decorate, or install machines.")
+			local name = Instance.new("TextBox")
+			name.Size, name.PlaceholderText, name.Text, name.ClearTextOnFocus, name.LayoutOrder, name.TextSize, name.ZIndex, name.Parent = UDim2.new(1,-8,0,40), "New bakery name (3–40 characters)", renameDraft, false, 1, 14, 28, scroll
+			name:GetPropertyChangedSignal("Text"):Connect(function() renameDraft = name.Text end)
+			name.FocusLost:Connect(function()
+				task.delay(.2, function() if pendingRender and panel.Visible then pendingRender = false; render() end end)
+			end)
+			count += 1
+			row("Rename cookie shop • $20 million", function() send("RenameShop", name.Text) end)
 			local beltCost = Polish.BeltCosts[data.belt + 1]
 			row(beltCost and ("Build conveyor line " .. (data.belt + 1) .. " • " .. (beltCost == 0 and "FREE" or "$" .. Progression.format(beltCost))) or "All three conveyor lines built", function() send("BuildBelt") end)
-			for _, key in ipairs({ "Walls", "Windows", "Door", "Plants", "Trees" }) do
+			for _, key in ipairs(Polish.DecorationOrder) do
 				local definition = Polish.Decorations[key]
 				row(definition.Name .. " • " .. (data.decorations[key] and "Owned" or "$" .. Progression.format(definition.Cost)), function() send("Decoration", key) end)
 			end
@@ -105,7 +117,13 @@ function Client.start(player, remotes, gui, hud, openButton)
 		end
 	end
 	openButton.Activated:Connect(function() tab, panel.Visible, shade.Visible = "Bag", true, true ; render() end)
-	table.insert(connections, stateRemote.OnClientEvent:Connect(function(data) snapshot = data ; if panel.Visible then render() end end))
+	table.insert(connections, stateRemote.OnClientEvent:Connect(function(data)
+		snapshot = data
+		if panel.Visible then
+			local focused = game:GetService("UserInputService"):GetFocusedTextBox()
+			if focused and focused:IsDescendantOf(panel) then pendingRender = true else render() end
+		end
+	end))
 	table.insert(connections, open.OnClientEvent:Connect(function(name) tab = name == "Bag" and "Bag" or (name == "Mine" and "Mine" or "People"); if name == "Gift" then pcall(function() game:GetService("StarterGui"):SetCore("SendNotification", { Title = "Cookie gift", Text = "Someone wants to give you a cookie. Accept or decline here.", Duration = 8 }) end) end; panel.Visible, shade.Visible = true, true ; render() end))
 	table.insert(connections, player:GetAttributeChangedSignal("DataReady"):Connect(function() if player:GetAttribute("DataReady") then send("Snapshot") end end))
 	send("Snapshot")
@@ -130,7 +148,28 @@ function Client.start(player, remotes, gui, hud, openButton)
 		local chip = sunPart("Sun Chocolate Chip", Vector3.new(5, 10, 9), Vector3.new(3, math.sin(i * 2.4) * 34, math.cos(i * 2.4) * 34), Color3.fromRGB(98, 57, 31))
 		chip.Shape = Enum.PartType.Ball
 	end
-	local elapsed, sunVisible, lastGuide = 0, nil, nil
+	local moon = Instance.new("Model")
+	moon.Name, moon.Parent = "Chocolate Chip Cookie Moon", skyFolder
+	local function moonPiece(name, size, offset, color, shape)
+		local p = Instance.new("Part")
+		p.Name, p.Size, p.CFrame, p.Color, p.Shape = name, size, CFrame.new(offset), color, shape or Enum.PartType.Ball
+		p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery, p.CastShadow, p.Material, p.Parent = true,false,false,false,false,Enum.Material.Neon,moon
+		return p
+	end
+	local crust = moonPiece("Golden Baked Edge", Vector3.new(7,94,94),Vector3.zero,Color3.fromRGB(158,101,51),Enum.PartType.Cylinder)
+	moon.PrimaryPart=crust
+	moonPiece("Warm Cookie Face",Vector3.new(8,88,88),Vector3.new(1,0,0),Color3.fromRGB(225,182,118),Enum.PartType.Cylinder)
+	for i=1,23 do
+		local angle=i*2.399963
+		local radius=math.sqrt(i/24)*36
+		moonPiece("Chocolate Chunk",Vector3.new(2.5,5+(i%3),4+(i%4)),Vector3.new(5,math.sin(angle)*radius,math.cos(angle)*radius),Color3.fromRGB(69,42,28))
+	end
+	for i=1,32 do
+		local angle=i*2.399963
+		local radius=math.sqrt(i/33)*40
+		moonPiece("Baked Sugar Pore",Vector3.new(.4,1.1,1.2),Vector3.new(5.1,math.cos(angle)*radius,math.sin(angle)*radius),Color3.fromRGB(183,137,78))
+	end
+	local elapsed, sunVisible, lastGuide, moonVisible = 0, nil, nil, nil
 	table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 		local camera = workspace.CurrentCamera
 		if camera then
@@ -142,6 +181,14 @@ function Client.start(player, remotes, gui, hud, openButton)
 			end
 			local position = camera.CFrame.Position + direction * 1500
 			sun:PivotTo(CFrame.lookAt(position, camera.CFrame.Position) * CFrame.Angles(0, math.pi / 2, 0))
+			local moonDirection = -direction
+			local showMoon = moonDirection.Y > .02
+			if showMoon ~= moonVisible then
+				moonVisible = showMoon
+				for _, part in ipairs(moon:GetChildren()) do part.Transparency = showMoon and 0 or 1 end
+			end
+			local moonPosition = camera.CFrame.Position + moonDirection * 1400
+			moon:PivotTo(CFrame.lookAt(moonPosition, camera.CFrame.Position) * CFrame.Angles(0,math.pi/2,0))
 		end
 		elapsed += dt
 		if elapsed < 0.2 then return end
@@ -156,7 +203,7 @@ function Client.start(player, remotes, gui, hud, openButton)
 		local flat = camera.CFrame.LookVector
 		local heading = math.floor((math.deg(math.atan2(-flat.X, -flat.Z)) + 360) % 360)
 		local buff = player:GetAttribute("CookieBuffName") or ""
-		compass.Text = heading .. "° • Cookie valley" .. (buff ~= "" and (" • " .. buff) or "")
+		compass.Text = heading .. "° • " .. snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")
 		if panel.Visible and tab == "Bag" and snapshot.life.oven.id then
 			local second = os.time()
 			if second ~= lastGuide then lastGuide = second ; render() end

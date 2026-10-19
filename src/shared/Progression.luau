@@ -5,6 +5,7 @@ local Boosts = if script then require(script.Parent.Boosts) else require("./Boos
 local AudioPreferences = if script then require(script.Parent.AudioPreferences) else require("./AudioPreferences")
 local Life = if script then require(script.Parent.BakeryLife) else require("./BakeryLife")
 
+local Cards = if script then require(script.Parent.CardEconomy) else require("./CardEconomy")
 local Progression = {}
 Progression.MAX_CASH = 1e15 -- Keep all currency integers below double precision limits.
 Progression.MAX_CHIPS = 1000000000
@@ -61,7 +62,7 @@ function Progression.normalize(raw)
 			if type(source) == "table" then
 				local flags = {}
 				for _, key in ipairs(Crafting.ModifierOrder) do
-					if source[key] == true then flags[key] = true end
+					if source[key] == true and Crafting.option(index, key) then flags[key] = true end
 				end
 				if next(flags) then data.modifiers[recipeKey] = flags end
 			end
@@ -81,18 +82,18 @@ function Progression.multiplier(data, perks)
 	return (1 + data.permanent.Yield * 0.25) * (1 + data.rebirths * 0.15)
 		* (perks and perks.DoubleIncome and 2 or 1)
 		* Boosts.multiplier(data.boosts, perks and perks.Now or os.time())
-		* Life.production(data.life, perks and perks.Now or os.time())
+		* Life.production(data.life, perks and perks.Now or os.time()) * Cards.bonuses(data.life.cards, perks and perks.ThirdCardSlot).Cash
 end
 
 function Progression.interval(data, perks)
 	local normalInterval = math.max(0.4, 3 / ((1 + (data.level - 1) * 0.25) * (1 + data.permanent.Speed * 0.08)))
-	return normalInterval / (perks and perks.DoubleSpeed and 2 or 1) / (1 + data.life.upgrades.Flow * 0.05)
+	return normalInterval / (perks and perks.DoubleSpeed and 2 or 1) / (1 + data.life.upgrades.Flow * 0.05) / Cards.bonuses(data.life.cards, perks and perks.ThirdCardSlot).Speed
 end
 
 function Progression.recipeValue(data, index, perks)
 	local flags = data.modifiers and data.modifiers[tostring(index)]
 	return math.min(Progression.MAX_CASH, math.floor(Recipes[index].Value * Crafting.rarity(Recipes[index]).Multiplier
-		* Crafting.multiplier(flags) * Progression.multiplier(data, perks) * (1 + (data.life.recipeLevels[tostring(index)] or 0) * 0.2)))
+		* Crafting.multiplier(flags, index) * Progression.multiplier(data, perks) * (1 + (data.life.recipeLevels[tostring(index)] or 0) * 0.2)))
 end
 
 function Progression.batchValue(data, perks)
@@ -105,10 +106,10 @@ function Progression.buyModifier(data, index, key)
 	if type(index) ~= "number" or index ~= math.floor(index) or index < 1 or index > data.unlocked then
 		return false, "Unlock that cookie recipe before decorating it."
 	end
-	if type(key) ~= "string" or not Crafting.Modifiers[key] then return false, "Unknown cookie modifier." end
+	if type(key) ~= "string" or not Crafting.option(index, key) then return false, "Unknown cookie modifier." end
 	local recipeKey = tostring(index)
 	local flags = data.modifiers and data.modifiers[recipeKey]
-	if flags and flags[key] then return false, "This recipe already has " .. Crafting.Modifiers[key].Name .. "." end
+	if flags and flags[key] then return false, "This recipe already has " .. Crafting.option(index, key).Name .. "." end
 	local cost = Crafting.cost(Recipes[index], key)
 	if data.cash < cost then return false, "You need $" .. Progression.format(cost) .. " in your wallet for this modifier." end
 	data.cash -= cost
@@ -118,7 +119,7 @@ function Progression.buyModifier(data, index, key)
 		data.modifiers[recipeKey] = flags
 	end
 	flags[key] = true
-	return true, Crafting.Modifiers[key].Name .. " added to " .. Recipes[index].Name .. "!"
+	return true, Crafting.option(index, key).Name .. " added to " .. Recipes[index].Name .. "!"
 end
 
 function Progression.ovenCost(data)
@@ -190,6 +191,10 @@ function Progression.rebirth(data)
 	data.life.machines = Life.normalize(nil).machines
 	data.life.recipeLevels = Life.normalize(nil).recipeLevels
 	data.life.oven = {}
+	data.life.inventory = {}
+	data.life.belt = 0
+	data.life.decorations = Life.normalize(nil).decorations
+	data.life.buff = Life.normalize(nil).buff
 	return true, "Reborn! +" .. requirement.Reward .. " Golden Chips. Permanent upgrades are kept; recipe modifiers reset."
 end
 

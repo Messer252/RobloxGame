@@ -3,8 +3,9 @@
 -- Prices come from Roblox on the client; do not hardcode Robux prices here.
 local Boosts = if script then require(script.Parent.Boosts) else require("./Boosts")
 local Catalog = {
-	PassOrder = { "DoubleIncome", "DoubleSpeed" },
+	PassOrder = { "DoubleIncome", "DoubleSpeed", "ThirdCardSlot" },
 	Passes = {
+		ThirdCardSlot = { Id = 0, Name = "Third Card Slot", Description = "Equip a third animal card on your bakery. Set this pass price to 150 Robux in Creator Dashboard.", SuggestedRobux = 150 },
 		DoubleIncome = { Id = 0, Name = "2x Cookie Income", Description = "Double cookie earnings forever. Stacks with Golden Batter and rebirth bonuses." },
 		DoubleSpeed = { Id = 0, Name = "2x Baking Speed", Description = "Bake twice as fast forever, including with fully upgraded ovens." },
 	},

@@ -3,10 +3,16 @@ local Polish = {}
 Polish.WrapZ, Polish.BoxZ = 118.5, 122
 Polish.BeltCosts = { 0, 10000, 250000 }
 Polish.Decorations = {
-	Walls = { Cost = 2500, Name = "Brick walls" }, Windows = { Cost = 6000, Name = "Arched windows" },
-	Door = { Cost = 4000, Name = "Bakery entrance" }, Plants = { Cost = 750, Name = "Potted plants" },
+	Walls = { Cost = 2500, Name = "Brick walls" }, Windows = { Cost = 6000, Name = "Fitted windows", Requires = "Walls" },
+	Door = { Cost = 4000, Name = "Hinged glass door", Requires = "Walls" }, Plants = { Cost = 750, Name = "Potted plants" },
 	Trees = { Cost = 1500, Name = "Cookie garden" },
+	Roof = { Cost = 25000, Name = "Skylight roof", Requires = "Walls" }, Lights = { Cost = 12000, Name = "Warm pendant lights", Requires = "Roof" },
+	Floor = { Cost = 8000, Name = "Herringbone floor" }, Signs = { Cost = 15000, Name = "Bakery lettering" },
+	Benches = { Cost = 9000, Name = "Cafe seating" }, Fountain = { Cost = 150000, Name = "Cookie fountain" },
+	Display = { Cost = 50000, Name = "Cookie display case" }, FlowerBeds = { Cost = 5000, Name = "Flower borders" },
+	Fence = { Cost = 18000, Name = "Garden fencing" },
 }
+Polish.DecorationOrder = { "Walls", "Windows", "Door", "Roof", "Lights", "Plants", "Trees", "Floor", "Signs", "Benches", "Fountain", "Display", "FlowerBeds", "Fence" }
 -- Name, run speed, jump height, mining damage, income %, sale %, regeneration/sec.
 local buffs = {
 	{ "Chip dash", 8, 0, 0, 0, 0, 0 }, { "Hearty harvest", 2, 0, 2, 0, 0, 1 },
@@ -27,17 +33,18 @@ local buffs = {
 }
 function Polish.buff(recipe)
 	local b = buffs[recipe] or buffs[1]
-	return { Name = b[1], Speed = b[2], Jump = b[3], Mine = b[4], Income = b[5], Sell = b[6], Regen = b[7], Seconds = 90 }
+	return { Name = b[1], Speed = b[2], Jump = b[3], Mine = b[4], Income = b[5], Sell = b[6], Regen = b[7], Damage = ({ [4] = 6, [6] = 8, [9] = 4, [16] = 10, [20] = 5, [21] = 8, [26] = 12, [30] = 14 })[recipe] or 0, Defense = ({ [2] = .1, [8] = .12, [11] = .2, [14] = .15, [17] = .2, [22] = .15, [28] = .25, [29] = .3, [30] = .2 })[recipe] or 0, Seconds = 90 }
 end
 function Polish.describe(recipe)
 	local b, parts = Polish.buff(recipe), {}
-	for _, entry in ipairs({ { "Speed", " speed" }, { "Jump", " jump" }, { "Mine", " mining" }, { "Income", "% income" }, { "Sell", "% sales" }, { "Regen", " HP/s" } }) do
+	for _, entry in ipairs({ { "Speed", " speed" }, { "Jump", " jump" }, { "Mine", " mining" }, { "Income", "% income" }, { "Sell", "% sales" }, { "Regen", " HP/s" }, { "Damage", " pin damage" } }) do
 		if b[entry[1]] > 0 then table.insert(parts, "+" .. b[entry[1]] .. entry[2]) end
 	end
+	if b.Defense > 0 then table.insert(parts, "+" .. math.floor(b.Defense*100) .. "% defense") end
 	return table.concat(parts, " • ") .. " • 90s"
 end
 function Polish.active(life, now)
-	return life.buff.expires > now and Polish.buff(life.buff.recipe) or { Speed = 0, Jump = 0, Mine = 0, Income = 0, Sell = 0, Regen = 0 }
+	return life.buff.expires > now and Polish.buff(life.buff.recipe) or { Speed = 0, Jump = 0, Mine = 0, Income = 0, Sell = 0, Regen = 0, Damage = 0, Defense = 0 }
 end
 function Polish.buyBelt(data)
 	local nextTier = data.life.belt + 1
@@ -51,6 +58,7 @@ end
 function Polish.buyDecoration(data, key)
 	local item = Polish.Decorations[key]
 	if not item or data.life.decorations[key] then return false, "Decoration unavailable or already owned." end
+	if item.Requires and not data.life.decorations[item.Requires] then return false, "Buy " .. Polish.Decorations[item.Requires].Name .. " first." end
 	if data.cash < item.Cost then return false, "Collect more cash for this decoration." end
 	data.cash -= item.Cost
 	data.life.decorations[key] = true

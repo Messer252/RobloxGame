@@ -3,11 +3,11 @@ local Layout = {
 	StationCount = 30,
 	StationSpacing = 7,
 	FirstStationZ = 74,
-	OvenX = -44.8,
+	OvenX = 44.8,
 	OvenScale = 0.45,
-	PadX = -53.5,
-	SpawnX = -52,
-	SpawnZ = 71,
+	PadX = 53.5,
+	SpawnX = 64,
+	SpawnZ = 78,
 	BeltWidth = 9,
 	BeltFrontZ = 78,
 	BeltBackZ = -8,
@@ -18,7 +18,7 @@ local Layout = {
 	MainEndZ = 126,
 	BoxZ = 134,
 	BeltTop = 4.4,
-	LaneXs = { -36, 0, 36 },
+	LaneXs = { 36, 0, -36 },
 	CookieY = 4.78,
 	CookieSpeed = 12,
 	MaxVisualCookies = 10,
@@ -30,8 +30,8 @@ function Layout.station(index)
 	if type(index) ~= "number" or index % 1 ~= 0 or index < 1 or index > Layout.StationCount then return nil end
 	local lane = math.floor((index - 1) / 10) + 1
 	local laneX = Layout.LaneXs[lane]
-	return { x = laneX - 8.8, z = Layout.FirstStationZ - ((index - 1) % 10) * Layout.StationSpacing,
-		padX = laneX - 17.5, scale = Layout.OvenScale, lane = lane, laneX = laneX }
+	return { x = laneX + 8.8, z = Layout.FirstStationZ - ((index - 1) % 10) * Layout.StationSpacing,
+		padX = laneX + 17.5, scale = Layout.OvenScale, lane = lane, laneX = laneX }
 end
 
 function Layout.speed(interval)

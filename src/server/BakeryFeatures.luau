@@ -39,11 +39,11 @@ function Features.create(world, plots, action)
 	for _, plot in ipairs(plots) do
 		self.machines[plot] = {}
 		self.decorations[plot] = Decorations.create(plot)
-		local buildPad = W.part(plot.model, "Build Conveyor", Vector3.new(7, 0.2, 7), W.position(plot, -61, 0.8, 61), Color3.fromRGB(117, 192, 170))
+		local buildPad = W.part(plot.model, "Build Conveyor", Vector3.new(7, 0.2, 7), W.position(plot, 60, 0.8, 64), Color3.fromRGB(117, 192, 170))
 		self.buildPads[plot] = { pad = buildPad, label = W.label(buildPad, "Build first conveyor • FREE", 45) }
 		W.prompt(buildPad, "Build / expand conveyor", 0, function(player) action(player, "BuildBelt", nil, plot) end)
-		for index, key in ipairs({ "Walls", "Windows", "Door", "Plants", "Trees" }) do
-			local pad = W.part(plot.model, key .. " Decoration Pad", Vector3.new(5, 0.2, 5), W.position(plot, 42 + (index % 3) * 10, 0.8, -77 + math.floor(index / 3) * 10), Color3.fromRGB(187, 156, 202))
+		for index, key in ipairs(Polish.DecorationOrder) do
+			local pad = W.part(plot.model, key .. " Decoration Pad", Vector3.new(5, 0.2, 5), W.position(plot, 30 + ((index - 1) % 5) * 10, 0.8, -55 - math.floor((index - 1) / 5) * 12), Color3.fromRGB(187, 156, 202))
 			W.label(pad, Polish.Decorations[key].Name .. "\n$" .. Progression.format(Polish.Decorations[key].Cost), 26)
 			W.prompt(pad, "Buy " .. key, 0, function(player) action(player, "Decoration", key, plot) end)
 		end

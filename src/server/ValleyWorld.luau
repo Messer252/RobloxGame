@@ -1,4 +1,6 @@
 local Lighting = game:GetService("Lighting")
+local Natural = require(script.Parent.NaturalTerrain)
+local Shape = require(game:GetService("ReplicatedStorage").CookieTycoon.TerrainShape)
 local Valley = {}
 local function part(parent, name, size, position, color, material)
 	local p = Instance.new("Part")
@@ -22,33 +24,17 @@ function Valley.create(parent)
 			stripe.CanCollide = false
 		end
 	end
-	-- Four angular rock faces form a pointed mountain, with a smaller snow crown.
-	for index = 1, 32 do
-		local angle = index / 32 * math.pi * 2
-		local center = Vector3.new(math.cos(angle) * 740, -8, math.sin(angle) * 890)
-		local height, width = random:NextNumber(170, 310), random:NextNumber(120, 205)
-		for layer = 1, 2 do
-			local size = layer == 1 and Vector3.new(width, height, width) or Vector3.new(width * 0.3, height * 0.3, width * 0.3)
-			local base = center + Vector3.new(0, layer == 1 and 0 or height * 0.7, 0)
-			for face = 0, 3 do
-				local rotation = CFrame.Angles(0, face * math.pi / 2 + angle, 0)
-				local rock = Instance.new("CornerWedgePart")
-				rock.Name, rock.Size = layer == 1 and "Faceted Mountain Face" or "Snowy Summit", Vector3.new(size.X / 2, size.Y, size.Z / 2)
-				rock.CFrame = CFrame.new(base) * rotation * CFrame.new(size.X / 4, size.Y / 2, size.Z / 4)
-				rock.Color = layer == 1 and Color3.fromRGB(91 + face * 6, 108 + face * 6, 115 + face * 7) or Color3.fromRGB(231, 238, 234)
-				rock.Material, rock.Anchored, rock.CanCollide, rock.Parent = layer == 1 and Enum.Material.Rock or Enum.Material.Snow, true, false, folder
-			end
-		end
-	end
+	Natural.create()
+
 	for index = 1, 175 do
 		local x = (index % 2 == 0 and -1 or 1) * random:NextNumber(225, 425)
 		local z = random:NextNumber(-570, 570)
 		local lake = x < -205 and z > -450 and z < -295
 		local mine = x < -210 and math.abs(z - 120) < 75
 		local obby = x > 215 and (math.abs(z) < 45 or math.abs(z - 180) < 45 or math.abs(z + 180) < 45)
-		if lake or mine or obby or math.abs(z) < 22 then continue end
+		if lake or mine or obby or math.abs(z) < 22 or (x + 285)^2 + (z - 400)^2 < 3600 then continue end
 		local height = random:NextNumber(12, 23)
-		local pos = Vector3.new(x, 0, z)
+		local pos = Vector3.new(x, math.max(0, Shape.height(x, z)), z)
 		part(folder, "Cookie Tree Trunk", Vector3.new(2.2, height, 2.2), pos + Vector3.new(0, height / 2, 0), Color3.fromRGB(100, 68, 43), Enum.Material.Wood)
 		local crown = part(folder, "Cookie Forest Canopy", Vector3.new(17, 15, 17), pos + Vector3.new(0, height, 0), Color3.fromRGB(random:NextInteger(69, 104), random:NextInteger(126, 158), 85), Enum.Material.Grass)
 		crown.Shape, crown.CanCollide = Enum.PartType.Ball, false
@@ -107,6 +93,16 @@ function Valley.create(parent)
 	end
 	for index = 0, 18 do
 		part(folder, "Lake Footbridge Plank", Vector3.new(7.4, 0.5, 8), Vector3.new(-355 + index * 7.5, 2.5 + math.sin(index / 18 * math.pi) * 3, -337), Color3.fromRGB(137, 99, 64), Enum.Material.WoodPlanks)
+	end
+	for i = 1, 140 do
+		local x = (i % 2 == 0 and -1 or 1) * random:NextNumber(220, 410)
+		local z = random:NextNumber(-570, 570)
+		if Shape.lake(x, z) or (x < 0 and z > 0 and z < 215) or (x > 0 and (math.abs(z) < 50 or math.abs(z-180) < 50 or math.abs(z+180) < 50)) then continue end
+		local y = math.max(0, Shape.height(x, z))
+		local stem = part(folder, "Wildflower Stem", Vector3.new(0.09, 0.65, 0.09), Vector3.new(x, y + 0.35, z), Color3.fromRGB(81, 125, 63))
+		stem.CanCollide = false
+		local petal = part(folder, "Meadow Wildflower", Vector3.new(0.55, 0.15, 0.55), Vector3.new(x, y + 0.7, z), ({ Color3.fromRGB(246, 231, 188), Color3.fromRGB(237, 166, 154), Color3.fromRGB(180, 180, 229) })[i % 3 + 1])
+		petal.Shape, petal.CanCollide = Enum.PartType.Ball, false
 	end
 	local epoch = os.clock()
 	task.spawn(function()

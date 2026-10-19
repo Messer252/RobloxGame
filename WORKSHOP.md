@@ -1,5 +1,6 @@
 # Workshop polish update
 
+**Latest behavior:** [Cookie animals and events update](CARDS-AND-EVENTS.md) supersedes older rebirth retention, terrain, entrance placement, decorations, and topping details below.
 [Download the Studio game](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Extract it and open `CookieCorner.rbxlx`. Copy your customized product IDs, audio IDs (if you want an optional uploaded mix), and AdminConfig usernames before replacing your old place. Publish into the same experience and restart outdated servers.
 
 ## Hotbar, cave, and mining
@@ -18,7 +19,7 @@ New players start with an unbuilt conveyor. Visit **Build Conveyor** beside the 
 | Second | $10,000 | Middle line and recipes 11–20 |
 | Third | $250,000 | Last line and recipes 21–30 |
 
-Production starts after building the first line. The next recipe cannot be bought until its line exists. Existing saves from before this update retain all three built lines. Conveyor construction and decorations survive rebirth.
+Production starts after building the first line. The next recipe cannot be bought until its line exists. Existing saves from before this update retain all three built lines. Conveyors and purchased decorations reset on rebirth. Cards and Star Crumbs survive.
 
 Buy **walls ($2,500), windows ($6,000), entrance/door ($4,000), plants ($750), and cookie trees ($1,500)** from the decoration pads at the rear of your own bakery. The Machines page shows these purchases too; you still need to visit the appropriate pads. These are cookie-cash purchases, with no Robux required. Purchases are checked and saved on the server.
 
@@ -68,7 +69,7 @@ Admins open **Bakery → Admin tools → My flight**. WASD steers with the camer
 
 ## Save and Studio checks
 
-Save envelope **7** accepts versions **1–6**, retaining the same `CookieCorner_PlayerData_v1` and trade journal. New saved fields include build tier, decorations, and the current randomized job. Keep the stores and restart older servers after publishing.
+Save envelope **8** accepts versions **1–7**, retaining the same `CookieCorner_PlayerData_v1` and trade journal. New saved fields include build tier, decorations, and the current randomized job. Keep the stores and restart older servers after publishing.
 
 Automated checks cover the economy, packaging thresholds, unique buffs/expiry, customer rolls/budgets, job rewards/migration, gift persistence, and flight permissions. Roblox Studio is still required to verify:
 

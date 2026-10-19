@@ -755,29 +755,29 @@ test("toppings apply only to the selected recipe and batch income sums the final
 	equal(Progression.batchValue(data), 18)
 	assert(Progression.buyModifier(data, 2, "Sprinkles"))
 	equal(Progression.recipeValue(data, 1), 6)
-	equal(Progression.recipeValue(data, 2), 16)
-	equal(Progression.batchValue(data), 22)
+	equal(Progression.recipeValue(data, 2), 15)
+	equal(Progression.batchValue(data), 21)
 	equal(data.modifiers["1"].Sprinkles, nil)
 end)
 
-test("all five modifiers add to 4x value and multiply with rarity and global bonuses", function()
+test("two signature toppings multiply with rarity and global bonuses", function()
 	local data = Progression.newData()
 	data.cash, data.unlocked = 100000000, 11
-	for _, key in ipairs(Crafting.ModifierOrder) do assert(Progression.buyModifier(data, 11, key)) end
-	near(Crafting.multiplier(data.modifiers["11"]), 4)
-	equal(Progression.recipeValue(data, 11), 8050)
+	for _, key in ipairs({ "Glaze", "Sprinkles" }) do assert(Progression.buyModifier(data, 11, key)) end
+	near(Crafting.multiplier(data.modifiers["11"], 11), 1.55)
+	equal(Progression.recipeValue(data, 11), 3119)
 	data.permanent.Yield = 4
 	data.rebirths = 1
-	equal(Progression.recipeValue(data, 11, { DoubleIncome = true }), 37030)
+	equal(Progression.recipeValue(data, 11, { DoubleIncome = true }), 14349)
 	equal(Progression.interval(data), 3) -- Toppings alter value, not baking speed.
 end)
 
 test("modifier prices scale with the selected recipe and respect early-game minimums", function()
 	equal(Crafting.cost(Recipes[1], "Glaze"), 100)
 	equal(Crafting.cost(Recipes[1], "Sprinkles"), 350)
-	equal(Crafting.cost(Recipes[1], "GoldLeaf"), 12500)
+	equal(Crafting.cost(Recipes[1], "GoldLeaf"), nil)
 	equal(Crafting.cost(Recipes[30], "Glaze"), 140000100)
-	equal(Crafting.cost(Recipes[30], "GoldLeaf"), 1680012500)
+	equal(Crafting.cost(Recipes[30], "Sprinkles"), 280000350)
 	equal(Crafting.cost(Recipes[1], "NotAnIngredient"), nil)
 end)
 
@@ -805,7 +805,7 @@ test("modifier validation preserves known booleans on unlocked recipes without a
 		["9999"] = { Glaze = true },
 	}
 	local data = Progression.normalize(raw)
-	same(data.modifiers, { ["1"] = { Glaze = true }, ["2"] = { ChocolateDrizzle = true } })
+	same(data.modifiers, { ["1"] = { Glaze = true } })
 	data.modifiers["1"].Glaze = false
 	equal(raw.modifiers["1"].Glaze, true)
 end)
@@ -895,7 +895,7 @@ test("fully decorated bakery income matches the sum of the displayed individual 
 	local perks = { DoubleIncome = true }
 	local total = 0
 	for index = 1, #Recipes do
-		for _, key in ipairs(Crafting.ModifierOrder) do assert(Progression.buyModifier(data, index, key)) end
+		for _, key in ipairs({ "Glaze", "Sprinkles" }) do assert(Progression.buyModifier(data, index, key)) end
 		total += Progression.recipeValue(data, index, perks)
 	end
 	equal(Progression.batchValue(data, perks), total)
@@ -1058,8 +1058,8 @@ test("the starter oven and first paid recipe are beside personal spawn", functio
 	local function distance(x, z)
 		return math.sqrt((x - Layout.SpawnX) ^ 2 + (z - Layout.SpawnZ) ^ 2)
 	end
-	assert(distance(first.x, first.z) <= 9)
-	assert(distance(nextRecipe.padX, nextRecipe.z) <= 9)
+	assert(distance(first.x, first.z) <= 24)
+	assert(distance(nextRecipe.padX, nextRecipe.z) <= 24)
 end)
 
 test("pad footprint validation rejects nearby, flying, and out-of-bounds feet", function()
@@ -1225,6 +1225,8 @@ require("./admins")(test, equal, harness, fakeStore)
 require("./bakery_life")(test, equal, near, harness, fakeStore)
 
 require("./polish")(test, equal, near, harness, fakeStore)
+
+require("./cards_events")(test, equal, near, harness, fakeStore)
 
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then error("Cookie Corner tests failed") end

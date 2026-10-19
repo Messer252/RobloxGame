@@ -55,11 +55,11 @@ function Presentation.lighting()
 	end
 	local atmosphere = Instance.new("Atmosphere")
 	atmosphere.Name = "CookieAtmosphere"
-	atmosphere.Density = 0.2
+	atmosphere.Density = 0.24
 	atmosphere.Offset = 0.15
-	atmosphere.Color = Color3.fromRGB(255, 239, 220)
-	atmosphere.Decay = Color3.fromRGB(194, 174, 159)
-	atmosphere.Haze = 1.1
+	atmosphere.Color = Color3.fromRGB(207, 226, 239)
+	atmosphere.Decay = Color3.fromRGB(112, 147, 171)
+	atmosphere.Haze = 1.5
 	atmosphere.Glare = 0.08
 	atmosphere.Parent = Lighting
 	local bloom = Instance.new("BloomEffect")
@@ -73,7 +73,7 @@ function Presentation.lighting()
 	correction.Brightness = 0.015
 	correction.Contrast = 0.08
 	correction.Saturation = 0.1
-	correction.TintColor = Color3.fromRGB(255, 249, 240)
+	correction.TintColor = Color3.fromRGB(253, 253, 248)
 	correction.Parent = Lighting
 	local sun = Instance.new("SunRaysEffect")
 	sun.Name = "CookieSun"

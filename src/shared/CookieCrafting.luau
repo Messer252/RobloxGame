@@ -1,3 +1,5 @@
+local Toppings = if script then require(script.Parent.RecipeToppings) else require("./RecipeToppings")
+local Recipes = if script then require(script.Parent.Recipes) else require("./Recipes")
 -- Fixed recipe tiers and cash-bought toppings. These definitions are shared by
 -- the server economy, workshop UI, and cookie visuals; no random rolls are used.
 local Crafting = {
@@ -24,16 +26,24 @@ function Crafting.rarity(recipe)
 	return Crafting.Rarities[recipe.Rarity] or Crafting.Rarities.Common
 end
 
+function Crafting.option(recipe, key)
+	local index = type(recipe) == "number" and recipe or table.find(Recipes, recipe)
+	local slot = key == "Glaze" and 1 or key == "Sprinkles" and 2 or nil
+	if not index or not slot then return nil end
+	local item = Toppings[index][slot]
+	return { Name = item[1], Bonus = item[2], Style = item[3], MinimumCost = slot == 1 and 100 or 350, CostFactor = slot == 1 and 0.25 or 0.5, Color = Recipes[index].Accent }
+end
 function Crafting.cost(recipe, key)
-	local modifier = Crafting.Modifiers[key]
+	local modifier = Crafting.option(recipe, key)
 	if not modifier then return nil end
 	return modifier.MinimumCost + math.floor(recipe.Cost * modifier.CostFactor)
 end
 
-function Crafting.multiplier(flags)
+function Crafting.multiplier(flags, recipe)
 	local bonus = 0
 	for _, key in ipairs(Crafting.ModifierOrder) do
-		if flags and flags[key] == true then bonus += Crafting.Modifiers[key].Bonus end
+		local definition = recipe and Crafting.option(recipe, key) or (not recipe and Crafting.Modifiers[key] or nil)
+		if definition and flags and flags[key] == true then bonus += definition.Bonus end
 	end
 	return 1 + bonus -- Add topping bonuses, then multiply with rarity and income boosts.
 end
@@ -56,10 +66,11 @@ function Crafting.decode(mask)
 	return flags
 end
 
-function Crafting.summary(flags)
+function Crafting.summary(flags, recipe)
 	local names = {}
 	for _, key in ipairs(Crafting.ModifierOrder) do
-		if flags and flags[key] == true then table.insert(names, Crafting.Modifiers[key].Name) end
+		local definition = recipe and Crafting.option(recipe, key) or (not recipe and Crafting.Modifiers[key] or nil)
+		if definition and flags and flags[key] == true then table.insert(names, definition.Name) end
 	end
 	return #names == 0 and "Plain" or table.concat(names, " + ")
 end

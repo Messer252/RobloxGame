@@ -519,6 +519,7 @@ local function currentData()
 		perks = {
 			DoubleIncome = player:GetAttribute("DoubleIncomeOwned") == true,
 			DoubleSpeed = player:GetAttribute("DoubleSpeedOwned") == true,
+			ThirdCardSlot = player:GetAttribute("ThirdCardSlotOwned") == true,
 			Now = math.floor(workspace:GetServerTimeNow()),
 		},
 		boosts = {
@@ -707,7 +708,7 @@ local function render()
 	recipeTitle.TextColor3 = Color3.fromRGB(table.unpack(rarity.Color))
 	workshopDetails.Text = rarity.Name .. "  •  " .. (unlocked and "$" .. format(Progression.recipeValue(data, selectedRecipe, data.perks)) .. " / cookie"
 		or "Unlock for $" .. format(selected.Cost))
-	toppingSummary.Text = "Toppings: " .. Crafting.summary(flags)
+	toppingSummary.Text = "Toppings: " .. Crafting.summary(flags, selectedRecipe)
 	local mastery = data.life.recipeLevels[tostring(selectedRecipe)] or 0
 	local masteryCost = Life.recipeCost(selectedRecipe, mastery)
 	masteryButton.Text = mastery == 10 and "Cookie mastery MAX" or ("Cookie mastery " .. mastery .. "/10 • $" .. format(masteryCost) .. "\n+20% value for this recipe")
@@ -715,7 +716,9 @@ local function render()
 	enable(previousCookie, selectedRecipe > 1)
 	enable(nextCookie, selectedRecipe < #Recipes)
 	for key, addButton in pairs(modifierButtons) do
-		local definition = Crafting.Modifiers[key]
+		local definition = Crafting.option(selectedRecipe, key)
+		addButton.Visible = definition ~= nil
+		if not definition then continue end
 		local cost = Crafting.cost(selected, key)
 		local applied = flags and flags[key] == true
 		addButton.Text = definition.Name .. "  +" .. math.floor(definition.Bonus * 100 + 0.5) .. "%\n"

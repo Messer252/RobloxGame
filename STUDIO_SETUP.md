@@ -238,7 +238,7 @@ The speed pass speeds up baking. Bought cash resets on rebirth; permanent passes
 5. In Creator Dashboard, use **Configurations → Server management → Restart Servers** and select outdated servers when the update needs everyone on the new code. In particular, restart older servers when rolling out this version's inventory and trade save format.
 6. Join through the Roblox app to check the published update.
 
-The current **version-7 save envelope** accepts versions **1–6** and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Earlier game versions cannot read version-7 records. Keep `CookieCorner_PlayerData_v1` and do not roll back to older save code after players have saved with this build.
+The current **version-8 save envelope** accepts versions **1–7** and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Earlier game versions cannot read version-8 records. Keep `CookieCorner_PlayerData_v1` and do not roll back to older save code after players have saved with this build.
 
 Keep these three copies in mind:
 
@@ -309,10 +309,12 @@ For live source editing, use `rojo serve default.project.json` with the Studio R
 - [ ] The chosen audience can join through the Roblox game-page link.
 - [ ] Purchases remain disabled, or the configured offers have passed the monetization checks.
 
-The place packager verifies all **60 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes the new original soundtrack WAV and plays its built-in score immediately. An uploaded full mix is optional. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
+The place packager verifies all **69 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes the new original soundtrack WAV and plays its built-in score immediately. An uploaded full mix is optional. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
 
 Official references: [Studio installation](https://create.roblox.com/docs/studio/setup), [publishing and audience requirements](https://create.roblox.com/docs/production/publishing/publish-games-and-places), [Studio DataStore access](https://create.roblox.com/docs/cloud-services/data-stores#enable-studio-access), [testing modes](https://create.roblox.com/docs/studio/testing-modes), and [server updates](https://create.roblox.com/docs/projects/update-games). Roblox's menu labels and release requirements can change; follow the current prompts if your layout differs.
 
 For the map, Home button, cookie bag, eating, mining, machines, customer sales, trading, and quest compass, follow [the cookie valley guide](VALLEY.md). Before overwriting a customized place, copy your audio/product IDs and AdminConfig username additions into the new file.
 
 For current controls, building, mining, free gifts, random jobs, buffs, scenery, and flight, use [WORKSHOP.md](WORKSHOP.md).
+
+The latest [cards/events guide](CARDS-AND-EVENTS.md) covers the generated animal art upload, optional 150 Robux card-slot pass, Star Crumb balance, meteors, PvP hill, natural terrain, decorations, plot entrance layout, and rebirth cleanup. All card/crumb state persists through rebirth; bag cookies and conveyors now reset.

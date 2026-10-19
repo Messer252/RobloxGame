@@ -34,7 +34,7 @@ return function(test, equal, near, harness, fakeStore)
 	end)
 	test("cookie value includes rarity, toppings, quality, packaging, boxing, and one finishing", function()
 		local item = Life.cookie({ id = "deluxe", recipe = 30, mask = 31, quality = 10, wrapped = true, boxed = true, baked = true })
-		equal(Life.value(item), math.floor(Recipes[30].Value * 6 * 4 * 3 * 1.25 * 1.5 * 3))
+		equal(Life.value(item), math.floor(Recipes[30].Value * 6 * 1.75 * 3 * 1.25 * 1.5 * 3))
 	end)
 	test("bag capacity cannot be bypassed and oven cookies cannot be eaten or traded", function()
 		local p = Progression.newData()
@@ -89,19 +89,19 @@ return function(test, equal, near, harness, fakeStore)
 		near(Progression.multiplier(p), 1.25 * 1.1)
 	end)
 	test("every cookie has strictly increasing topping and mastery prices", function()
-		for _, key in ipairs(Crafting.ModifierOrder) do
+		for _, key in ipairs({ "Glaze", "Sprinkles" }) do
 			for i = 2, #Recipes do assert(Crafting.cost(Recipes[i], key) > Crafting.cost(Recipes[i-1], key)) end
 		end
 		for i = 2, #Recipes do assert(Life.recipeCost(i, 0) > Life.recipeCost(i-1, 0)) end
 		for level = 1, 9 do assert(Life.recipeCost(1, level) > Life.recipeCost(1, level-1)) end
 	end)
-	test("rebirth retains inventory, dough and permanent mining upgrades but resets cash machines", function()
+	test("rebirth clears cookies and machines while retaining permanent mining upgrades", function()
 		local p = Progression.newData()
 		Life.add(p.life, cookie("kept", 30))
 		p.life.dough, p.life.pin, p.life.upgrades.Flow, p.life.machines.Boxer = 100, 3, 4, true
 		p.life.recipeLevels["1"], p.cash, p.unlocked = 3, 1e8, 30
 		assert(Progression.rebirth(p))
-		equal(p.life.inventory[1].id, "kept")
+		equal(#p.life.inventory, 0)
 		equal(p.life.dough, 100)
 		equal(p.life.pin, 3)
 		equal(p.life.upgrades.Flow, 4)

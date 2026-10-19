@@ -1,5 +1,6 @@
 # Cookie valley update
 
+**Latest behavior:** [Cookie animals and events update](CARDS-AND-EVENTS.md) supersedes older rebirth retention, terrain, entrance placement, decorations, and topping details below.
 **Current controls and mechanics:** see [the Workshop update](WORKSHOP.md), which replaces the earlier mining prompts, quest waypoints, cookie swaps, generic food buffs, and scenery described below.
 Download the latest [Studio ZIP](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip), extract it, and open `CookieCorner.rbxlx`. Publish to your existing start place and **restart outdated servers**. Keep the existing player DataStore name. Before replacing a customized Studio file, copy across any audio IDs, shop product IDs, and friends you added to AdminConfig.
 
@@ -39,7 +40,7 @@ Visit each purchase pad beside your own line:
 
 Wrappers and boxes attach without adding collision obstacles to the belt. Picking a cookie before an arch means it does not receive that arch's bonus. The finishing oven locks the item in your bag while baking; it cannot be eaten, sold, or traded during that time. The queue survives a normal departure and completes when its timestamp is reached. The oven must be purchased before use, and starting a finish requires being at its pad.
 
-Cash-bought machines, cookie mastery, and toppings reset on rebirth. Stored cookies, dough, rolling pins, and dough upgrades survive. An unfinished oven job is canceled on rebirth and returns the original cookie to normal bag use.
+Cash-bought machines, cookie mastery, and toppings reset on rebirth. Stored cookies reset; cards, Star Crumbs, dough, rolling pins, and dough upgrades survive. An unfinished oven job is canceled on rebirth and returns the original cookie to normal bag use.
 
 ## Roaming customers and bargaining
 
@@ -86,7 +87,7 @@ The HUD now includes a **heading compass, direction arrow, target name, and dist
 
 ## Save upgrade and playtest checklist
 
-Save envelope **7** accepts versions 1–6 and preserves previous cash, paid boosts, receipts, audio, and quest progress. New inventory/dough/machine state lives in the existing `CookieCorner_PlayerData_v1` store. Trade recovery uses `CookieCorner_CookieTrades_v1`. Restart old servers; earlier writers must not drop the new ownership fields.
+Save envelope **8** accepts versions 1–7 and preserves previous cash, paid boosts, receipts, audio, and quest progress. New inventory/dough/machine state lives in the existing `CookieCorner_PlayerData_v1` store. Trade recovery uses `CookieCorner_CookieTrades_v1`. Restart old servers; earlier writers must not drop the new ownership fields.
 
 Automated tests cover inventory validation/capacity, values, buff expiry, costs and rebirth rules, finishing queues, bargaining outcomes, trade confirmation prerequisites, activity locks, journal abort/commit recovery, and lost save responses. Roblox Studio is still required for these engine checks:
 

@@ -153,7 +153,7 @@ function Conveyor.create(plot, position)
 		if p:IsA("BasePart") then
 			local localPos = p.Position - plot.origin
 			local x, z = localPos.X, localPos.Z * plot.direction
-			local tier = z > 110 and 1 or (x < -9 and 1 or (x > 9 and 3 or 2))
+			local tier = z > 110 and 1 or (x > 9 and 1 or (x < -9 and 3 or 2))
 			table.insert(plot.conveyorParts, { part = p, tier = tier, transparency = p.Transparency, collision = p.CanCollide, query = p.CanQuery })
 		end
 	end

@@ -2,12 +2,37 @@
   "name": "CookieFactoryTycoon",
   "tree": {
     "$className": "DataModel",
-    "ReplicatedStorage": { "CookieTycoon": { "$path": "src/shared" } },
+    "ReplicatedStorage": {
+      "CookieTycoon": {
+        "$path": "src/shared"
+      }
+    },
     "ServerStorage": {
       "$className": "ServerStorage",
-      "CookieCornerAssets": { "$path": "assets/models/CookieCornerAssets.rbxmx" }
+      "CookieCornerAssets": {
+        "$path": "assets/models/CookieCornerAssets.rbxmx"
+      }
     },
-    "ServerScriptService": { "Tycoon": { "$path": "src/server" } },
-    "StarterPlayer": { "StarterPlayerScripts": { "TycoonUI": { "$path": "src/client" } } }
+    "ServerScriptService": {
+      "Tycoon": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "TycoonUI": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "Terrain": {
+        "$className": "Terrain",
+        "$properties": {
+          "Decoration": true
+        }
+      }
+    }
   }
 }

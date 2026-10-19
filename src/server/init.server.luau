@@ -9,6 +9,7 @@ local Recipes = require(shared.Recipes)
 local Crafting = require(shared.CookieCrafting)
 local Challenges = require(shared.Challenges)
 local Contracts = require(shared.BakeryContracts)
+local Cards = require(shared.CardEconomy)
 local Boosts = require(shared.Boosts)
 local AudioPreferences = require(shared.AudioPreferences)
 local ProfileStore = require(script.ProfileStore)
@@ -77,7 +78,7 @@ local function sync(player, state)
 	player:SetAttribute("EffectsEnabled", data.audio.effects)
 	player:SetAttribute("MusicVolume", data.audio.musicVolume)
 	player:SetAttribute("EffectsVolume", data.audio.effectsVolume)
-	player:SetAttribute("LifeProgress", HttpService:JSONEncode({ upgrades = data.life.upgrades, machines = data.life.machines, recipeLevels = data.life.recipeLevels, buff = data.life.buff, belt = data.life.belt }))
+	player:SetAttribute("LifeProgress", HttpService:JSONEncode({ upgrades = data.life.upgrades, machines = data.life.machines, recipeLevels = data.life.recipeLevels, buff = data.life.buff, belt = data.life.belt, cards = data.life.cards }))
 	player:SetAttribute("ContractJSON", HttpService:JSONEncode(data.life.contract))
 	player:SetAttribute("ChallengeIndex", data.challenges.index)
 	player:SetAttribute("ChallengeActive", data.challenges.active)
@@ -176,6 +177,7 @@ local function onAction(player, action, argument, sourcePlot)
 		if state.data.challenges.active then success, message, reward = Challenges.interact(state.data, Progression.MAX_CASH)
 		else success, message, reward = Contracts.interact(state.data, os.time(), math.random(), math.random(), math.random(), argument == "Skip") end
 		if success then
+			if (reward or 0) > 0 then Cards.award(state.data.life.cards, 25, state.perks.ThirdCardSlot) end
 			sync(player, state)
 			if state.plot then World.updateBank(state.plot, state.data) end
 			state.nextSave = math.min(state.nextSave, now + 2)
@@ -417,6 +419,7 @@ task.spawn(function()
 				state.nextBake = now + interval
 				state.data.bank = math.min(Progression.MAX_CASH, state.data.bank + Progression.batchValue(state.data, state.perks) * batches)
 				Contracts.record(state.data, "Bake", batches)
+				for _ = 1, batches do Cards.production(state.data.life.cards, os.time(), state.perks.ThirdCardSlot) end
 				World.updateBank(state.plot, state.data)
 				sync(player, state)
 				if now >= state.nextVisual then

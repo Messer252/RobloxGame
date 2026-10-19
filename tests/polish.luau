@@ -21,8 +21,9 @@ return function(test, equal, near, harness, fakeStore)
 		old.life.belt = nil
 		equal(Progression.normalize(old).life.belt, 3)
 		local p = Progression.newData()
-		p.cash = 100000
-		for key, item in pairs(Polish.Decorations) do
+		p.cash = 10000000
+		for _, key in ipairs(Polish.DecorationOrder) do
+			local item = Polish.Decorations[key]
 			local before = p.cash
 			assert(Polish.buyDecoration(p, key)); equal(p.cash, before - item.Cost)
 			assert(not Polish.buyDecoration(p, key)); equal(p.cash, before - item.Cost)

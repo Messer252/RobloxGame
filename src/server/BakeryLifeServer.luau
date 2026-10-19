@@ -7,6 +7,8 @@ local Customers = require(script.Parent.CookieCustomers)
 local Packaging = require(script.Parent.CookiePackaging)
 local Polish = require(Shared.BakeryPolish)
 local Contracts = require(Shared.BakeryContracts)
+local Cards, CardCatalog = require(Shared.CardEconomy), require(Shared.CardCatalog)
+local TextService = game:GetService("TextService")
 local Server = {}
 Server.__index = Server
 function Server.start(context)
@@ -17,6 +19,8 @@ function Server.start(context)
 		return r
 	end
 	self.action, self.stateRemote, self.open = remote("LifeAction"), remote("LifeState"), remote("OpenLife")
+	self.packResult = remote("PackResult")
+	self.events = require(script.Parent.ValleyEventsServer).start(context)
 	self.features = Features.create(context.World, context.Plots, function(...) self:Action(...) end)
 	self.customers = Customers.create(context.World, function(player, customer) self:OfferCustomer(player, customer) end)
 	context.OnCookie(function(...) self:Cookie(...) end, function(...) self:ProcessCookie(...) end)
@@ -37,6 +41,18 @@ function Server.start(context)
 					if self.offers[player] and not self.offers[player].committing and self.offers[player].expires < os.clock() then self:CancelTrade(player) end
 					local runtime = self:Runtime(player)
 					runtime.data = state.data
+					local savedName = state.data.life.shopName
+					if runtime.filteredSource ~= savedName then
+						runtime.filteredSource = savedName
+						player:SetAttribute("FilteredShopName", nil)
+						if savedName ~= "" then task.spawn(function()
+							local ok, filtered = pcall(function() return TextService:FilterStringAsync(savedName, player.UserId, Enum.TextFilterContext.PublicChat):GetNonChatStringForBroadcastAsync() end)
+							if ok and player.Parent and runtime.filteredSource == savedName then
+								player:SetAttribute("FilteredShopName", filtered)
+								if state.plot then self.context.Changed(player, state) end
+							end
+						end) end
+					end
 					if player.Character ~= runtime.character then
 						runtime.character, runtime.held, runtime.cookieTool = player.Character, nil, nil
 						self:TradePrompt(player)
@@ -51,7 +67,7 @@ function Server.start(context)
 						if runtime.pinTool then runtime.pinTool:Destroy() end
 						runtime.pinLevel, runtime.pinTool = state.data.life.pin, Tools.pin(player, state.data.life.pin, function() self:Swing(player) end)
 					end
-					if runtime.cookieTool and not runtime.cookieTool.Parent then runtime.cookieTool, runtime.held = nil, nil end
+					if runtime.cookieTool and (not runtime.cookieTool.Parent or not Life.find(state.data.life, runtime.cookieTool:GetAttribute("InventoryCookieId"))) then self:ClearTool(player) end
 					if context.Usable(player) and Life.finishOven(state.data.life, os.time()) then
 						self:Changed(player, state)
 						context.Notify(player, "Your finishing oven is done! The cookie is worth 3x.")
@@ -66,9 +82,42 @@ function Server.start(context)
 	end)
 	return self
 end
+function Server:OpenPack(player, packId)
+	local state = self.context.Usable(player)
+	if not state or not state.plot or not CardCatalog.Packs[packId] then return end
+	local runtime, pack = self:Runtime(player), CardCatalog.Packs[packId]
+	if runtime.opening or os.clock() - (runtime.lastPack or -math.huge) < 3 then return end
+	if state.data.life.cards.crumbs < pack.Cost then self.context.Notify(player, "Earn more Star Crumbs first."); return end
+	runtime.opening, runtime.lastPack = true, os.clock()
+	local cardId = Cards.roll(packId, math.random(), math.random())
+	if state.profile.sessionOnly then
+			local ok, message = Cards.open(state.data.life.cards, packId, cardId)
+			runtime.opening = false
+			if ok then self:Changed(player, state); self.packResult:FireClient(player, cardId, packId) else self.context.Notify(player, message) end
+			return
+		end
+	local receipt = "cp:" .. Http:GenerateGUID(false)
+	state.receiptWorkers += 1
+	task.spawn(function()
+		local ok, reason
+		for _ = 1, 6 do
+			ok, reason = self.context.Profiles:GrantReceipt(state.profile, receipt, 1, function(data) return Cards.open(data.life.cards, packId, cardId) end)
+			if ok or (reason ~= "unavailable" and reason ~= "busy") then break end
+			task.wait(1)
+		end
+		state.receiptWorkers -= 1
+		runtime.opening = false
+		if player.Parent then
+			if ok then self:Changed(player, state); self.packResult:FireClient(player, cardId, packId, state.data.life.cards.owned[tostring(cardId)])
+			else self.context.Notify(player, "Pack saving could not finish. Rejoin to recover; any committed card and charge stay together.") end
+		elseif ok then self.context.Profiles:Save(state.profile, true) end
+	end)
+end
 function Server:Swing(player)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if not root or not self.context.Usable(player) then return end
+	local runtime = self:Runtime(player)
+	if runtime.pinTool and self.events:Swing(player, runtime.pinTool) then return end
 	local nearest, distance = nil, 12
 	for _, node in ipairs(self.features.ores) do
 		local delta = node.part.Position - root.Position
@@ -92,8 +141,9 @@ function Server:Refresh(player)
 	local state, runtime = self.context.GetState(player), self:Runtime(player)
 	if not state or state.closing then return end
 	local b, trade = runtime.bargain, self.offers[player]
-	local snapshot = { life = state.data.life, held = self:Held(player), hasPlot = state.plot ~= nil,
+	local snapshot = { life = Life.normalize(state.data.life), held = self:Held(player), hasPlot = state.plot ~= nil,
 		busy = state.profile.activityLock ~= nil or state.profile.transacting == true }
+	snapshot.life.cards.milestone, snapshot.life.cards.daily, snapshot.life.cards.dailyEarned = 0, 0, 0
 	if b then snapshot.bargain = { name = b.customer.name, price = b.price, attempts = b.attempts, item = b.item, personality = b.customer.traits.Style, favorite = Recipes[b.customer.traits.Favorite].Name } end
 	if trade then snapshot.trade = { id = trade.id, from = trade.a.Name, to = trade.b.Name,
 		giveA = Recipes[trade.itemA.recipe].Name .. " • $" .. self.context.Format(Life.value(trade.itemA)),
@@ -164,7 +214,7 @@ function Server:OfferCustomer(player, customer)
 	if customer.reservedUntil > os.clock() then self.context.Notify(player, "This customer is already talking to someone.") ; return end
 	self:CloseBargain(runtime)
 	local item = Life.find(state.data.life, runtime.held)
-	local base = math.floor(Life.value(item) * (1 + Polish.active(state.data.life, os.time()).Sell / 100))
+	local base = math.floor(Life.value(item) * (1 + Polish.active(state.data.life, os.time()).Sell / 100) * Cards.bonuses(state.data.life.cards, state.perks.ThirdCardSlot).Sales)
 	local price, budget = Polish.offer(base, item.recipe, customer.traits, math.random())
 	customer.reservedUntil, customer.reservedBy = os.clock() + 30, player
 	runtime.bargain = { customer = customer, item = item.id, base = base, price = price, budget = budget, attempts = 0, expires = os.clock() + 30 }
@@ -251,7 +301,22 @@ function Server:Action(player, action, argument, plot)
 	local state = self.context.Usable(player)
 	if not state then return end
 	local data, ok, message = state.data, false, nil
-	if action == "Snapshot" then runtime.lastSnapshot = nil ; self:Refresh(player) ; return
+	if action == "OpenPack" then self:OpenPack(player, argument); return
+	elseif action == "EquipCard" then ok, message = Cards.equip(data.life.cards, argument, state.perks.ThirdCardSlot)
+	elseif action == "RenameShop" then
+		if type(argument) ~= "string" or #argument > 80 or not state.plot then return end
+		argument = argument:match("^%s*(.-)%s*$")
+		if #argument < 3 or #argument > 40 or data.cash < 20000000 then self.context.Notify(player, "A shop name needs 3–40 characters and $20 million."); return end
+		if os.clock() - (runtime.lastRename or -math.huge) < 5 then return end
+		runtime.lastRename = os.clock()
+		local success, filtered = pcall(function() return TextService:FilterStringAsync(argument, player.UserId, Enum.TextFilterContext.PublicChat):GetNonChatStringForBroadcastAsync() end)
+		if not success or (type(filtered) == "string" and #filtered:gsub("#", "") < 3) or self.context.Usable(player) ~= state or data.cash < 20000000 then self.context.Notify(player, "The name could not be checked. No cash was charged."); return end
+		data.cash -= 20000000
+		data.life.shopName = filtered
+		runtime.filteredSource = filtered
+		player:SetAttribute("FilteredShopName", filtered)
+		ok, message = true, "Shop renamed!"
+	elseif action == "Snapshot" then runtime.lastSnapshot = nil ; self:Refresh(player) ; return
 	elseif action == "OpenMine" then self.open:FireClient(player, "Mine") ; return
 	elseif action == "Home" then
 		if state.plot then self.context.Home(player, state.plot) else self.context.Notify(player, "Claim a bakery first.") end
@@ -281,11 +346,12 @@ function Server:Action(player, action, argument, plot)
 		crumbs.Speed, crumbs.SpreadAngle, crumbs.Size, crumbs.Parent = NumberRange.new(3, 6), Vector2.new(160, 160), NumberSequence.new(0.2, 0), node.part
 		crumbs:Emit(6)
 		game:GetService("Debris"):AddItem(crumbs, 0.5)
-		node.hp = math.max(0, node.hp - Life.PinPower[data.life.pin] - Polish.active(data.life, os.time()).Mine)
+		node.hp = math.max(0, node.hp - Life.PinPower[data.life.pin] - Polish.active(data.life, os.time()).Mine - Cards.bonuses(data.life.cards, state.perks.ThirdCardSlot).Mine)
 		node.label.Text = "Dough ore • " .. node.hp .. "/" .. node.maximum .. " HP"
 		node.bar.Size = UDim2.fromScale(node.hp / node.maximum, 1)
 		if node.hp == 0 then
 			Contracts.record(data, "Mine", 1)
+			if os.time() >= (runtime.nextOreCrumb or 0) then Cards.award(data.life.cards, 1, state.perks.ThirdCardSlot); runtime.nextOreCrumb = os.time() + 20 end
 			data.life.dough = math.min(1e9, data.life.dough + node.reward)
 			node.ready, node.part.Transparency, node.part.CanCollide = os.clock() + 10, 1, false
 			node.label.Parent.Enabled = false
@@ -297,7 +363,7 @@ function Server:Action(player, action, argument, plot)
 		if action == "Pin" then ok, message = Life.upgradePin(data) else ok, message = Life.upgradeDough(data, argument) end
 	elseif action == "BuildBelt" or action == "Decoration" then
 		if not state.plot or (plot and state.plot ~= plot) then return end
-		local point = action == "BuildBelt" and self.features.buildPads[state.plot].pad.Position or W.position(state.plot, 60, 1, -70)
+		local point = action == "BuildBelt" and self.features.buildPads[state.plot].pad.Position or W.position(state.plot, 50, 1, -67)
 		if not W.near(player, point, action == "BuildBelt" and 16 or 32) then self.context.Notify(player, "Visit the purchase pads in your bakery."); return end
 		if action == "BuildBelt" then ok, message = Polish.buyBelt(data) else ok, message = Polish.buyDecoration(data, argument) end
 	elseif action == "Machine" or action == "Bake" then
