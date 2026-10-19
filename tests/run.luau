@@ -1220,6 +1220,7 @@ test("uncertain cash receipts preserve hunt progress during reconciliation", fun
 end)
 
 require("./expansion")(test, equal, near, harness, fakeStore)
+require("./conveyors")(test, equal, near)
 
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then error("Cookie Corner tests failed") end

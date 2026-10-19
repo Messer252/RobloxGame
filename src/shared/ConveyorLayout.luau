@@ -2,15 +2,18 @@
 local Layout = {
 	StationCount = 30,
 	StationSpacing = 7,
-	FirstStationZ = 102,
-	OvenX = -42.8,
+	FirstStationZ = 74,
+	OvenX = -44.8,
 	OvenScale = 0.45,
-	PadX = -51.5,
-	SpawnX = -50,
-	SpawnZ = 99,
-	BeltWidth = 6.2,
-	BeltFrontZ = 106,
-	BeltBackZ = 20,
+	PadX = -53.5,
+	SpawnX = -52,
+	SpawnZ = 71,
+	BeltWidth = 9,
+	BeltFrontZ = 78,
+	BeltBackZ = -8,
+	RailHeight = 1.8,
+	RailThickness = 0.65,
+	CookieRadius = 1.725,
 	MainStartZ = 118,
 	MainEndZ = 126,
 	BoxZ = 134,
@@ -27,8 +30,8 @@ function Layout.station(index)
 	if type(index) ~= "number" or index % 1 ~= 0 or index < 1 or index > Layout.StationCount then return nil end
 	local lane = math.floor((index - 1) / 10) + 1
 	local laneX = Layout.LaneXs[lane]
-	return { x = laneX - 6.8, z = Layout.FirstStationZ - ((index - 1) % 10) * Layout.StationSpacing,
-		padX = laneX - 15.5, scale = Layout.OvenScale, lane = lane, laneX = laneX }
+	return { x = laneX - 8.8, z = Layout.FirstStationZ - ((index - 1) % 10) * Layout.StationSpacing,
+		padX = laneX - 17.5, scale = Layout.OvenScale, lane = lane, laneX = laneX }
 end
 
 function Layout.speed(interval)
@@ -36,12 +39,13 @@ function Layout.speed(interval)
 end
 
 function Layout.segments()
+	-- Logical connections; ConveyorRouting expands these into connected curves.
 	local result = {}
 	for _, x in ipairs(Layout.LaneXs) do
-		table.insert(result, { ax = x, az = Layout.BeltBackZ, bx = x, bz = Layout.BeltFrontZ, rails = true })
-		table.insert(result, { ax = x, az = Layout.BeltFrontZ, bx = 0, bz = Layout.MainStartZ, rails = true, railInset = 3 })
+		table.insert(result, { ax = x, az = Layout.BeltBackZ, bx = x, bz = Layout.BeltFrontZ })
+		table.insert(result, { ax = x, az = Layout.BeltFrontZ, bx = 0, bz = Layout.MainStartZ })
 	end
-	table.insert(result, { ax = 0, az = Layout.MainStartZ, bx = 0, bz = Layout.MainEndZ, rails = true })
+	table.insert(result, { ax = 0, az = Layout.MainStartZ, bx = 0, bz = Layout.MainEndZ })
 	return result
 end
 

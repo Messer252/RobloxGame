@@ -16,7 +16,7 @@ The selected song is **cookiecookieloop1.ogg**, supplied by the project owner an
 
 This song is **not covered by the original asset pack's CC0 license**. No broader license for the friend's recording was supplied. The earlier generated café music and nine original SFX remain available under their original CC0 license.
 
-**Roblox cannot play an OGG directly from GitHub or embed it as playable audio in a place file.** Upload the song to Roblox and put its audio ID in the game. The updated Studio ZIP includes the OGG beside the place file. Background music stays silent until this step is complete; the old synthesized background tune is disabled by default. Sound effects still work with the bundled chime.
+**Roblox cannot play an OGG directly from GitHub or embed it as playable audio in a place file.** Upload the song to Roblox and put its audio ID in the game. The updated Studio ZIP includes the OGG beside the place file. The HUD shows **Music pending** until an audio ID is configured, **Music loading** while it loads, and **Music unavailable** if the configured recording cannot load. Background music stays silent until setup is complete; the old synthesized background tune is disabled by default. Sound effects still work with the bundled chime.
 
 ## Upload the new song once
 

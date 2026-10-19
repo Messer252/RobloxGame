@@ -228,7 +228,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		prop(plot, "BakeryShell", 0, 0, 0)
 		prop(plot, "BakeryAwning", 0, 113)
 		Conveyor.create(plot, position)
-		local counter = prop(plot, "PrepCounter", -49, 78)
+		local counter = prop(plot, "PrepCounter", -49, -45)
 		local worktop = counter:FindFirstChild("Texture_CounterMarble")
 		label(worktop, "Cookie toppings", 35)
 		plot.workshopPrompt = prompt(worktop, "Open toppings", function(player) onWorkshop(player, plot) end, "Cookie Workshop")
@@ -260,8 +260,8 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		local collect = prop(plot, "CollectionRegister", 19, 128)
 		plot.bankText = label(Assets.anchor(collect), "Collect $0", 45)
 		prompt(Assets.anchor(collect), "Collect cash", function(player) onAction(player, "Collect", nil, plot) end, "Bakery Register")
-		local upgrade = prop(plot, "UpgradeConsole", -46, 108)
-		local speedPadModel = prop(plot, "ClaimPad", -46, 100)
+		local upgrade = prop(plot, "UpgradeConsole", -60, Layout.FirstStationZ + 6)
+		local speedPadModel = prop(plot, "ClaimPad", -60, Layout.FirstStationZ - 2)
 		speedPadModel:ScaleTo(0.6)
 		plot.upgradePad = speedPadModel:FindFirstChild("Claim Surface")
 		plot.upgradeText = label(Assets.anchor(upgrade), "Baking speed", 35)
@@ -289,7 +289,7 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 			local bench = detail(plot, "Oven Counter", Vector3.new(6, 1.8, 6.6), geometry.x, 1.4, geometry.z, Color3.fromRGB(127, 100, 83), stationModel)
 			bench.CanCollide = true
 			local oven = ovenModel:FindFirstChild("RecipeBadge")
-			local chute = detail(plot, "Cookie Feed Tray", Vector3.new(1.1, 0.2, 2.8), geometry.laneX - 3.65, Layout.BeltTop - 0.12, geometry.z,
+			local chute = detail(plot, "Cookie Feed Tray", Vector3.new(1.1, 0.2, 2.8), geometry.laneX - 5.05, Layout.BeltTop - 0.3, geometry.z,
 				Color3.fromRGB(126, 143, 150), stationModel)
 			chute.Material = Enum.Material.Metal
 			local buyModel = prop(plot, "ClaimPad", geometry.padX, geometry.z, 0.55)
@@ -336,6 +336,7 @@ function World.animate(plot, data, perks)
 		plot.visuals[model] = true
 		model:SetAttribute("CashValue", Progression.recipeValue(data, index, perks))
 		local hull = Conveyor.makePhysical(model)
+		Conveyor.track(plot, model, hull, math.floor((index - 1) / 10) + 1)
 		hull.AssemblyLinearVelocity = Vector3.new(0, 0, Layout.speed(Progression.interval(data, perks)) * plot.direction)
 	end
 end

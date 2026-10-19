@@ -36,6 +36,7 @@ function AudioController.start(player, requestAction)
 	local self = setmetatable({
 		player = player, requestAction = requestAction, music = true, effects = true,
 		musicVolume = Preferences.DefaultMusicVolume, effectsVolume = Preferences.DefaultEffectsVolume,
+		musicStatus = "Unconfigured",
 		ready = false, dirty = false, alive = true, revision = 0,
 		musicCursor = 0, effectCursor = 0, noteIndex = 1, epoch = os.clock(),
 		lastCues = {}, connections = {}, voices = {}, samples = {}, effectEpoch = 0,
@@ -69,11 +70,14 @@ function AudioController.start(player, requestAction)
 	end
 	local musicUri = assetId(Config.MusicAssetId)
 	if musicUri then
+		self.musicStatus = "Loading"
 		self.track = sound(Config.MusicName, musicUri, self.musicGroup, self.folder)
 		self.track.Looped = true
 		self.track.Volume = 1
 		table.insert(self.connections, self.track.Loaded:Connect(function()
 			if not self.alive then return end
+			self.musicStatus = "Ready"
+			self.Changed:Fire()
 			self:_stopVoices(true)
 			if self.ready and self.music then self.track:Play() end
 		end))
@@ -120,6 +124,8 @@ function AudioController.start(player, requestAction)
 			warn("Cookie Corner: bundled chime unavailable. Upload the included WAVs and configure AudioConfig for this experience.")
 		end
 		if self.alive and (not self.track or not self.track.IsLoaded) and not Config.FallbackMusicEnabled then
+			if self.track then self.musicStatus = "Unavailable" end
+			self.Changed:Fire()
 			warn("Cookie Corner: background music needs the Roblox audio ID for cookiecookieloop1.ogg and experience permission. See AUDIO.md.")
 		end
 	end)

@@ -205,6 +205,11 @@ local drawEffectsVolume = VolumeSlider.create(hud, "SFX", 200,
 	function() return audio.effectsVolume end, function(value) audio:SetVolume("effects", value) end)
 local function renderAudio()
 	musicToggle.Text = audio.music and "Music ON" or "Music OFF"
+	if audio.music then
+		if audio.musicStatus == "Unconfigured" then musicToggle.Text = "Music pending"
+		elseif audio.musicStatus == "Loading" then musicToggle.Text = "Music loading"
+		elseif audio.musicStatus == "Unavailable" then musicToggle.Text = "Music unavailable" end
+	end
 	effectsToggle.Text = audio.effects and "SFX ON" or "SFX OFF"
 	musicToggle.BackgroundColor3 = audio.music and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)
 	effectsToggle.BackgroundColor3 = audio.effects and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)

@@ -56,6 +56,8 @@ Keep the existing DataStore name. After publishing this version, restart outdate
 servers: save formats 1-4 migrate to version 5 with quest progress and receipts preserved.
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
+The conveyor update widens the tracks, adds taller rounded outer rails, closes
+curve joints, and guides physical cookies through the merge without teleporting.
 
 NEW BACKGROUND SONG / SAVED VOLUME SLIDERS
 This ZIP includes your friend's cookiecookieloop1.ogg. Upload it to Roblox as
