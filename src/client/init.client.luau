@@ -5,6 +5,7 @@ local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local AudioController = require(script:WaitForChild("AudioController"))
 local VolumeSlider = require(script:WaitForChild("VolumeSlider"))
+local AdminPanel = require(script:WaitForChild("AdminPanel"))
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Recipes = require(shared:WaitForChild("Recipes"))
@@ -316,6 +317,9 @@ local function text(parent, content, size, tint)
 end
 
 local bakeryInfo = ordered(text(scroll, "Claim a green pad to start baking."))
+local adminButton = ordered(button(scroll, "Admin tools", Color3.fromRGB(66, 114, 100)))
+adminButton.Size, adminButton.Visible = UDim2.new(1, 0, 0, 40), false
+AdminPanel.start(player, remotes, gui, adminButton)
 local collectButton = ordered(button(scroll, "Collect earnings", Color3.fromRGB(134, 100, 35)))
 local recipeButton = ordered(button(scroll, "Unlock next cookie"))
 local ovenButton = ordered(button(scroll, "Faster conveyor", Color3.fromRGB(103, 82, 147)))

@@ -17,6 +17,8 @@ local ChallengeWorld = require(script.ChallengeWorld)
 local ObbyWorld = require(script.ObbyWorld)
 local PlazaExtras = require(script.PlazaExtras)
 local CommerceServer = require(script.CommerceServer)
+local AdminServer = require(script.AdminServer)
+local AdminRewards = require(script.AdminRewards)
 
 local remotes = Instance.new("Folder")
 remotes.Name = "Remotes"
@@ -48,6 +50,7 @@ local profiles = ProfileStore.new(store, {
 local sessions = {}
 local pendingLoads = {}
 local shuttingDown = false
+
 
 local function notify(player, message)
 	player:SetAttribute("Notice", message)
@@ -121,6 +124,31 @@ local commerce = CommerceServer.start({
 		if state.plot then World.refresh(state.plot, state.data, state.perks) end
 	end,
 }, requestPurchase, refreshPasses)
+
+AdminServer.start(remotes, {
+	ReturnToSpawn = function(player)
+		local state = sessions[player]
+		if state and state.plot and state.plot.owner == player then
+			World.spawnPlayer(player, state.plot)
+		elseif player.Character then
+			player.Character:PivotTo(CFrame.new(0, 5, -9))
+			local root = player.Character:FindFirstChild("HumanoidRootPart")
+			if root then root.AssemblyLinearVelocity, root.AssemblyAngularVelocity = Vector3.zero, Vector3.zero end
+		end
+	end,
+	GrantCash = function(player, action, amount, maximum)
+		local state = usable(player)
+		if not state or state.profile.saving then return false, "Player data is loading or busy. Try again shortly." end
+		local success, message = AdminRewards.grant(state.data, action, amount, maximum)
+		if success then
+			sync(player, state)
+			if state.plot then World.updateBank(state.plot, state.data) end
+			state.nextSave = math.min(state.nextSave, os.clock() + 2)
+			notify(player, "Admin gift: " .. message)
+		end
+		return success, message
+	end,
+})
 
 local allowedActions = { Collect = true, BuyRecipe = true, BuyModifier = true, UpgradeOven = true, UpgradePermanent = true, Rebirth = true, SetAudioPreferences = true, ChallengeAction = true }
 local function onAction(player, action, argument, sourcePlot)

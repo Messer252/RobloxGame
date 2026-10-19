@@ -51,6 +51,13 @@ Studio Access to API Services in its Experience Settings > Security.
 FULL SETUP, SAVING, AND PUBLIC ACCESS GUIDE:
 https://github.com/Messer252/RobloxGame/blob/main/STUDIO_SETUP.md
 
+ADMIN TOOLS
+unbenator is configured as an admin. To add friends, stop the playtest and open
+ServerScriptService > Tycoon > AdminConfig. Add their account usernames inside
+Usernames in quotes, separated by commas. Publish and restart outdated servers.
+Admins open Bakery > Admin tools for kick, spawn return, teleport, bring-player,
+wallet/earnings cash gifts, and self-invisibility. Full guide: ADMINS.md in this ZIP.
+
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
 servers: save formats 1-4 migrate to version 5 with quest progress and receipts preserved.
@@ -106,6 +113,7 @@ def main():
         archive.writestr("START_HERE.txt", START_HERE)
         archive.write(MUSIC, MUSIC.name)
         archive.write(ROOT / "AUDIO.md", "AUDIO.md")
+        archive.write(ROOT / "ADMINS.md", "ADMINS.md")
         archive.write(MUSIC.parent / "README.md", "SONG_CREDIT.txt")
     with ZipFile(ARCHIVE) as archive:
         assert archive.testzip() is None, "Download ZIP failed its integrity check"

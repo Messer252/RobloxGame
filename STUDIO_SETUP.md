@@ -289,6 +289,10 @@ Skip this section if you downloaded the ready-made `.rbxlx` or game ZIP above. T
 
 For live source editing, use `rojo serve default.project.json` with the Studio Rojo plugin. If you prefer to assemble the source manually, follow the exact script/model hierarchy in [README.md](README.md#open-in-roblox-studio), including the ModuleScripts nested under the Tycoon Script.
 
+## Configure admin access
+
+`unbenator` is already in **ServerScriptService → Tycoon → AdminConfig → Usernames**. Add friends' exact account usernames there, in quotes with commas, then publish and restart outdated servers. Admins open **Bakery → Admin tools**. See [ADMINS.md](ADMINS.md) for wallet/earnings gifts, moderation, teleports, invisibility, and stable user IDs.
+
 ## Before sharing the game
 
 - [ ] The complete place is published to the intended production start place.
@@ -305,6 +309,6 @@ For live source editing, use `rojo serve default.project.json` with the Studio R
 - [ ] The chosen audience can join through the Roblox game-page link.
 - [ ] Purchases remain disabled, or the configured offers have passed the monetization checks.
 
-The place packager verifies all **34 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes your friend's OGG; upload it and set AudioConfig.MusicAssetId for background music. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
+The place packager verifies all **40 source scripts**, the model pack, and the built-in music score. The Studio ZIP includes your friend's OGG; upload it and set AudioConfig.MusicAssetId for background music. Optional original WAV effects remain in the repository. Roblox Studio and live-server gameplay, device, audio, saving, and transaction checks must still be completed in Roblox; the cloud environment cannot run the Roblox engine.
 
 Official references: [Studio installation](https://create.roblox.com/docs/studio/setup), [publishing and audience requirements](https://create.roblox.com/docs/production/publishing/publish-games-and-places), [Studio DataStore access](https://create.roblox.com/docs/cloud-services/data-stores#enable-studio-access), [testing modes](https://create.roblox.com/docs/studio/testing-modes), and [server updates](https://create.roblox.com/docs/projects/update-games). Roblox's menu labels and release requirements can change; follow the current prompts if your layout differs.
