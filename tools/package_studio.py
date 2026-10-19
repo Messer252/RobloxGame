@@ -15,6 +15,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 ROOT = Path(__file__).resolve().parents[1]
 PLACE = ROOT / "CookieCorner.rbxlx"
 ARCHIVE = ROOT / "CookieCorner_Studio.zip"
+MUSIC = ROOT / "assets/audio/friend/cookiecookieloop1.ogg"
 
 START_HERE = """COOKIE CORNER TYCOON - OPEN IN ROBLOX STUDIO
 
@@ -56,7 +57,15 @@ servers: save formats 1-4 migrate to version 5 with quest progress and receipts 
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 
-OPTIONAL FULL MUSIC RECORDING / AUDIO SETUP:
+NEW BACKGROUND SONG / SAVED VOLUME SLIDERS
+This ZIP includes your friend's cookiecookieloop1.ogg. Upload it to Roblox as
+audio, grant this experience access, then open ReplicatedStorage > CookieTycoon >
+AudioConfig and set MusicAssetId to the resulting numeric Roblox audio ID.
+Publish again. Background music stays silent until this is configured.
+The song loops at its original speed. Music and SFX have independent saved
+0-100% sliders and mute buttons in the HUD. Use drag, tap, or the +/- buttons.
+The supplied song is not included in the free asset pack's CC0 license.
+Full upload and permissions guide:
 https://github.com/Messer252/RobloxGame/blob/main/AUDIO.md
 
 You open CookieCorner.rbxlx in Studio; you do not upload this ZIP or the
@@ -93,9 +102,13 @@ def main():
     with ZipFile(ARCHIVE, "w", ZIP_DEFLATED) as archive:
         archive.write(PLACE, PLACE.name)
         archive.writestr("START_HERE.txt", START_HERE)
+        archive.write(MUSIC, MUSIC.name)
+        archive.write(ROOT / "AUDIO.md", "AUDIO.md")
+        archive.write(MUSIC.parent / "README.md", "SONG_CREDIT.txt")
     with ZipFile(ARCHIVE) as archive:
         assert archive.testzip() is None, "Download ZIP failed its integrity check"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read(MUSIC.name) == MUSIC.read_bytes(), "Packaged song differs from the supplied original"
     # Keep the older local download path current too; build/ stays untracked.
     (ROOT / "build").mkdir(exist_ok=True)
     shutil.copyfile(PLACE, ROOT / "build" / PLACE.name)

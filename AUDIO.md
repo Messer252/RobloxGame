@@ -2,95 +2,58 @@
 
 The refreshed game has warm afternoon lighting, soft color grading and bloom, four pastel bakery themes, checkerboard floors, windows, string lights, a cookie monument, benches, oven steam, clearer world labels, and a highlighted next recipe. The HUD and menu have borders, gradients, hover/focus feedback, animated opening/toasts, and small reward bursts. Legendary and Mythic cookies sparkle.
 
-## Music and SFX buttons
+## Music and SFX volume
 
-Two buttons sit below the main Bakery button in the HUD:
+The HUD keeps separate **Music ON/OFF** and **SFX ON/OFF** buttons and now has two **0–100% volume sliders**. Drag or tap a slider, or use its **− / +** buttons for five-percentage-point adjustments. The buttons work with gamepad selection; a selected slider also accepts Left/Right or D-pad Left/Right. Music defaults to **24%** and SFX to **55%**.
 
-- **Music: ON/OFF** controls background music for that player.
-- **SFX: ON/OFF** controls interface and gameplay sound effects independently.
+Each slider adjusts only that channel for the current player. Zero is silent; muting preserves the slider's value so unmuting restores it. Moving a slider while muted changes the saved level without unmuting. Roblox's master volume still applies. These controls cover game music and cues, not Roblox's own character sounds.
 
-The controls work with mouse, touch, and gamepad selection. They do not mute another player or Roblox's own character sounds. Preferences are saved with the player's profile, work before claiming a bakery, and survive rebirth. Temporary **STUDIO SESSION ONLY** play cannot persist them.
+Mute states and volume levels save with the player profile and survive rejoin, respawn, and rebirth. Old profiles keep their mute choices and receive the default levels. Settings wait for the profile before playback starts and are debounced for an early save about five seconds after a change. Session-only Studio previews cannot save. Keep the existing DataStore name and restart outdated servers when publishing this update.
 
-Music waits for the profile to load, so a returning player who muted it does not hear a new song before their preference arrives. Settings changes are debounced and queued for an early save after approximately five seconds, and are included in normal/final saves. Avoid force-closing immediately after changing a setting when checking persistence.
+## Your friend's background song
 
-## Included original audio
+The selected song is **cookiecookieloop1.ogg**, supplied by the project owner and made by their friend. The original file is preserved unchanged: stereo Ogg Vorbis, 44.1 kHz, approximately **44.14 seconds**, 2.15 MB. It plays at its original speed with `Sound.Looped = true`. See [the supplied song and credit](assets/audio/friend/README.md).
 
-`assets/audio` contains an original **58.18-second, 66 BPM** café loop and nine short cues. Its 36-note score combines warm sustained chords, low bass, and occasional soft keys, with space between phrases. There is no percussion or busy bell pattern. All recordings are stereo 32 kHz, 16-bit PCM WAV files under Roblox's upload limits. The music has a continuous loop boundary.
+This song is **not covered by the original asset pack's CC0 license**. No broader license for the friend's recording was supplied. The earlier generated café music and nine original SFX remain available under their original CC0 license.
 
-| File | Use |
-| --- | --- |
-| `CookieCornerCafe.wav` | Looping café background music |
-| `Click.wav` | Menu/button interaction |
-| `Claim.wav` | Claim a bakery |
-| `Collect.wav` | Collect cookie cash |
-| `BuyRecipe.wav` | Unlock a recipe |
-| `UpgradeOven.wav` | Upgrade baking speed |
-| `BuyModifier.wav` | Add a topping |
-| `UpgradePermanent.wav` | Buy a Golden Chip upgrade |
-| `Rebirth.wav` | Confirm and complete a rebirth |
-| `Error.wav` | A rejected gameplay purchase/action |
+**Roblox cannot play an OGG directly from GitHub or embed it as playable audio in a place file.** Upload the song to Roblox and put its audio ID in the game. The updated Studio ZIP includes the OGG beside the place file. Background music stays silent until this step is complete; the old synthesized background tune is disabled by default. Sound effects still work with the bundled chime.
 
-The composition and recordings are original and **CC0**, including commercial use; see [assets/LICENSE.txt](assets/LICENSE.txt). No downloaded music, copyrighted songs, or third-party recordings were used to generate these files.
+## Upload the new song once
 
-## Playback before uploading audio
+1. Download the updated [Studio ZIP](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip) and extract it. It contains `CookieCorner.rbxlx`, `cookiecookieloop1.ogg`, this guide, and instructions. You can also [download the song directly](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/assets/audio/friend/cookiecookieloop1.ogg).
+2. In **Creator Dashboard → Development Items → Audio → Upload Asset**, upload `cookiecookieloop1.ogg` under the account or group that owns the game. Studio's Asset Manager audio import is another option. Follow Roblox's current upload prompts.
+3. Wait for processing/moderation, then copy the **audio asset ID**. Grant your game/experience permission to use that audio in the asset's permissions settings. Use the experience/universe ID where requested, rather than its individual place ID.
+4. With the playtest stopped, open **ReplicatedStorage → CookieTycoon → AudioConfig** in Studio's Explorer.
+5. Change `MusicAssetId = 0` to `MusicAssetId = YOUR_NUMERIC_AUDIO_ID`, using the actual digits without quotes. Keep `FallbackMusicEnabled = false` to avoid the earlier background tune.
+6. Publish to your existing start place and restart outdated servers. Join through the Roblox app and check the song loops, each slider works, and mute/volume choices restore after rejoin. If silent, check Output for audio permissions or moderation errors.
 
-All audio asset IDs start at `0`. In that configuration, the client plays the sparse music score and action cues by pitching Roblox's bundled `electronicpingshort.wav` chime. The music uses lower notes, a quiet volume, a gentle fade-in, and strong treble filtering to soften the sample's sharp attack. The filter applies only to background sampler voices; the nine action cues retain their short, distinct sounds.
+No audio has been uploaded to your Roblox account on your behalf. Adding a file to GitHub does not create a Roblox audio asset. If you already uploaded this recording, use its existing permitted audio ID instead of uploading again.
 
-This softened default works immediately without uploading anything. It follows the same 36-note score, although a pitched sample cannot reproduce the recording's warm sustained instruments.
+## Sound effects and earlier music
 
-The game references the chime installed with Roblox; it does not redistribute that sample. No Creator Store music IDs or private third-party audio are required. If a client cannot load the bundled chime, upload the supplied recordings as described below. The game continues running if audio cannot load.
+The nine original CC0 effects in `assets/audio` remain `Click.wav`, `Claim.wav`, `Collect.wav`, `BuyRecipe.wav`, `UpgradeOven.wav`, `BuyModifier.wav`, `UpgradePermanent.wav`, `Rebirth.wav`, and `Error.wav`. They work immediately using the bundled Roblox chime. Optionally upload the WAVs and set their matching IDs under `AudioConfig.Effects` for the full recordings. They use the SFX slider in either mode.
 
-## Use the full mixed recording in Roblox
-
-Uploading the music once gives the game the full warm keys, sustained chords, and bass recording. You can upload the sound effects too, or keep their default chime arrangement. The Music ON/OFF and SFX ON/OFF preferences work with either playback method.
-
-1. Download the included WAV files from `assets/audio` on GitHub, or extract the updated free-assets ZIP supplied in the chat.
-2. Open the **published** experience in Studio, then open **Asset Manager** from **Window** or **Home**.
-3. Use its import button to upload `CookieCornerCafe.wav` under the appropriate account/group. Alternatively, use Creator Dashboard → **Development Items → Audio → Upload Asset**.
-4. Wait for Roblox's processing/moderation to finish. Copy the resulting **audio asset ID**.
-5. Grant the intended experience permission to use the audio through the asset's configuration/permissions page if needed. Use the correct experience/universe when granting permissions; a place ID is different.
-6. With the playtest stopped, open **ReplicatedStorage → CookieTycoon → AudioConfig** in Explorer.
-7. Replace the music entry's zero with your numeric audio asset ID:
-
-   ```lua
-   MusicAssetId = 0,
-   ```
-
-   The zero above marks the setting to change. Use the real digits Roblox gave you, without quotes.
-
-8. For each uploaded sound effect, replace the matching zero under `Effects` with its audio asset ID. For example, `Collect.wav` maps to `Effects.Collect`. Leave other entries at `0` to keep their default arrangement.
-9. Publish to the same experience, start a new session, and check playback. A configured recording is used once it loads; the chime arrangement covers playback while an uploaded recording is unavailable.
-
-You can adjust `MusicVolume` and `EffectsVolume` in AudioConfig; values between `0` and `1` are sensible starting points. Music defaults to `0.24`. `MusicAttackSeconds` (`0.18`) and `MusicReleaseSeconds` (`0.35`) soften the built-in music sampler; they do not alter uploaded recordings or sound effects. Changing `ChimeMidi` retunes the built-in sampler. Roblox's master volume still applies to everything.
-
-No audio has been uploaded to your Roblox account on your behalf. A `.wav` on GitHub or your computer cannot be played directly by a published Roblox game; uploaded recordings need Roblox asset IDs and experience permissions.
+`CookieCornerCafe.wav` and its generated 66 BPM score are retained as earlier optional assets, not the selected background song. `tools/build_audio.py` regenerates those original files and cues without replacing your friend's OGG. The old music sampler only runs if an administrator deliberately sets `FallbackMusicEnabled = true`.
 
 ## Code locations
 
-- `src/server/Presentation.luau`: lighting, pastel decoration, bulbs, windows, and oven steam.
-- `src/server/World.luau`: claim/recipe indicators, world labels, and the cookie monument.
-- `src/client/init.client.luau`: HUD styling, audio buttons, menu animation, and reward bursts.
-- `src/client/AudioController.luau`: local music scheduling, voice pools, cues, mute controls, and preference submission.
-- `src/shared/AudioConfig.luau`: uploaded audio IDs, volumes, and bundled sample tuning.
-- `src/shared/MusicScore.luau`: generated sparse chord/melody score and cue timing.
-- `tools/build_audio.py`: original composition and synthesis; run with Python 3 and NumPy to regenerate the recordings and Luau score.
-
-Audio is local to each client. Music and SFX have separate SoundGroups. The sampler reuses a fixed pool of 12 music voices and 8 effect voices, skips stale notes after a frame stall, and cancels queued cues when effects are muted. One music scheduler is used per player; toggling does not start extra loops.
-
-Gameplay cues are sent only to the affected player after the server accepts the action. No rewards or purchases depend on audio playback. Decoration does not change the economy, required recipe count, or rebirth prices. Steam uses low particle rates, lights do not cast additional dynamic shadows, and each plot uses one next-recipe outline.
+- `src/client/AudioController.luau`: local looping track, separate SoundGroups, fades, cues, mute, volume, and debounced preference submission.
+- `src/client/VolumeSlider.luau`: mouse/touch sliders and keyboard/gamepad adjustment.
+- `src/shared/AudioPreferences.luau`: default levels, finite-number validation, bounded values, and save migration.
+- `src/shared/AudioConfig.luau`: Roblox audio IDs and optional sampler settings.
+- `src/server/init.server.luau`: server-validated settings and save scheduling.
+- `src/server/Presentation.luau`: lighting and bakery decoration.
 
 ## Check in Studio and Roblox
 
-1. Start a player playtest with either valid save access or the explicit Studio session-only fallback. Check lighting, entrance lights, floor/wall colors, menu readability, and the next unlock indicator.
-2. Claim a bakery: hear the claim cue and see steam from the active oven. Check that locked ovens are not steaming.
-3. Collect cash, unlock a recipe, add a topping, and upgrade an oven. Each should have its own success cue. A rejected physical-pad purchase should play the quieter error cue.
-4. Toggle Music off. Sound effects should continue. Toggle SFX off. Music should continue if enabled. With both off, neither channel should play. Toggle rapidly and check that no extra music layers appear.
-5. Die/reset your character and confirm the HUD/audio do not duplicate.
-6. In a persistent session, mute music, leave normally after the setting has saved, and rejoin. Confirm the saved button states restore before music starts. Repeat with SFX, and after a rebirth.
-7. Test with two clients: toggling one client's audio must not mute the other client.
-8. Check the audio buttons, open menu, and reward bursts on a small screen and with a controller. Check frame rate with several developed bakeries and lower graphics settings.
-9. If using uploaded audio, join through the Roblox app and verify the full track and cues work with the experience's permissions. Check Output for asset-load errors in Studio.
+1. Configure the uploaded song's ID and experience permission, start a player playtest, and listen through at least two loops. The old background tune must not play while the new song loads or if its asset is unavailable.
+2. Drag each slider independently through 0%, a mid-level, and 100%. Tap both ends and drag beyond the track: levels must stay within 0–100%. Release the drag outside the slider, then move the pointer: volume must stop changing.
+3. Mute Music while leaving SFX on, then reverse. Change levels while muted, then unmute: each saved level should return. At zero, that channel must be silent. Adjust SFX and collect cash to hear its cue at the new level.
+4. In a persistent session, set different levels and mute states, wait for a saved status, leave normally, and rejoin. Check both values, no audible startup burst, and independence after a rebirth or purchase.
+5. Reset your character and confirm audio/UI do not duplicate. With two clients, changing one player's audio must not affect the other.
+6. Test touch dragging on a small screen, controller plus/minus activation, selected-slider left/right input, focus visibility, and readability. Check that both sliders fit below the HUD buttons.
+7. Without an audio ID, music should remain silent while the rest of the game and SFX continue. Check configured but unpermitted audio too, then restore the correct ID and permission.
 
-Cloud checks cover saved preferences, save/rejoin/rebirth and receipt preservation, bounded score/cue data, and actual WAV hashes, format limits, levels, fade-outs, and loop continuity. They cannot verify Roblox rendering, sample availability, live audio permissions, or the listening experience; complete the engine checks above before release.
+Cloud checks cover preference validation, legacy saves, rejoin/rebirth and receipt preservation, original WAV integrity, and unchanged OGG bytes. Roblox playback, moderation, permissions, dragging, and device controls still require these engine checks.
 
 Official reference: [Roblox audio assets and uploads](https://create.roblox.com/docs/audio/assets).

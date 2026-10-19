@@ -8,7 +8,7 @@ An eight-player Roblox cookie tycoon with 30 recipes, 15 baking-speed levels, Go
 
 Stand on your next cookie's purchase pad for about **0.28 seconds** to buy it with cookie cash; no held key is needed. Step off before buying again. The speed pad works the same way. The **Bakery** button opens four short tabs: **Bakery**, **Toppings**, **Quests**, and **Shop**. Collect, unlock cookies, or speed up production from Bakery; expand **Golden Chips & rebirth** for permanent upgrades and rebirth confirmation.
 
-The presentation includes warm afternoon lighting, pastel bakeries, tiled floors, string lights, windows, oven steam, a cookie monument, and animated menu/reward feedback. **Music** and **SFX** buttons independently control each player's audio and save their choices. The calmer original music uses sparse chords at **66 BPM**, with a roughly **58-second** loop. A quiet bundled-chime arrangement works without audio uploads; the full recording and nine WAV cues can be uploaded for richer playback. See [graphics and audio setup](AUDIO.md).
+The presentation includes warm lighting, pastel bakeries, string lights, oven steam, and animated menu/reward feedback. **Music** and **SFX** have separate mute buttons and saved **0–100% volume sliders**. The selected background song is your friend's **cookiecookieloop1.ogg**; it is included in the Studio ZIP and loops after you upload it to Roblox and set its audio asset ID. Background music stays quiet until configured; SFX work immediately. See [audio upload and volume setup](AUDIO.md).
 
 Recipes have **six rarity tiers**, from Common (1×) to Mythic (6×). In **Toppings**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible decorations. See [rarity and topping details](CRAFTING.md).
 
@@ -47,6 +47,7 @@ ReplicatedStorage
     PurchaseRewards (ModuleScript)  <- src/shared/PurchaseRewards.luau
     CookieCrafting (ModuleScript)   <- src/shared/CookieCrafting.luau
     AudioConfig (ModuleScript)      <- src/shared/AudioConfig.luau
+    AudioPreferences (ModuleScript) <- src/shared/AudioPreferences.luau
     MusicScore (ModuleScript)       <- src/shared/MusicScore.luau
     ConveyorLayout (ModuleScript)   <- src/shared/ConveyorLayout.luau
     ChallengeCatalog (ModuleScript) <- src/shared/ChallengeCatalog.luau
@@ -77,6 +78,7 @@ StarterPlayer
   StarterPlayerScripts
     TycoonUI (LocalScript)          <- src/client/init.client.luau
       AudioController (ModuleScript) <- src/client/AudioController.luau
+      VolumeSlider (ModuleScript)    <- src/client/VolumeSlider.luau
 ```
 
 The server generates the map and remotes. Set the experience's maximum player count to **8**, matching the number of bakeries. If more players join, they must wait for a plot to become available. Recipe and baking-speed pads purchase when their owner stands on them; claim, register, counter, NPC, and hidden-item prompts activate without a held delay using keyboard, controller, or touch. The menu supports touch and scrolling.
@@ -127,7 +129,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 91 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, and leaderboard sorting. They do not contact Roblox's live DataStore or payment services.
+The 94 deterministic tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, and leaderboard sorting. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 

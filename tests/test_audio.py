@@ -1,6 +1,7 @@
 """Check the actual original WAV deliverables and Roblox upload constraints."""
 import hashlib
 import json
+import struct
 from pathlib import Path
 import unittest
 import wave
@@ -58,6 +59,18 @@ class AudioPackTests(unittest.TestCase):
         for name in names:
             signal = self.read_audio(name + ".wav")
             self.assertLess(float(np.max(np.abs(signal[-160:]))), .001)
+
+    def test_supplied_song_preserves_original_bytes_and_valid_vorbis_upload_format(self):
+        path = AUDIO / "friend/cookiecookieloop1.ogg"
+        data = path.read_bytes()
+        self.assertEqual(len(data), 2145921)
+        self.assertEqual(hashlib.sha256(data).hexdigest(), "05c0fab98151553ca1e934024a02d80fbdf5ec78a92643166321377fa1093d4a")
+        self.assertEqual(data[:4], b"OggS")
+        header = data.index(b"\x01vorbis")
+        self.assertEqual(data[header + 11], 2)
+        self.assertEqual(struct.unpack_from("<I", data, header + 12)[0], 44100)
+        self.assertLess(len(data), 20 * 1024 * 1024)
+        self.assertIn("NOT included in this CC0", (ROOT / "assets/LICENSE.txt").read_text())
 
 
 if __name__ == "__main__":

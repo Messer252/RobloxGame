@@ -9,6 +9,10 @@ games that earn revenue. No attribution or payment is required.
 
 CC0 legal terms: https://creativecommons.org/publicdomain/zero/1.0/legalcode
 
+EXCEPTION: assets/audio/friend/cookiecookieloop1.ogg was supplied by the project
+owner and composed by their friend. It is NOT included in this CC0 dedication.
+No broader license for that recording has been supplied. See audio/friend/README.md.
+
 This dedication applies to the original files in this assets directory. It does
 not grant ownership of Roblox software, Roblox's built-in materials, third-party
 tools, or fonts used to render preview labels. No third-party meshes or texture

@@ -2,6 +2,7 @@ local Recipes = if script then require(script.Parent.Recipes) else require("./Re
 local Crafting = if script then require(script.Parent.CookieCrafting) else require("./CookieCrafting")
 local Challenges = if script then require(script.Parent.Challenges) else require("./Challenges")
 local Boosts = if script then require(script.Parent.Boosts) else require("./Boosts")
+local AudioPreferences = if script then require(script.Parent.AudioPreferences) else require("./AudioPreferences")
 
 local Progression = {}
 Progression.MAX_CASH = 1e15 -- Keep all currency integers below double precision limits.
@@ -27,7 +28,7 @@ function Progression.newData()
 	return {
 		cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0,
 		permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {},
-		audio = { music = true, effects = true }, challenges = Challenges.normalize(nil), boosts = Boosts.normalize(nil),
+		audio = AudioPreferences.normalize(nil), challenges = Challenges.normalize(nil), boosts = Boosts.normalize(nil),
 	}
 end
 
@@ -43,11 +44,7 @@ function Progression.normalize(raw)
 	data.chips = integer(raw.chips, 0, 0, Progression.MAX_CHIPS)
 	data.challenges = Challenges.normalize(raw.challenges)
 	data.boosts = Boosts.normalize(raw.boosts)
-	if type(raw.audio) == "table" then
-		for key in pairs(data.audio) do
-			if type(raw.audio[key]) == "boolean" then data.audio[key] = raw.audio[key] end
-		end
-	end
+	data.audio = AudioPreferences.normalize(raw.audio)
 	if type(raw.permanent) == "table" then
 		for key, upgrade in pairs(Progression.Permanent) do
 			data.permanent[key] = integer(raw.permanent[key], 0, 0, upgrade.Max)

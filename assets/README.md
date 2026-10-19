@@ -1,7 +1,7 @@
 # Cookie Corner original asset pack
 
 **Free to use, change, and publish in monetized games. No attribution required.**
-Original models and texture images are dedicated under CC0; see `LICENSE.txt`.
+Original models and texture images are dedicated under CC0; see `LICENSE.txt`. The supplied friend-made song in `audio/friend/` is excluded from that license.
 
 ## Included
 
@@ -9,6 +9,7 @@ Original models and texture images are dedicated under CC0; see `LICENSE.txt`.
 - `textures/`: 42 seamless, 512 × 512 RGB PNGs. `Cookie01` through `Cookie30` follow the game's recipe order; the other 12 images cover floors, walls, wood, metal, conveyors, brick, parchment, gold, awnings, marble, grass, and paths.
 - `previews/Models.png` and `previews/Textures.png`: visual catalogs.
 - `manifest.json`: model inventory, texture names, dimensions, and SHA-256 hashes.
+- `audio/friend/`: the owner-supplied `cookiecookieloop1.ogg`, now selected for background music; not covered by CC0. Upload it to Roblox and configure its audio ID.
 - `audio/`: an original 58.18-second, 66 BPM ambient café loop and nine sound cues, supplied as CC0 WAV files with their own manifest. See [music, sound controls, and Roblox upload instructions](../AUDIO.md).
 
 Every model uses anchored Roblox Parts, a transparent `Root` as its PrimaryPart,

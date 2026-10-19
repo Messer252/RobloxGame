@@ -7,6 +7,7 @@ local Rewards = require("../src/shared/PurchaseRewards")
 local Crafting = require("../src/shared/CookieCrafting")
 local Score = require("../src/shared/MusicScore")
 local AudioConfig = require("../src/shared/AudioConfig")
+local AudioPreferences = require("../src/shared/AudioPreferences")
 local Challenges = require("../src/shared/Challenges")
 local ChallengeCatalog = require("../src/shared/ChallengeCatalog")
 local Layout = require("../src/shared/ConveyorLayout")
@@ -975,6 +976,57 @@ test("music and action cues have bounded pitches, levels, and ordered timing", f
 			last = note[1]
 		end
 	end
+end)
+
+test("old profiles get volume defaults while zero and independent channel levels restore", function()
+	local legacy = Progression.normalize({ audio = { music = false, effects = true } })
+	equal(legacy.audio.music, false)
+	equal(legacy.audio.musicVolume, AudioPreferences.DefaultMusicVolume)
+	equal(legacy.audio.effectsVolume, AudioPreferences.DefaultEffectsVolume)
+	local raw = { audio = { musicVolume = 0, effectsVolume = 0.87 } }
+	local data = Progression.normalize(raw)
+	equal(data.audio.musicVolume, 0)
+	equal(data.audio.effectsVolume, 0.87)
+	raw.audio.effectsVolume = 0
+	equal(data.audio.effectsVolume, 0.87)
+end)
+
+test("volume validation rejects malformed requests and clamps finite levels to safe bounds", function()
+	local current = AudioPreferences.normalize({ musicVolume = 0.3, effectsVolume = 0.7 })
+	for _, bad in ipairs({ math.huge, -math.huge, 0/0, "0.4", false, {} }) do
+		equal(AudioPreferences.update(current, { music = true, effects = true, musicVolume = bad }), nil)
+		equal(AudioPreferences.update(current, { music = true, effects = true, effectsVolume = bad }), nil)
+		equal(AudioPreferences.normalize({ musicVolume = bad }).musicVolume, AudioPreferences.DefaultMusicVolume)
+	end
+	local updated = AudioPreferences.update(current, { music = false, effects = true, musicVolume = -9, effectsVolume = 50, cash = 1e9 })
+	equal(updated.musicVolume, 0)
+	equal(updated.effectsVolume, 1)
+	equal(updated.cash, nil)
+	equal(current.musicVolume, 0.3)
+	equal(current.effectsVolume, 0.7)
+	local toggled = AudioPreferences.update(current, { music = false, effects = false })
+	equal(toggled.musicVolume, 0.3)
+	equal(toggled.effectsVolume, 0.7)
+end)
+
+test("independent volume levels and mute states survive rebirth, paid receipts, and rejoin", function()
+	local store = fakeStore()
+	local manager = harness(store)
+	local profile = assert(manager:Load(830, "volume-first"))
+	profile.data.audio = AudioPreferences.update(profile.data.audio, { music = false, effects = true, musicVolume = 0.18, effectsVolume = 0 })
+	profile.data.cash, profile.data.unlocked = 5000000, 18
+	assert(Progression.rebirth(profile.data))
+	assert(manager:GrantReceipt(profile, "volume-paid", 12345, function(data)
+		return Rewards.product(data, Catalog.Products.IncomeTier1, Progression.MAX_CASH)
+	end))
+	assert(manager:Save(profile, true))
+	local restored = assert(manager:Load(830, "volume-second"))
+	equal(restored.data.audio.music, false)
+	equal(restored.data.audio.effects, true)
+	equal(restored.data.audio.musicVolume, 0.18)
+	equal(restored.data.audio.effectsVolume, 0)
+	equal(restored.data.boosts.paidTier, 1)
+	equal(restored.receipts["volume-paid"], 12345)
 end)
 
 test("three feeder lanes contain all 30 compact stations inside the bakery", function()

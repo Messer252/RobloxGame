@@ -4,6 +4,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local AudioController = require(script:WaitForChild("AudioController"))
+local VolumeSlider = require(script:WaitForChild("VolumeSlider"))
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
 local Recipes = require(shared:WaitForChild("Recipes"))
@@ -64,7 +65,7 @@ local function fixedLabel(parent, y, height, size, tint)
 end
 
 local hud = Instance.new("Frame")
-hud.Size = UDim2.new(0.94, 0, 0, 172)
+hud.Size = UDim2.new(0.94, 0, 0, 238)
 hud.Position = UDim2.fromOffset(12, 12)
 hud.BackgroundColor3 = Color3.fromRGB(53, 36, 32)
 hud.BackgroundTransparency = 0.06
@@ -72,7 +73,7 @@ hud.Parent = gui
 round(hud, 16)
 local hudStroke = finish(hud, gold)
 local hudLimit = Instance.new("UISizeConstraint")
-hudLimit.MaxSize = Vector2.new(420, 172)
+hudLimit.MaxSize = Vector2.new(420, 238)
 hudLimit.Parent = hud
 local cookieIcon = Instance.new("Frame")
 cookieIcon.Position = UDim2.fromOffset(15, 9)
@@ -198,11 +199,17 @@ effectsToggle.Name = "EffectsToggle"
 effectsToggle.Position = UDim2.new(0.72, 0, 0, 106)
 effectsToggle.Size = UDim2.new(0.28, -14, 0, 30)
 effectsToggle.TextSize = 12
+local drawMusicVolume = VolumeSlider.create(hud, "Music", 166,
+	function() return audio.musicVolume end, function(value) audio:SetVolume("music", value) end)
+local drawEffectsVolume = VolumeSlider.create(hud, "SFX", 200,
+	function() return audio.effectsVolume end, function(value) audio:SetVolume("effects", value) end)
 local function renderAudio()
 	musicToggle.Text = audio.music and "Music ON" or "Music OFF"
 	effectsToggle.Text = audio.effects and "SFX ON" or "SFX OFF"
 	musicToggle.BackgroundColor3 = audio.music and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)
 	effectsToggle.BackgroundColor3 = audio.effects and Color3.fromRGB(66, 114, 100) or Color3.fromRGB(95, 75, 69)
+	drawMusicVolume()
+	drawEffectsVolume()
 end
 musicToggle.Activated:Connect(function() audio:SetMusicEnabled(not audio.music) end)
 effectsToggle.Activated:Connect(function() audio:SetEffectsEnabled(not audio.effects) end)

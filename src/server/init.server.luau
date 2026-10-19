@@ -9,6 +9,7 @@ local Recipes = require(shared.Recipes)
 local Crafting = require(shared.CookieCrafting)
 local Challenges = require(shared.Challenges)
 local Boosts = require(shared.Boosts)
+local AudioPreferences = require(shared.AudioPreferences)
 local ProfileStore = require(script.ProfileStore)
 local Settings = require(script.Settings)
 local World = require(script.World)
@@ -65,6 +66,8 @@ local function sync(player, state)
 	player:SetAttribute("GoldenChips", data.chips)
 	player:SetAttribute("MusicEnabled", data.audio.music)
 	player:SetAttribute("EffectsEnabled", data.audio.effects)
+	player:SetAttribute("MusicVolume", data.audio.musicVolume)
+	player:SetAttribute("EffectsVolume", data.audio.effectsVolume)
 	player:SetAttribute("ChallengeIndex", data.challenges.index)
 	player:SetAttribute("ChallengeActive", data.challenges.active)
 	player:SetAttribute("ChallengeFound", Challenges.encode(data.challenges))
@@ -143,13 +146,16 @@ local function onAction(player, action, argument, sourcePlot)
 		return
 	end
 	if action == "SetAudioPreferences" then
-		if type(argument) ~= "table" or type(argument.music) ~= "boolean" or type(argument.effects) ~= "boolean" then return end
+		local preferences = AudioPreferences.update(state.data.audio, argument)
+		if not preferences then return end
 		local now = os.clock()
 		if now - (state.lastAudioPreference or -math.huge) < 0.2 then return end
 		state.lastAudioPreference = now
-		state.data.audio.music, state.data.audio.effects = argument.music, argument.effects
-		player:SetAttribute("MusicEnabled", argument.music)
-		player:SetAttribute("EffectsEnabled", argument.effects)
+		state.data.audio = preferences
+		player:SetAttribute("MusicEnabled", preferences.music)
+		player:SetAttribute("EffectsEnabled", preferences.effects)
+		player:SetAttribute("MusicVolume", preferences.musicVolume)
+		player:SetAttribute("EffectsVolume", preferences.effectsVolume)
 		-- Debounce settings changes; they are included in normal/final saves too.
 		state.nextSave = math.min(state.nextSave, now + 5)
 		return

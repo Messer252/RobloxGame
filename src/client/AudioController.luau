@@ -5,6 +5,7 @@ local ContentProvider = game:GetService("ContentProvider")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.CookieTycoon.AudioConfig)
 local Score = require(ReplicatedStorage.CookieTycoon.MusicScore)
+local Preferences = require(ReplicatedStorage.CookieTycoon.AudioPreferences)
 local AudioController = {}
 AudioController.__index = AudioController
 
@@ -34,6 +35,7 @@ end
 function AudioController.start(player, requestAction)
 	local self = setmetatable({
 		player = player, requestAction = requestAction, music = true, effects = true,
+		musicVolume = Preferences.DefaultMusicVolume, effectsVolume = Preferences.DefaultEffectsVolume,
 		ready = false, dirty = false, alive = true, revision = 0,
 		musicCursor = 0, effectCursor = 0, noteIndex = 1, epoch = os.clock(),
 		lastCues = {}, connections = {}, voices = {}, samples = {}, effectEpoch = 0,
@@ -67,7 +69,7 @@ function AudioController.start(player, requestAction)
 	end
 	local musicUri = assetId(Config.MusicAssetId)
 	if musicUri then
-		self.track = sound("Cookie Corner Cafe", musicUri, self.musicGroup, self.folder)
+		self.track = sound(Config.MusicName, musicUri, self.musicGroup, self.folder)
 		self.track.Looped = true
 		self.track.Volume = 1
 		table.insert(self.connections, self.track.Loaded:Connect(function()
@@ -82,6 +84,9 @@ function AudioController.start(player, requestAction)
 		self.ready = true
 		if not self.musicTouched then self.music = player:GetAttribute("MusicEnabled") ~= false end
 		if not self.effectsTouched then self.effects = player:GetAttribute("EffectsEnabled") ~= false end
+		local saved = Preferences.normalize({ musicVolume = player:GetAttribute("MusicVolume"), effectsVolume = player:GetAttribute("EffectsVolume") })
+		if not self.musicVolumeTouched then self.musicVolume = saved.musicVolume end
+		if not self.effectsVolumeTouched then self.effectsVolume = saved.effectsVolume end
 		self.epoch = os.clock()
 		self:_apply()
 		if self.dirty then self:_queueSave() end
@@ -89,7 +94,7 @@ function AudioController.start(player, requestAction)
 	table.insert(self.connections, player:GetAttributeChangedSignal("DataReady"):Connect(loadPreferences))
 	loadPreferences()
 	table.insert(self.connections, RunService.Heartbeat:Connect(function()
-		if not self.ready or not self.music or (self.track and self.track.IsLoaded) then return end
+		if not Config.FallbackMusicEnabled or not self.ready or not self.music or self.musicVolume == 0 or (self.track and self.track.IsLoaded) then return end
 		local secondsPerBeat = 60 / Score.BPM
 		local elapsed = (os.clock() - self.epoch) / secondsPerBeat
 		if elapsed >= Score.Beats then
@@ -113,6 +118,9 @@ function AudioController.start(player, requestAction)
 		pcall(function() ContentProvider:PreloadAsync(preload) end)
 		if self.alive and not self.voices[1].sound.IsLoaded then
 			warn("Cookie Corner: bundled chime unavailable. Upload the included WAVs and configure AudioConfig for this experience.")
+		end
+		if self.alive and (not self.track or not self.track.IsLoaded) and not Config.FallbackMusicEnabled then
+			warn("Cookie Corner: background music needs the Roblox audio ID for cookiecookieloop1.ogg and experience permission. See AUDIO.md.")
 		end
 	end)
 	return self
@@ -166,12 +174,12 @@ function AudioController:_tone(midi, duration, volume, music)
 end
 
 function AudioController:_apply()
-	TweenService:Create(self.musicGroup, TweenInfo.new(0.15), {
-		Volume = self.ready and self.music and Config.MusicVolume or 0,
-	}):Play()
-	TweenService:Create(self.effectsGroup, TweenInfo.new(0.1), {
-		Volume = self.ready and self.effects and Config.EffectsVolume or 0,
-	}):Play()
+	if self.musicFade then self.musicFade:Cancel() end
+	if self.effectsFade then self.effectsFade:Cancel() end
+	self.musicFade = TweenService:Create(self.musicGroup, TweenInfo.new(0.08), { Volume = self.ready and self.music and self.musicVolume or 0 })
+	self.effectsFade = TweenService:Create(self.effectsGroup, TweenInfo.new(0.08), { Volume = self.ready and self.effects and self.effectsVolume or 0 })
+	self.musicFade:Play()
+	self.effectsFade:Play()
 	if not self.music then
 		self:_stopVoices(true)
 		if self.track then self.track:Pause() end
@@ -195,7 +203,9 @@ function AudioController:_queueSave()
 			task.delay(1, send)
 			return
 		end
-		self.requestAction:FireServer("SetAudioPreferences", { music = self.music, effects = self.effects })
+		self.requestAction:FireServer("SetAudioPreferences", {
+			music = self.music, effects = self.effects, musicVolume = self.musicVolume, effectsVolume = self.effectsVolume,
+		})
 		self.dirty = false
 	end
 	task.delay(0.4, send)
@@ -213,6 +223,15 @@ function AudioController:SetEffectsEnabled(enabled)
 	self.effectsTouched = true
 	self.effects = enabled == true
 	if not self.effects then self.effectEpoch += 1 end
+	self.dirty = true
+	self:_apply()
+	self:_queueSave()
+end
+
+function AudioController:SetVolume(channel, value)
+	if (channel ~= "music" and channel ~= "effects") or not Preferences.validVolume(value) then return end
+	self[channel .. "VolumeTouched"] = true
+	self[channel .. "Volume"] = math.floor(math.clamp(value, 0, 1) * 100 + 0.5) / 100
 	self.dirty = true
 	self:_apply()
 	self:_queueSave()
