@@ -1228,6 +1228,7 @@ require("./polish")(test, equal, near, harness, fakeStore)
 
 require("./cards_events")(test, equal, near, harness, fakeStore)
 require("./town_update")(test, equal, near, harness, fakeStore)
+require("./review_polish")(test, equal, near)
 require("./global_rankings")(test, equal)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

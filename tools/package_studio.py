@@ -81,6 +81,12 @@ The map includes a cookie forest, lake/waterfall, mountains, and day/night.
 Before replacing a customized place, copy across your audio IDs, product IDs,
 and friends added to AdminConfig. Restart outdated servers after publishing.
 
+CODE REVIEW AND POLISH
+See POLISH-REVIEW.md for fixes and focused playtests. Starter conveyors now
+keep their complete route through the merge. Menus preserve typed shop names
+and focus during updates. Audio choices retry while transactions are busy.
+Obby finishes show their actual rewards and consistently advance quests.
+
 SPAWN MARKET UPDATE
 See MARKET-UPDATE.md in this ZIP for controls, prices and playtests.
 Visit Bruno at the spawn blacksmith for cookie armor and better rolling pins.
@@ -166,6 +172,7 @@ def main():
         archive.write(ROOT / "VALLEY.md", "VALLEY.md")
         archive.write(ROOT / "WORKSHOP.md", "WORKSHOP.md")
         archive.write(ROOT / "MARKET-UPDATE.md", "MARKET-UPDATE.md")
+        archive.write(ROOT / "POLISH-REVIEW.md", "POLISH-REVIEW.md")
         archive.write(ROOT / "CARDS-AND-EVENTS.md", "CARDS-AND-EVENTS.md")
         for sheet in sorted((ROOT / "assets/cards").glob("CookieTCG_*.png")):
             archive.write(sheet, sheet.name)
@@ -183,6 +190,7 @@ def main():
             assert not entry.flag_bits & 1, "Unexpected encrypted ZIP entry"
         assert "CardGallery.html" not in archive.namelist(), "Browser preview must not be bundled"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read("POLISH-REVIEW.md") == (ROOT / "POLISH-REVIEW.md").read_bytes(), "Packaged review guide is stale"
         assert archive.read("MARKET-UPDATE.md") == (ROOT / "MARKET-UPDATE.md").read_bytes(), "Packaged market guide is stale"
         assert archive.read("UPLOAD-ASSETS.md") == (ROOT / "UPLOAD-ASSETS.md").read_bytes(), "Packaged upload guide is stale"
         assert archive.read(MUSIC.name) == MUSIC.read_bytes(), "Packaged song differs from the supplied original"

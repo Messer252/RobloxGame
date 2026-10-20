@@ -53,7 +53,7 @@ end
 
 function Routing.surfaces(paths)
 	local surfaces, seen = {}, {}
-	for _, path in ipairs(paths) do
+	for lane, path in ipairs(paths) do
 		for index = 2, #path do
 			local a, b = path[index - 1], path[index]
 			local span = b.s - a.s
@@ -62,7 +62,7 @@ function Routing.surfaces(paths)
 			if not seen[key] then
 				seen[key] = true
 				table.insert(surfaces, { x = (a.x + b.x) / 2, z = (a.z + b.z) / 2,
-					dx = dx, dz = dz, width = Layout.BeltWidth, length = span + 0.12 })
+					dx = dx, dz = dz, width = Layout.BeltWidth, length = span + 0.12, tier = lane })
 			end
 			if index < #path then
 				local joinKey = string.format("join/%.3f/%.3f", b.x, b.z)
@@ -73,7 +73,7 @@ function Routing.surfaces(paths)
 					local vx, vz = dx + (c.x - b.x) / nextSpan, dz + (c.z - b.z) / nextSpan
 					local magnitude = length(vx, vz)
 					table.insert(surfaces, { x = b.x, z = b.z, dx = vx / magnitude, dz = vz / magnitude,
-						width = Layout.BeltWidth, round = true })
+						width = Layout.BeltWidth, round = true, tier = lane })
 				end
 			end
 		end
@@ -134,7 +134,7 @@ function Routing.rails(paths)
 					local key = string.format("%.2f/%.2f/%.2f/%.2f", start.x, start.z, finish.x, finish.z)
 					if not seen[key] then
 						seen[key] = true
-						table.insert(rails, { a = start, b = finish })
+						table.insert(rails, { a = start, b = finish, tier = lane })
 					end
 				end
 				for step = 0, steps do

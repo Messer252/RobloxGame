@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.CookieTycoon.AudioConfig)
 local Score = require(ReplicatedStorage.CookieTycoon.MusicScore)
 local Preferences = require(ReplicatedStorage.CookieTycoon.AudioPreferences)
+local Delivery = require(script.Parent.PreferenceDelivery)
 local AudioController = {}
 AudioController.__index = AudioController
 
@@ -37,10 +38,14 @@ function AudioController.start(player, requestAction)
 		player = player, requestAction = requestAction, music = true, effects = true,
 		musicVolume = Preferences.DefaultMusicVolume, effectsVolume = Preferences.DefaultEffectsVolume,
 		musicStatus = Config.FallbackMusicEnabled and "Ready" or "Unconfigured",
-		ready = false, dirty = false, alive = true, revision = 0,
+		ready = false, dirty = false, alive = true,
 		musicCursor = 0, effectCursor = 0, noteIndex = 1, epoch = os.clock(),
 		lastCues = {}, connections = {}, voices = {}, samples = {}, ovenVoices = {}, effectEpoch = 0,
 	}, AudioController)
+	self.delivery = Delivery.new(function(preferences) requestAction:FireServer("SetAudioPreferences", preferences) end)
+	table.insert(self.connections, requestAction.Parent:WaitForChild("AudioPreferencesAck").OnClientEvent:Connect(function(revision)
+		if self.delivery:Acknowledge(revision) then self.dirty = false end
+	end))
 	self.folder = Instance.new("Folder")
 	self.folder.Name = "CookieCornerAudio"
 	self.folder.Parent = SoundService
@@ -102,6 +107,7 @@ function AudioController.start(player, requestAction)
 	table.insert(self.connections, player:GetAttributeChangedSignal("DataReady"):Connect(loadPreferences))
 	loadPreferences()
 	table.insert(self.connections, RunService.Heartbeat:Connect(function()
+		self.delivery:Step(os.clock(), self.ready and player:GetAttribute("DataReady") == true and player:GetAttribute("PurchasePending") ~= true)
 		if not Config.FallbackMusicEnabled or not self.ready or not self.music or self.musicVolume == 0 or (self.track and self.track.IsLoaded) then return end
 		local secondsPerBeat = 60 / Score.BPM
 		local elapsed = (os.clock() - self.epoch) / secondsPerBeat
@@ -133,8 +139,8 @@ function AudioController.start(player, requestAction)
 		if self.alive and not self.voices[1].sound.IsLoaded then
 			warn("Cookie Corner: bundled chime unavailable. Upload the included WAVs and configure AudioConfig for this experience.")
 		end
-		if self.alive and (not self.track or not self.track.IsLoaded) and not Config.FallbackMusicEnabled then
-			if self.track then self.musicStatus = "Unavailable" end
+		if self.alive and self.track and not self.track.IsLoaded then
+			self.musicStatus = Config.FallbackMusicEnabled and "Fallback" or "Unavailable"
 			self.Changed:Fire()
 			warn("Cookie Corner: optional full-mix music needs its Roblox audio ID and experience permission. See AUDIO.md.")
 		end
@@ -212,20 +218,10 @@ function AudioController:_apply()
 end
 
 function AudioController:_queueSave()
-	self.revision += 1
-	local revision = self.revision
-	local function send()
-		if not self.alive or revision ~= self.revision or not self.dirty then return end
-		if not self.ready or self.player:GetAttribute("PurchasePending") == true then
-			task.delay(1, send)
-			return
-		end
-		self.requestAction:FireServer("SetAudioPreferences", {
-			music = self.music, effects = self.effects, musicVolume = self.musicVolume, effectsVolume = self.effectsVolume,
-		})
-		self.dirty = false
-	end
-	task.delay(0.4, send)
+	self.delivery:Queue({
+		music = self.music, effects = self.effects,
+		musicVolume = self.musicVolume, effectsVolume = self.effectsVolume,
+	}, os.clock())
 end
 
 function AudioController:SetMusicEnabled(enabled)

@@ -11,8 +11,9 @@ return function(test, equal, near)
 	local paths = Routing.paths()
 	local rails = Routing.rails(paths)
 	local surfaces = Routing.surfaces(paths)
-	local function supported(x, z)
+	local function supported(x, z, tier)
 		for _, surface in ipairs(surfaces) do
+			if tier and surface.tier > tier then continue end
 			local dx, dz = x - surface.x, z - surface.z
 			if surface.round then
 				if dx * dx + dz * dz <= (surface.width / 2)^2 then return true end
@@ -100,6 +101,23 @@ return function(test, equal, near)
 						end
 					end
 					assert(delivered, "Cookie stalled before reaching the box")
+				end
+			end
+		end
+	end)
+
+
+	test("each conveyor purchase supports its complete route through the merge", function()
+		for tier=1,3 do
+			for lane=1,tier do
+				local path=paths[lane]
+				for distance=Layout.CookieRadius+.1,path[#path].s-Layout.CookieRadius-.1,.5 do
+					local point=Routing.pointAt(path,distance)
+					for angle=0,7 do
+						local x=point.x+math.cos(angle*math.pi/4)*Layout.CookieRadius
+						local z=point.z+math.sin(angle*math.pi/4)*Layout.CookieRadius
+						assert(supported(x,z,tier),string.format("Tier %d leaves lane %d unsupported at %.2f, %.2f",tier,lane,x,z))
+					end
 				end
 			end
 		end

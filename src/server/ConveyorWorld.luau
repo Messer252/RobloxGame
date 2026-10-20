@@ -21,10 +21,15 @@ local function part(parent, name, size, frame, tint)
 	return object
 end
 
-local function line(parent, name, a, b, width, tint)
+local function component(object, tier)
+	object:SetAttribute("ConveyorTier", tier)
+	return object
+end
+
+local function line(parent, name, a, b, width, tint, tier)
 	local object = part(parent, name, Vector3.new(width, 0.06, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), tint)
 	object.CanCollide, object.CanTouch, object.CanQuery = false, false, false
-	return object
+	return component(object, tier)
 end
 
 local function text(target, value)
@@ -47,20 +52,22 @@ local function decoration(object)
 	return object
 end
 
-local function belt(plot, parent, size, frame, direction)
+local function belt(plot, parent, size, frame, direction, tier)
 	local surface = part(parent, "Moving Belt", size, frame, Color3.fromRGB(53, 63, 69))
 	surface.CustomPhysicalProperties = PhysicalProperties.new(1, 1, 0, 100, 1)
 	surface.CanTouch = false
 	surface:SetAttribute("Direction", direction)
 	surface.AssemblyLinearVelocity = direction * Layout.CookieSpeed
+	component(surface, tier)
 	table.insert(plot.beltSurfaces, surface)
 	return surface
 end
 
-local function rail(parent, a, b, joints)
+local function rail(parent, a, b, joints, tier)
 	local center = (a + b) / 2
 	local frame = CFrame.lookAt(center, b)
 	local wall = part(parent, "Smooth Outer Rail", Vector3.new(Layout.RailThickness, Layout.RailHeight, (b - a).Magnitude + 0.05), frame, Color3.fromRGB(151, 169, 173))
+	component(wall, tier)
 	wall.Material = Enum.Material.Metal
 	wall.CanTouch = false
 	-- Low friction and rounded joints let a cookie slide past boundary contact.
@@ -72,10 +79,12 @@ local function rail(parent, a, b, joints)
 		local cap = part(parent, "Rounded Rail Joint", Vector3.new(Layout.RailHeight, Layout.RailThickness, Layout.RailThickness),
 			CFrame.new(point) * CFrame.Angles(0, 0, math.pi / 2), wall.Color)
 		cap.Shape, cap.Material, cap.CustomPhysicalProperties = Enum.PartType.Cylinder, wall.Material, wall.CustomPhysicalProperties
+		component(cap, tier)
 		cap.CanTouch = false
 	end
 	local trim = decoration(part(parent, "Rail Top Trim", Vector3.new(Layout.RailThickness + 0.08, 0.08, (b - a).Magnitude),
 		frame + Vector3.new(0, Layout.RailHeight / 2, 0), Color3.fromRGB(199, 211, 211)))
+	component(trim, tier)
 	trim.Material = Enum.Material.Metal
 end
 
@@ -92,36 +101,36 @@ function Conveyor.create(plot, position)
 		if section.round then
 			-- Flat infill closes both edges of every curve without a raised lip.
 			local join = belt(plot, model, Vector3.new(0.6, section.width, section.width),
-				CFrame.new(center) * CFrame.Angles(0, 0, math.pi / 2), direction)
+				CFrame.new(center) * CFrame.Angles(0, 0, math.pi / 2), direction, section.tier)
 			join.Shape = Enum.PartType.Cylinder
 		else
-			belt(plot, model, Vector3.new(section.width, 0.6, section.length), CFrame.lookAt(center, center + direction), direction)
+			belt(plot, model, Vector3.new(section.width, 0.6, section.length), CFrame.lookAt(center, center + direction), direction, section.tier)
 		end
 	end
-	for _, path in ipairs(paths) do
+	for lane, path in ipairs(paths) do
 		for distance = 4, path[#path].s - 1, 10 do
 			local point = Routing.pointAt(path, distance)
 			-- One set of arrows on the shared outlet, all derived from flow.
-			if point.z >= Layout.MainStartZ and path ~= paths[2] then continue end
+			if point.z >= Layout.MainStartZ and lane ~= 1 then continue end
 			local center = position(plot, point.x, Layout.BeltTop + 0.035, point.z)
 			local direction = Vector3.new(point.dx, 0, point.dz * plot.direction)
 			local side = direction:Cross(Vector3.yAxis)
 			local tip = center + direction * 0.8
 			local back = center - direction * 0.5
-			line(model, "Forward Arrow", tip, back + side * 0.5, 0.15, Color3.fromRGB(245, 204, 124))
-			line(model, "Forward Arrow", tip, back - side * 0.5, 0.15, Color3.fromRGB(245, 204, 124))
+			line(model, "Forward Arrow", tip, back + side * 0.5, 0.15, Color3.fromRGB(245, 204, 124), lane)
+			line(model, "Forward Arrow", tip, back - side * 0.5, 0.15, Color3.fromRGB(245, 204, 124), lane)
 		end
 		for distance = 8, path[#path].s - 2, 18 do
 			local point = Routing.pointAt(path, distance)
 			local center = position(plot, point.x, (Layout.BeltTop - 0.8) / 2, point.z)
-			decoration(part(model, "Recessed Conveyor Support", Vector3.new(6.2, Layout.BeltTop - 0.8, 0.7),
-				CFrame.new(center), Color3.fromRGB(112, 133, 142)))
+			component(decoration(part(model, "Recessed Conveyor Support", Vector3.new(6.2, Layout.BeltTop - 0.8, 0.7),
+				CFrame.new(center), Color3.fromRGB(112, 133, 142))), lane)
 		end
 	end
 	local joints = {}
 	for _, edge in ipairs(boundaryRails) do
 		local y = Layout.BeltTop + Layout.RailHeight / 2 - 0.1
-		rail(model, position(plot, edge.a.x, y, edge.a.z), position(plot, edge.b.x, y, edge.b.z), joints)
+		rail(model, position(plot, edge.a.x, y, edge.a.z), position(plot, edge.b.x, y, edge.b.z), joints, edge.tier)
 	end
 	local center = position(plot, 0, 0, Layout.BoxZ)
 	local wood = Color3.fromRGB(182, 133, 80)
@@ -151,9 +160,9 @@ function Conveyor.create(plot, position)
 	plot.conveyorParts = {}
 	for _, p in ipairs(model:GetDescendants()) do
 		if p:IsA("BasePart") then
-			local localPos = p.Position - plot.origin
-			local x, z = localPos.X, localPos.Z * plot.direction
-			local tier = z > 110 and 1 or (x > 9 and 1 or (x < -9 and 3 or 2))
+			-- Curved pieces belong to the feeder that creates them, even after
+			-- they cross into the central lane. Position-based tiers leave gaps.
+			local tier = assert(p:GetAttribute("ConveyorTier"), "Conveyor component missing build tier")
 			table.insert(plot.conveyorParts, { part = p, tier = tier, transparency = p.Transparency, collision = p.CanCollide, query = p.CanQuery })
 		end
 	end

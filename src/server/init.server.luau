@@ -10,13 +10,13 @@ local Crafting = require(shared.CookieCrafting)
 local Challenges = require(shared.Challenges)
 local Contracts = require(shared.BakeryContracts)
 local Cards = require(shared.CardEconomy)
-local Boosts = require(shared.Boosts)
 local AudioPreferences = require(shared.AudioPreferences)
 local ProfileStore = require(script.ProfileStore)
 local Settings = require(script.Settings)
 local World = require(script.World)
 local ChallengeWorld = require(script.ChallengeWorld)
 local ObbyWorld = require(script.ObbyWorld)
+local ObbyRewards = require(shared.ObbyRewards)
 local PlazaExtras = require(script.PlazaExtras)
 local LeaderboardServer = require(script.LeaderboardServer)
 local CommerceServer = require(script.CommerceServer)
@@ -40,6 +40,8 @@ requestPurchase.Parent = remotes
 local refreshPasses = Instance.new("RemoteEvent")
 refreshPasses.Name = "RefreshPasses"
 refreshPasses.Parent = remotes
+local audioAck = Instance.new("RemoteEvent")
+audioAck.Name, audioAck.Parent = "AudioPreferencesAck", remotes
 local feedback = Instance.new("RemoteEvent")
 feedback.Name = "Feedback"
 feedback.Parent = remotes
@@ -203,6 +205,8 @@ local function onAction(player, action, argument, sourcePlot)
 		player:SetAttribute("EffectsVolume", preferences.effectsVolume)
 		-- Debounce settings changes; they are included in normal/final saves too.
 		state.nextSave = math.min(state.nextSave, now + 5)
+		local revision = argument.Revision
+		if type(revision) == "number" and revision % 1 == 0 and revision > 0 and revision < 2^53 then audioAck:FireClient(player, revision) end
 		return
 	end
 	if not state.plot or state.plot.owner ~= player then return end
@@ -300,17 +304,13 @@ ObbyWorld.create(workspace.CookieTycoonWorld, function(player, difficulty)
 	-- profile. Acknowledgement means the bonus is already applied, not queued.
 	local state = usable(player)
 	if not state then return false end
-	local success, message = Boosts.awardObby(state.data, difficulty, os.time())
-	local crumbs=Cards.obby(state.data.life.cards,difficulty,os.time(),state.perks.ThirdCardSlot)
-	if crumbs>0 then message=(message or "Course completed!").." +"..crumbs.." Star Crumbs!" end
-	if success or crumbs>0 then
-		Contracts.record(state.data, "Obby", 1)
+	local completed, message, changed = ObbyRewards.complete(state.data, difficulty, os.time(), state.perks.ThirdCardSlot)
+	if changed then
 		sync(player, state)
 		state.nextSave = math.min(state.nextSave, os.clock() + 2)
 		feedback:FireClient(player, "UpgradePermanent")
 	end
-	if message then notify(player, message) end
-	return true -- A stronger existing boost also counts as a completed course.
+	return completed, message -- The finish detector displays the full reward once.
 end, notify)
 
 PlazaExtras.create(workspace.CookieTycoonWorld, rankings)

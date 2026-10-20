@@ -466,7 +466,7 @@ refreshShopButton.Size = UDim2.new(1, 0, 0, 42)
 
 local toast = Instance.new("TextLabel")
 toast.AnchorPoint = Vector2.new(0.5, 1)
-toast.Position = UDim2.new(0.5, 0, 1, -12)
+toast.Position = UDim2.new(0.5, 0, 1, -76)
 toast.Size = UDim2.new(0.94, 0, 0, 72)
 toast.BackgroundColor3 = Color3.fromRGB(53, 36, 32)
 toast.TextColor3 = cream
@@ -474,7 +474,7 @@ toast.Font = Enum.Font.GothamBold
 toast.TextSize = 16
 toast.TextWrapped = true
 toast.Visible = false
-toast.ZIndex = 10
+toast.ZIndex = 100
 toast.Parent = gui
 round(toast)
 local toastStroke = finish(toast, gold)
@@ -685,7 +685,9 @@ local function render()
 	enable(collectButton, false)
 	local nextRecipe = Recipes[data.unlocked + 1]
 	recipeButton.Text = nextRecipe and (nextRecipe.Name .. "  •  $" .. format(nextRecipe.Cost) .. "\nUnlock next cookie") or "All 30 cookies unlocked!"
-	enable(recipeButton, canManage and nextRecipe ~= nil and data.cash >= (nextRecipe and nextRecipe.Cost or 0))
+	local lineReady = nextRecipe ~= nil and math.ceil((data.unlocked+1)/10)<=data.life.belt
+	if nextRecipe and not lineReady then recipeButton.Text=nextRecipe.Name.." • Build conveyor line "..math.ceil((data.unlocked+1)/10).." first" end
+	enable(recipeButton, canManage and lineReady and data.cash >= (nextRecipe and nextRecipe.Cost or 0))
 	local ovenMax = data.level >= Progression.MAX_OVEN_LEVEL
 	ovenButton.Text = ovenMax and "Conveyor speed maxed!" or ("Faster conveyor  •  $" .. format(Progression.ovenCost(data)) .. "\nSpeed level " .. data.level .. " → " .. (data.level + 1))
 	enable(ovenButton, canManage and not ovenMax and data.cash >= Progression.ovenCost(data))
@@ -699,7 +701,7 @@ local function render()
 	enable(rebirthButton, canRebirth)
 	if confirmation.Visible then
 		if data.rebirths ~= confirmCount or not ownsBakery then confirmation.Visible = false end
-		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, ready earnings, cookies, conveyor levels and toppings.\nKeep: Golden Chips, permanent upgrades, quests and passes."
+		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, bag cookies, conveyors, machines, decorations and toppings.\nKeep: cards, Star Crumbs, armor, pins, permanent upgrades and quests."
 		enable(confirmButton, canRebirth)
 	end
 	for key, upgradeButton in pairs(permanentButtons) do
@@ -841,9 +843,9 @@ local function showNotice()
 	local version = noticeVersion
 	toast.Text = message
 	toast.Visible = true
-	toast.Position = UDim2.new(0.5, 0, 1, 4)
+	toast.Position = UDim2.new(0.5, 0, 1, -60)
 	TweenService:Create(toast, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 0, 1, -12),
+		Position = UDim2.new(0.5, 0, 1, -76),
 	}):Play()
 	task.delay(6, function() if noticeVersion == version then toast.Visible = false end end)
 end

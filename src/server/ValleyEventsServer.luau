@@ -204,7 +204,10 @@ function Events:Step()
 		if state then Cards.award(state.data.life.cards,Rules.HillReward,state.perks.ThirdCardSlot); self.context.Changed(player,state) end
 	end
 	self.hillText.Text=#occupants>1 and "COOKIE HILL CONTESTED\nRewards paused • PVP ON" or candidate and ("@"..candidate.Name.." capturing • "..math.max(0,math.ceil(Rules.CaptureSeconds-(now-self.hill.capture))).."s\n"..(owner and "Held by @"..owner.Name or "Claim the hill")) or owner and ("@"..owner.Name.." owns COOKIE HILL\n"..rewardText.." • Defend your flag!") or idleText
-	for _,player in ipairs(Players:GetPlayers()) do player:SetAttribute("OwnsCookieHill",self.hill.owner==player.UserId) end
+	for _,player in ipairs(Players:GetPlayers()) do
+		player:SetAttribute("OwnsCookieHill",self.hill.owner==player.UserId)
+		player:SetAttribute("CookieHillContested",#occupants>1)
+	end
 	local hillColor = #occupants > 1 and Color3.fromRGB(255, 113, 94) or owner and Color3.fromRGB(124, 235, 169) or gold
 	if self.hillColor ~= hillColor then
 		self.hillColor, self.flag.Color, self.hillText.TextColor3 = hillColor, hillColor, hillColor

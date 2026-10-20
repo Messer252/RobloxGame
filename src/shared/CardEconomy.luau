@@ -84,7 +84,7 @@ function Cards.pickup(data,id,now,third)
 end
 function Cards.obby(data,difficulty,now,third)
 	local reward=({Easy=20,Medium=35,Hard=50})[difficulty]
-	if not reward or (data.obbyClaims[difficulty] or 0)>now then return 0 end
+	if not reward or (data.obbyClaims[difficulty] or 0)>now or data.crumbs>=Cards.MaxCrumbs then return 0 end
 	data.obbyClaims[difficulty]=now+300
 	return Cards.award(data,reward,third)
 end

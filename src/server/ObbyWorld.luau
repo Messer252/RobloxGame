@@ -100,10 +100,11 @@ function ObbyWorld.create(parent, onComplete, notify)
 								Progress.advance(run, definition, run.stage + 1, now)
 							end
 							if run.stage == definition.Count and not run.awarded then
-								if onComplete(player, definition.Id) == true then
+								local awarded, message = onComplete(player, definition.Id)
+								if awarded == true then
 									run.awarded = true
 									completed[player], runs[player], run = definition.Id, nil, nil
-									notify(player, definition.Id .. " complete! Check the HUD boost timer.")
+									notify(player, message or (definition.Id .. " complete! Check the HUD boost timer."))
 								end
 							elseif surface == course.floor and now >= (resets[player] or 0) then
 								resets[player], runs[player], run = now + 1, nil, nil

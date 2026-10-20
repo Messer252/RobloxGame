@@ -100,11 +100,12 @@ function Server:OpenPack(player, packId)
 	if state.profile.sessionOnly then
 			local ok, message = Cards.open(state.data.life.cards, packId, cardId)
 			runtime.opening = false
-			if ok then self:Changed(player, state); self.packResult:FireClient(player, cardId, packId) else self.context.Notify(player, message) end
+			if ok then self:Changed(player, state); self.packResult:FireClient(player, cardId, packId, state.data.life.cards.owned[tostring(cardId)]) else self.context.Notify(player, message) end
 			return
 		end
 	local receipt = "cp:" .. Http:GenerateGUID(false)
 	state.receiptWorkers += 1
+	self:Refresh(player)
 	task.spawn(function()
 		local ok, reason
 		for _ = 1, 6 do
@@ -148,12 +149,24 @@ function Server:Held(player)
 	local runtime = self:Runtime(player)
 	return runtime.cookieTool and runtime.cookieTool.Parent == player.Character and runtime.held or nil
 end
+function Server:NearbyActions(player, state)
+	local near = { mine = W.near(player, self.features.mine, 22), build = false, decorations = {}, machines = {} }
+	local plot = state.plot
+	if not plot then return near end
+	local function at(record)
+		return record and record.pad.Parent ~= nil and W.near(player, record.pad.Position, 16) or false
+	end
+	near.build = at(self.features.buildPads[plot])
+	for key, record in pairs(self.features.decorationPads[plot]) do near.decorations[key] = at(record) end
+	for key, record in pairs(self.features.machines[plot]) do near.machines[key] = at(record) end
+	return near
+end
 function Server:Refresh(player)
 	local state, runtime = self.context.GetState(player), self:Runtime(player)
 	if not state or state.closing then return end
 	local b, trade = runtime.bargain, self.offers[player]
 	local snapshot = { life = Life.normalize(state.data.life), held = self:Held(player), hasPlot = state.plot ~= nil,
-		busy = state.profile.activityLock ~= nil or state.profile.transacting == true }
+		busy = self.context.Usable(player) == nil, cash = state.data.cash, nearby = self:NearbyActions(player, state) }
 	snapshot.nearPackShop,snapshot.nearBlacksmith=self:NearTown(player,Town.PackStand),self:NearTown(player,Town.Blacksmith)
 	snapshot.life.cards.milestone, snapshot.life.cards.daily, snapshot.life.cards.dailyEarned = 0, 0, 0
 	if b then snapshot.bargain = { name = b.customer.name, price = b.price, attempts = b.attempts, item = b.item, personality = b.customer.traits.Style, favorite = Recipes[b.customer.traits.Favorite].Name } end
@@ -195,6 +208,7 @@ function Server:Cookie(plot, model, index, data)
 		quality = data.life.recipeLevels[tostring(index)], wrapped = false, boxed = false, baked = false }
 	local pickup = { plot = plot, cookie = cookie }
 	self.pickups[model] = pickup
+	model.Destroying:Connect(function() self.pickups[model] = nil end)
 	local root = model.PrimaryPart
 	local worth = Life.value(cookie)
 	model:SetAttribute("CashValue", worth)

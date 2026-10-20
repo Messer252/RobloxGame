@@ -4,7 +4,9 @@
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
-**Newest update:** [Softer lighting, responsive buttons, fitted decorations, easier Star Crumbs, persistent online hill income, spawn pack shop with animated ripping, and Bruno’s cookie armor/rolling-pin blacksmith](MARKET-UPDATE.md).
+**Code review and polish:** [Connected starter conveyors, stable menus, reliable audio preferences, clearer purchases and obby rewards](POLISH-REVIEW.md).
+
+**Spawn market update:** [Softer lighting, responsive buttons, fitted decorations, easier Star Crumbs, persistent online hill income, spawn pack shop with animated ripping, and Bruno’s cookie armor/rolling-pin blacksmith](MARKET-UPDATE.md).
 
 **Cards and valley:** [40 animal cards, five packs, Star Crumbs, meteors, Cookie Hill PvP, natural terrain, rebirth fixes, road-side entrances and expanded decoration purchases](CARDS-AND-EVENTS.md). Four revised anime TCG art sheets and a static card preview are included in the Studio download; upload the images and enter their IDs in CardCatalog.ArtSheets. The optional source-code browser gallery is not bundled. The compass is removed. Two card slots are free; the optional third-slot pass remains disabled until configured.
 
@@ -81,6 +83,7 @@ ReplicatedStorage
     MapLayout (ModuleScript)        <- src/shared/MapLayout.luau
     ObbyCatalog (ModuleScript)      <- src/shared/ObbyCatalog.luau
     ObbyProgress (ModuleScript)     <- src/shared/ObbyProgress.luau
+    ObbyRewards (ModuleScript)      <- src/shared/ObbyRewards.luau
     LeaderboardRanks (ModuleScript) <- src/shared/LeaderboardRanks.luau
 ServerStorage
   CookieCornerAssets (Model)        <- insert assets/models/CookieCornerAssets.rbxmx
@@ -134,6 +137,8 @@ StarterPlayer
       CardArt (ModuleScript) <- src/client/CardArt.luau
       CardPacksClient (ModuleScript) <- src/client/CardPacksClient.luau
       UIFlow (ModuleScript) <- src/client/UIFlow.luau
+      MenuRows (ModuleScript) <- src/client/MenuRows.luau
+      PreferenceDelivery (ModuleScript) <- src/client/PreferenceDelivery.luau
       AudioController (ModuleScript) <- src/client/AudioController.luau
       VolumeSlider (ModuleScript)    <- src/client/VolumeSlider.luau
       AdminPanel (ModuleScript)      <- src/client/AdminPanel.luau
@@ -187,7 +192,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 185 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. They do not contact Roblox's live DataStore or payment services.
+The 192 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. Review regressions also cover partial conveyor builds, menu control reuse, audio acknowledgment/retries, and obby quest progress during reward cooldowns. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 

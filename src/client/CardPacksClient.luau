@@ -30,6 +30,7 @@ function Client.renderPacks(data,row,send)
 			toggle.Text=detail.Visible and "Hide odds" or "Show odds"
 		end)
 		toggle.Size=UDim2.new(1,-8,0,32)
+		toggle.Interactable=true
 	end
 	row("One card per pack. The server saves the card before the reveal. Duplicates stay in your collection.")
 end
@@ -38,18 +39,20 @@ function Client.renderCollection(player,data,row,send,panel)
 	row(#data.equipped.."/"..(third and 3 or 2).." cards equipped • "..data.crumbs.." crumbs")
 	row("Open packs at the Crumbkin Pack House beside spawn.")
 	local buy=row(third and "Third slot owned" or "Optional third card slot",function() Shared.Remotes.RequestPurchase:FireServer("Pass","ThirdCardSlot") end)
-	buy.Interactable=not third and require(Shared.ShopCatalog).offer("Pass","ThirdCardSlot")~=nil
+	buy.Interactable=buy.Interactable and not third and player:GetAttribute("CommerceReady")==true and player:GetAttribute("PassesReady")==true and player:GetAttribute("ShopPromptOpen")~=true and require(Shared.ShopCatalog).offer("Pass","ThirdCardSlot")~=nil
 	local count=0
 	for id,card in ipairs(Catalog.Cards) do
 		local copies=data.owned[tostring(id)]
 		if not copies then continue end
 		count+=1
 		local equipped=table.find(data.equipped,id)
-		local button=row((equipped and "✓ " or "")..card.Name.." • "..card.Rarity.." ×"..copies.."\n"..Client.describe(card),function() send("EquipCard",id) end)
+		local button=row((equipped and "✓ " or "")..card.Name.." • "..card.Rarity.." ×"..copies.."\n"..Client.describe(card),function() send("EquipCard",id) end,"equip-card:"..id)
 		button.Size=UDim2.new(1,-8,0,65)
+		button.Interactable=button.Interactable and (equipped~=nil or #data.equipped<(third and 3 or 2))
 		button.BackgroundColor3=Color3.fromRGB(table.unpack(Catalog.Colors[card.Rarity])):Lerp(Color3.fromRGB(40,40,35),.55)
-		local view=row("View "..card.Animal.." card",function() Client.reveal(panel.Parent,id,false,nil,copies) end)
+		local view=row("View "..card.Animal.." card",function() Client.reveal(panel.Parent,id,false,nil,copies) end,"view-card:"..id)
 		view.Size=UDim2.new(1,-8,0,34)
+		view.Interactable=true
 	end
 	if count==0 then row("Your collection starts with your first pack. Claim the daily gift at the Pack House!") end
 end
@@ -96,7 +99,7 @@ function Client.reveal(gui,cardId,ripping,packId,copies)
 	local close=button(frame,"CLOSE",UDim2.new(1,-90,0,-38),UDim2.fromOffset(90,30),function() shade:Destroy() end)
 	close.Visible=not ripping
 	local rarityColor=Color3.fromRGB(table.unpack(Catalog.Colors[card.Rarity]))
-	local result=text(frame,(copies and copies>1 and "DUPLICATE • "..copies.." COPIES" or "NEW COLLECTION CARD").."  /  "..string.upper(card.Rarity),UDim2.new(0,0,1,12),UDim2.new(1,0,0,28),14,57)
+	local result=text(frame,(not ripping and ("OWNED • "..(copies or 1).." COPIES") or copies and copies>1 and "DUPLICATE • "..copies.." COPIES" or "NEW COLLECTION CARD").."  /  "..string.upper(card.Rarity),UDim2.new(0,0,1,12),UDim2.new(1,0,0,28),14,57)
 	result.TextColor3=rarityColor
 	local wrapper,skip,top,bob
 	local function showCard(instant)
