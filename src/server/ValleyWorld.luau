@@ -30,7 +30,7 @@ function Valley.create(parent)
 		local x = (index % 2 == 0 and -1 or 1) * random:NextNumber(225, 425)
 		local z = random:NextNumber(-570, 570)
 		local lake = x < -205 and z > -450 and z < -295
-		local mine = x < -210 and math.abs(z - 120) < 75
+		local mine = x < -210 and math.abs(z - 108) < 113
 		local obby = x > 215 and (math.abs(z) < 45 or math.abs(z - 180) < 45 or math.abs(z + 180) < 45)
 		if lake or mine or obby or math.abs(z) < 22 or (x + 285)^2 + (z - 400)^2 < 3600 then continue end
 		local height = random:NextNumber(12, 23)

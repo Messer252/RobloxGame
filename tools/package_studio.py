@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLACE = ROOT / "CookieCorner.rbxlx"
 ARCHIVE = ROOT / "CookieCorner_Studio.zip"
 MUSIC = ROOT / "assets/audio/CookieCornerCafe.wav"
-METEOR_AUDIO = [ROOT / "assets/audio/MeteorCrash.wav", ROOT / "assets/audio/MeteorIncoming.wav"]
+EFFECT_AUDIO = [ROOT / "assets/audio/MeteorCrash.wav", ROOT / "assets/audio/MeteorIncoming.wav", ROOT / "assets/audio/PinSwing.wav", ROOT / "assets/audio/OreHit.wav"]
 
 START_HERE = """COOKIE CORNER TYCOON - OPEN IN ROBLOX STUDIO
 
@@ -80,6 +80,13 @@ Bakery > Cookie bag opens inventory, mining, machines, customers, and trades.
 The map includes a cookie forest, lake/waterfall, mountains, and day/night.
 Before replacing a customized place, copy across your audio IDs, product IDs,
 and friends added to AdminConfig. Restart outdated servers after publishing.
+
+CAVE AND PRESTIGE UPDATE
+Read CAVE-AND-PRESTIGE.md. Explore five ore galleries unlocked by better pins.
+Save extra cash for bonus Golden Chips; the rebirth menu previews your payout.
+Admins can grant Golden Chips and Star Crumbs. Shift/Ctrl, controller R3 or
+the Aim button toggles shoulder camera lock. It pauses for menus and flight.
+PinSwing.wav and OreHit.wav are optional uploads; built-in cues work first.
 
 NPC MOVEMENT AND MODELS
 See NPC-UPDATE.md for the walking changes and Studio playtest checklist.
@@ -170,7 +177,7 @@ def main():
         archive.write(PLACE, PLACE.name)
         archive.writestr("START_HERE.txt", START_HERE)
         archive.write(MUSIC, MUSIC.name)
-        for effect in METEOR_AUDIO:
+        for effect in EFFECT_AUDIO:
             archive.write(effect, effect.name)
         archive.write(ROOT / "AUDIO.md", "AUDIO.md")
         archive.write(ROOT / "UPLOAD-ASSETS.md", "UPLOAD-ASSETS.md")
@@ -180,6 +187,7 @@ def main():
         archive.write(ROOT / "MARKET-UPDATE.md", "MARKET-UPDATE.md")
         archive.write(ROOT / "POLISH-REVIEW.md", "POLISH-REVIEW.md")
         archive.write(ROOT / "NPC-UPDATE.md", "NPC-UPDATE.md")
+        archive.write(ROOT / "CAVE-AND-PRESTIGE.md", "CAVE-AND-PRESTIGE.md")
         archive.write(ROOT / "CARDS-AND-EVENTS.md", "CARDS-AND-EVENTS.md")
         for sheet in sorted((ROOT / "assets/cards").glob("CookieTCG_*.png")):
             archive.write(sheet, sheet.name)
@@ -197,13 +205,14 @@ def main():
             assert not entry.flag_bits & 1, "Unexpected encrypted ZIP entry"
         assert "CardGallery.html" not in archive.namelist(), "Browser preview must not be bundled"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read("CAVE-AND-PRESTIGE.md") == (ROOT / "CAVE-AND-PRESTIGE.md").read_bytes(), "Packaged cave guide is stale"
         assert archive.read("NPC-UPDATE.md") == (ROOT / "NPC-UPDATE.md").read_bytes(), "Packaged NPC guide is stale"
         assert archive.read("POLISH-REVIEW.md") == (ROOT / "POLISH-REVIEW.md").read_bytes(), "Packaged review guide is stale"
         assert archive.read("MARKET-UPDATE.md") == (ROOT / "MARKET-UPDATE.md").read_bytes(), "Packaged market guide is stale"
         assert archive.read("UPLOAD-ASSETS.md") == (ROOT / "UPLOAD-ASSETS.md").read_bytes(), "Packaged upload guide is stale"
         assert archive.read(MUSIC.name) == MUSIC.read_bytes(), "Packaged song differs from the supplied original"
-        for effect in METEOR_AUDIO:
-            assert archive.read(effect.name) == effect.read_bytes(), "Packaged meteor effect differs from the generated WAV"
+        for effect in EFFECT_AUDIO:
+            assert archive.read(effect.name) == effect.read_bytes(), "Packaged effect differs from the generated WAV"
         sheets = sorted((ROOT / "assets/cards").glob("CookieTCG_*.png"))
         assert len(sheets) == 4, "Expected four TCG art sheets"
         for sheet in sheets:

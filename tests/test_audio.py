@@ -24,7 +24,7 @@ class AudioPackTests(unittest.TestCase):
 
     def test_every_original_recording_matches_manifest_and_roblox_limits(self):
         self.assertEqual(self.manifest["license"], "CC0-1.0")
-        self.assertEqual(len(self.manifest["files"]), 12)
+        self.assertEqual(len(self.manifest["files"]), 14)
         for record in self.manifest["files"]:
             path = AUDIO / record["file"]
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), record["sha256"])
@@ -55,7 +55,7 @@ class AudioPackTests(unittest.TestCase):
 
     def test_sound_cues_end_silently_and_match_the_configurable_names(self):
         names = {record["file"][:-4] for record in self.manifest["files"] if record["file"] != "CookieCornerCafe.wav"}
-        self.assertEqual(names, {"Click", "Claim", "Collect", "BuyRecipe", "UpgradeOven", "BuyModifier", "UpgradePermanent", "Rebirth", "Error", "MeteorIncoming", "MeteorCrash"})
+        self.assertEqual(names, {"Click", "Claim", "Collect", "BuyRecipe", "UpgradeOven", "BuyModifier", "UpgradePermanent", "Rebirth", "Error", "MeteorIncoming", "MeteorCrash", "PinSwing", "OreHit"})
         for name in names:
             signal = self.read_audio(name + ".wav")
             self.assertLess(float(np.max(np.abs(signal[-160:]))), .001)

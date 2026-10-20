@@ -35,13 +35,15 @@ Select an online account by its `@username`, then use:
 | Bring player to me | Moves the selected player beside you |
 | Add amount to wallet | Adds exactly the entered cash amount to their spendable wallet |
 | Add amount to ready earnings | Adds exactly the entered amount to their uncollected earnings, ready to collect |
+| Give Golden Chips | Adds exactly the entered Golden Chips; retained through rebirth |
+| Give Star Crumbs | Adds exactly the entered Star Crumbs for packs; retained through rebirth |
 | My invisibility | Hides/restores your own character; does not require selecting a player |
 
 Admins cannot kick themselves or another admin with these tools. Teleports need living characters. Invisibility hides body parts, accessories, face textures, nameplates, and character visual effects; it retains normal collisions, sounds, and vulnerability. It stays active through respawns in that server, then resets when you leave. Tools equipped while invisible are hidden and restored when unequipped or when visibility returns.
 
-Cash grants require a loaded, available profile. Enter a **positive whole number**; the default maximum is **1,000,000,000 per action**, configurable through `MaxCashGrant`. The server rejects the entire grant if the chosen balance has insufficient space. Income boosts do not multiply admin gifts. A gift changes only the chosen cash balance; it does not grant Robux, paid upgrades, Golden Chips, recipes, or rebirths.
+Cash grants require a loaded, available profile. Enter a **positive whole number**; the default maximum is **1,000,000,000 per action**, configurable through `MaxCashGrant`. The server rejects the entire grant if the chosen balance has insufficient space. Income boosts do not multiply admin gifts. Each action changes only its chosen balance. Golden Chip and Star Crumb grants have separate buttons and per-action limits: `MaxGoldenChipGrant = 10000` and `MaxStarCrumbGrant = 100000`. They do not consume daily earning caps. No grant changes Robux, paid entitlements, recipes or rebirth count.
 
-Cash grants queue an early save after about two seconds and are included in normal/final saves. They follow the normal cash reset on rebirth. In a Studio session marked **Preview / not saved**, admin gifts are also temporary. If a profile is loading, saving, or completing a purchase, wait and retry a rejected gift.
+All currency grants queue an early save after about two seconds and are included in normal/final saves. Cash follows its normal reset on rebirth; Golden Chips and Star Crumbs are retained. In a Studio session marked **Preview / not saved**, admin gifts are also temporary. If a profile is loading, saving, or completing a purchase, wait and retry a rejected gift.
 
 ## Ownership and stable account IDs
 
@@ -67,6 +69,6 @@ User IDs identify the same account after a rename. Username entries are resolved
 - Check mobile/controller controls, player departure during selection, and all eight players in the list.
 - If the menu is missing, check the username, the latest published start place, and server Output for **Cookie Corner admin setup** warnings. Invalid/unavailable lookups do not grant access; correct the config or retry in a restarted server.
 
-All requests are checked against a server-owned account-ID set, with a one-second cooldown. Client attributes and hidden buttons do not authorize actions. Successful actions are logged in server Output with the acting account, target, action, and cash amount where applicable. Roblox engine tests are still required for the UI, live name lookup, character appearance, teleporting, and kick behavior.
+All requests are checked against a server-owned account-ID set, with a one-second cooldown. Client attributes and hidden buttons do not authorize actions. Successful actions are logged in server Output with the acting account, target, action, and currency amount where applicable. Roblox engine tests are still required for the UI, live name lookup, character appearance, teleporting, and kick behavior.
 
 **Flight:** Admin tools now includes **My flight**. WASD steers, Space rises, Ctrl/Q descends; touch users get up/down buttons. Only the authorized admin can fly their own character. It stops on death/respawn/leave. See [Workshop controls](WORKSHOP.md).

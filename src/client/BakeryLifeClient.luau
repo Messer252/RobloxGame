@@ -5,6 +5,7 @@ local CardUI = require(script.Parent.CardPacksClient)
 local CollectionService = game:GetService("CollectionService")
 local Town,Blueprint=require(Shared.TownCatalog),require(Shared.BakeryBlueprint)
 local Flow=require(script.Parent.UIFlow)
+local Mine=require(Shared.MiningCatalog)
 local MenuRows=require(script.Parent.MenuRows)
 local Client = {}
 function Client.start(player, remotes, gui, hud, openButton, audio)
@@ -53,6 +54,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 	local shade = Instance.new("TextButton")
 	shade.Size, shade.Text, shade.BackgroundTransparency, shade.BackgroundColor3, shade.ZIndex, shade.Visible, shade.Parent = UDim2.fromScale(1, 1), "", 0.35, Color3.new(), 25, false, gui
 	local panel = Instance.new("Frame")
+	panel:SetAttribute("BlocksCameraLock",true)
 	panel.AnchorPoint, panel.Position, panel.Size, panel.BackgroundColor3, panel.ZIndex, panel.Visible, panel.Parent = Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.94, 0.88), Color3.fromRGB(54, 39, 33), 26, false, gui
 	local size = Instance.new("UISizeConstraint")
 	size.MaxSize, size.Parent = Vector2.new(520, 650), panel
@@ -147,6 +149,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 		elseif tab=="Blacksmith" then
 			row(snapshot.nearBlacksmith and ("Wallet $"..Progression.format(wallet)) or "Visit Bruno’s stall beside spawn to purchase gear.")
 			row("Rolling pin: "..Life.PinNames[data.pin].." • power "..Life.PinPower[data.pin])
+			row("Cave access: "..Mine.Zones[data.pin].Name)
 			local pinCost=Life.PinCosts[data.pin+1]
 			if pinCost then purchase("Buy "..Life.PinNames[data.pin+1].." rolling pin • $"..Progression.format(pinCost),pinCost,wallet,snapshot.nearBlacksmith,function() send("Pin") end,"pin-upgrade") else row("Best rolling pin owned") end
 			local armor=Town.Armor[data.armor]
@@ -168,6 +171,8 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			end
 		elseif tab == "Mine" then
 			row("Dough: " .. data.dough .. " • " .. Life.PinNames[data.pin] .. " rolling pin (" .. data.pin .. "/5)")
+			for tier,zone in ipairs(Mine.Zones) do row((tier<=data.pin and "✓ " or "Locked • ")..zone.Name.." • "..Life.PinNames[tier].." pin") end
+			row("Deeper galleries have better ore pools. Ore rarity changes when a node respawns.")
 			row("Left-click with your pin near cave ore. Buy better pins and armor from Bruno beside spawn.")
 			for _, key in ipairs({ "Mixing", "Flow", "Pockets" }) do
 				local level, definition = data.upgrades[key], Life.DoughUpgrades[key]
@@ -305,6 +310,14 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			local anchor = sign.Parent
 			local range = sign:GetAttribute("OwnerUserId") == player.UserId and 180 or 55
 			sign.Enabled = root ~= nil and anchor and anchor:IsA("BasePart") and (root.Position - anchor.Position).Magnitude <= range or false
+		end
+		for _,gate in ipairs(CollectionService:GetTagged("MineGate")) do
+			local tier=gate:GetAttribute("RequiredPin")
+			local unlocked=Mine.allowed(snapshot.life.pin,tier)
+			gate.LocalTransparencyModifier=unlocked and .9 or 0
+			local sign=gate:FindFirstChildOfClass("BillboardGui")
+			local label=sign and sign:FindFirstChildOfClass("TextLabel")
+			if label then label.Text=Mine.Zones[tier].Name.."\n"..(unlocked and "Access unlocked" or Life.PinNames[tier].." pin required") end
 		end
 		for _,crumb in ipairs(CollectionService:GetTagged("TrailStarCrumb")) do
 			local id=tostring(crumb:GetAttribute("CrumbPickupId"))

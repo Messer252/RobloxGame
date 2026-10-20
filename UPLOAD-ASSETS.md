@@ -20,6 +20,7 @@ The extracted ZIP includes:
 | --- | --- |
 | `MeteorCrash.wav` | Full original 8-bit meteor impact |
 | `MeteorIncoming.wav` | Optional meteor warning recording |
+| `PinSwing.wav` and `OreHit.wav` | Optional original rolling-pin whoosh and ore impact |
 | `CookieCornerCafe.wav` | Optional full Valley Afterglow background music |
 | `CookieTCG_01.png` through `CookieTCG_04.png` | All forty card illustrations, ten per sheet |
 
@@ -60,6 +61,8 @@ Use these mappings:
 | --- | --- |
 | `MeteorCrash.wav` or your OGG export of it | `Effects.MeteorCrash` |
 | `MeteorIncoming.wav` | `Effects.MeteorIncoming` |
+| `PinSwing.wav` | `Effects.PinSwing` |
+| `OreHit.wav` | `Effects.OreHit` |
 | `CookieCornerCafe.wav` or another background song | `MusicAssetId` |
 | Bubby's six voice lines | The six entries in `OvenPurchaseVoices` |
 

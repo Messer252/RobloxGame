@@ -9,6 +9,7 @@ function Panel.start(player, remotes, gui, openButton)
 	backdrop.Size, backdrop.Text, backdrop.BackgroundTransparency = UDim2.fromScale(1, 1), "", 0.35
 	backdrop.BackgroundColor3, backdrop.ZIndex, backdrop.Visible, backdrop.Parent = Color3.new(0, 0, 0), 20, false, gui
 	local frame = Instance.new("Frame")
+	frame:SetAttribute("BlocksCameraLock",true)
 	frame.AnchorPoint, frame.Position, frame.Size = Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.92, 0.85)
 	frame.BackgroundColor3, frame.ZIndex, frame.Visible, frame.Parent = Color3.fromRGB(53, 36, 32), 21, false, gui
 	local limit = Instance.new("UISizeConstraint")
@@ -63,17 +64,21 @@ function Panel.start(player, remotes, gui, openButton)
 	bringButton.LayoutOrder = 7
 	local amount = Instance.new("TextBox")
 	amount.LayoutOrder, amount.Size, amount.Text = 8, UDim2.new(1, -4, 0, 40), "10000"
-	amount.PlaceholderText, amount.ClearTextOnFocus, amount.TextSize = "Whole cash amount", false, 16
+	amount.PlaceholderText, amount.ClearTextOnFocus, amount.TextSize = "Whole currency amount", false, 16
 	amount.TextColor3, amount.BackgroundColor3 = Color3.fromRGB(255, 236, 209), Color3.fromRGB(89, 69, 60)
 	amount.Font, amount.ZIndex, amount.Parent = Enum.Font.GothamBold, 22, content
 	local walletButton = button(content, "Add amount to wallet")
 	walletButton.LayoutOrder = 9
 	local bankButton = button(content, "Add amount to ready earnings")
 	bankButton.LayoutOrder = 10
+	local chipButton = button(content, "Give Golden Chips")
+	chipButton.LayoutOrder = 11
+	local crumbButton = button(content, "Give Star Crumbs")
+	crumbButton.LayoutOrder = 12
 	local invisibilityButton = button(content, "My invisibility: OFF")
-	invisibilityButton.LayoutOrder = 11
+	invisibilityButton.LayoutOrder = 13
 	local flyButton = button(content, "My flight: OFF")
-	flyButton.LayoutOrder = 12
+	flyButton.LayoutOrder = 14
 	require(script.Parent.AdminFlightClient).start(player, remotes, gui)
 	local status = label(frame, "Admin actions apply to this server.")
 	status.Position, status.Size, status.AutomaticSize = UDim2.fromOffset(14, 48), UDim2.new(1, -28, 0, 46), Enum.AutomaticSize.None
@@ -102,6 +107,7 @@ function Panel.start(player, remotes, gui, openButton)
 		returnButton.Interactable, kickButton.Interactable = target ~= nil, target ~= nil
 		goButton.Interactable, bringButton.Interactable = target ~= nil, target ~= nil
 		walletButton.Interactable, bankButton.Interactable = target ~= nil, target ~= nil
+		chipButton.Interactable, crumbButton.Interactable = target ~= nil, target ~= nil
 	end
 	local function visible(value)
 		frame.Visible = value and player:GetAttribute("IsAdmin") == true
@@ -143,6 +149,8 @@ function Panel.start(player, remotes, gui, openButton)
 		resetConfirmation()
 		send("GiveBankCash", tonumber(amount.Text:sub(1, 32)))
 	end)
+	chipButton.Activated:Connect(function() resetConfirmation(); send("GiveGoldenChips",tonumber(amount.Text:sub(1,32))) end)
+	crumbButton.Activated:Connect(function() resetConfirmation(); send("GiveStarCrumbs",tonumber(amount.Text:sub(1,32))) end)
 	invisibilityButton.Activated:Connect(function()
 		resetConfirmation()
 		send("SetInvisible", player:GetAttribute("AdminInvisible") ~= true)

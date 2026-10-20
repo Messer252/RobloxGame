@@ -152,7 +152,7 @@ AdminServer.start(remotes, {
 			if root then root.AssemblyLinearVelocity, root.AssemblyAngularVelocity = Vector3.zero, Vector3.zero end
 		end
 	end,
-	GrantCash = function(player, action, amount, maximum)
+	GrantCurrency = function(player, action, amount, maximum)
 		local state = usable(player)
 		if not state or state.profile.saving then return false, "Player data is loading or busy. Try again shortly." end
 		local success, message = AdminRewards.grant(state.data, action, amount, maximum)

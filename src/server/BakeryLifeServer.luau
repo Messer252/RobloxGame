@@ -10,6 +10,7 @@ local Contracts = require(Shared.BakeryContracts)
 local Cards, CardCatalog = require(Shared.CardEconomy), require(Shared.CardCatalog)
 local Town = require(Shared.TownCatalog)
 local TownWorld,Armor = require(script.Parent.TownWorld),require(script.Parent.CookieArmor)
+local Mine, Cave, MineAccess = require(Shared.MiningCatalog), require(script.Parent.DoughCave), require(script.Parent.MineAccess)
 local TextService = game:GetService("TextService")
 local Server = {}
 Server.__index = Server
@@ -35,6 +36,7 @@ function Server.start(context)
 		local runtime = self.runtime[player]
 		if runtime then self:CloseBargain(runtime); Appearance.clear(runtime) end
 		if runtime and runtime.appearance then runtime.appearance:Disconnect() end
+		if runtime and runtime.mineConnection then runtime.mineConnection:Disconnect() end
 		self.runtime[player] = nil
 	end)
 	task.spawn(function()
@@ -78,6 +80,7 @@ function Server.start(context)
 						context.Notify(player, "Your finishing oven is done! The cookie is worth 3x.")
 					end
 					if runtime.bargain and (runtime.bargain.expires < os.clock() or not W.near(player, runtime.bargain.customer.root.Position, 16)) then self:CloseBargain(runtime) end
+					MineAccess.update(player,runtime,state.data.life.pin)
 					Appearance.step(player, runtime)
 					Armor.step(player,runtime)
 					self:Refresh(player)
@@ -129,6 +132,10 @@ function Server:Swing(player)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if not root or not self.context.Usable(player) then return end
 	local runtime = self:Runtime(player)
+	if not runtime.pinTool or runtime.pinTool.Parent~=player.Character then return end
+	if os.clock()-(runtime.lastSwing or -math.huge)<.45 then return end
+	runtime.lastSwing=os.clock()
+	self.context.Remotes.Feedback:FireClient(player,"PinSwing")
 	if runtime.pinTool and self.events:Swing(player, runtime.pinTool) then return end
 	local nearest, distance = nil, 12
 	for _, node in ipairs(self.features.ores) do
@@ -378,23 +385,30 @@ function Server:Action(player, action, argument, plot)
 		local node = argument
 		if type(node) ~= "table" or not table.find(self.features.ores, node) or node.hp <= 0 or not W.near(player, node.part.Position) then return end
 		if not runtime.pinTool or runtime.pinTool.Parent ~= player.Character then self.context.Notify(player, "Equip your rolling pin first.") ; return end
+		if not Mine.canMine(data.life.pin,node.zone,node.oreId) then
+			self.context.Notify(player,"This gallery requires a "..Life.PinNames[node.zone].." rolling pin from Bruno."); return
+		end
+		local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local ray=RaycastParams.new()
+		ray.FilterType,ray.FilterDescendantsInstances,ray.RespectCanCollide=Enum.RaycastFilterType.Exclude,{player.Character},true
+		local hit=root and workspace:Raycast(root.Position,node.part.Position-root.Position,ray)
+		if not hit or hit.Instance~=node.part then return end -- No mining through cave walls or seals.
 		if os.clock() - (runtime.lastMine or 0) < 0.4 then return end
 		runtime.lastMine = os.clock()
 		local feedback = self.context.Remotes:FindFirstChild("Feedback")
-		if feedback then feedback:FireClient(player, "Click") end
+		if feedback then feedback:FireClient(player, "OreHit") end
 		local crumbs = Instance.new("ParticleEmitter")
 		crumbs.Texture, crumbs.Color, crumbs.Rate, crumbs.Lifetime = "rbxasset://textures/particles/sparkles_main.dds", ColorSequence.new(node.part.Color), 0, NumberRange.new(0.15, 0.35)
 		crumbs.Speed, crumbs.SpreadAngle, crumbs.Size, crumbs.Parent = NumberRange.new(3, 6), Vector2.new(160, 160), NumberSequence.new(0.2, 0), node.part
 		crumbs:Emit(6)
 		game:GetService("Debris"):AddItem(crumbs, 0.5)
 		node.hp = math.max(0, node.hp - Life.PinPower[data.life.pin] - Polish.active(data.life, os.time()).Mine - Cards.bonuses(data.life.cards, state.perks.ThirdCardSlot).Mine)
-		node.label.Text = "Dough ore • " .. node.hp .. "/" .. node.maximum .. " HP"
-		node.bar.Size = UDim2.fromScale(node.hp / node.maximum, 1)
+		Cave.refreshLabel(node)
 		if node.hp == 0 then
 			Contracts.record(data, "Mine", 1)
 			if os.time() >= (runtime.nextOreCrumb or 0) then Cards.award(data.life.cards, 3, state.perks.ThirdCardSlot); runtime.nextOreCrumb = os.time() + 10 end
 			data.life.dough = math.min(1e9, data.life.dough + node.reward)
-			node.ready, node.part.Transparency, node.part.CanCollide = os.clock() + 10, 1, false
+			node.ready, node.part.Transparency, node.part.CanCollide = os.clock() + node.respawn, 1, false
 			node.label.Parent.Enabled = false
 			for _, chip in ipairs(node.chips) do chip.Transparency = 1 end
 			ok, message = true, "+" .. node.reward .. " cookie dough!"

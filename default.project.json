@@ -19,6 +19,7 @@
       }
     },
     "StarterPlayer": {
+      "$properties": { "EnableMouseLockOption": false },
       "StarterPlayerScripts": {
         "TycoonUI": {
           "$path": "src/client"

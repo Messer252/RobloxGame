@@ -60,3 +60,7 @@ To hear the **full 8-bit crash**, upload `MeteorCrash.wav` as Roblox audio under
 - In a private two-player test, trigger a meteor and confirm both clients see the incoming and impact banners, one crash per impact, and the shockwave. Test different SFX levels/mute states, the built-in fallback, and the uploaded crash's experience permissions.
 
 The cloud environment validates WAV integrity, levels, loop continuity, score bounds, scripts, and packaging. Roblox Studio/live clients are required to validate engine audio playback and uploaded-asset permissions.
+
+## Rolling-pin swings and ore hits
+
+Accepted rolling-pin swings play a short built-in whoosh, including misses. Ore damage has a separate impact cue. Both use the saved SFX channel. The ZIP now includes original CC0 `PinSwing.wav` and `OreHit.wav`; uploading is optional. To use the recordings, upload them under the game's creator, grant the experience access, and enter the IDs in `AudioConfig.Effects.PinSwing` and `AudioConfig.Effects.OreHit`. A zero or unavailable ID retains a built-in cue. The generated audio manifest now contains the soundtrack and thirteen effects.

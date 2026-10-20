@@ -122,6 +122,7 @@ wallet.Text = "Loading your bakery..."
 
 local menu = Instance.new("Frame")
 menu.Name = "BakeryMenu"
+menu:SetAttribute("BlocksCameraLock",true)
 menu.AnchorPoint = Vector2.new(0.5, 0.5)
 menu.Position = UDim2.fromScale(0.5, 0.5)
 menu.Size = UDim2.fromScale(0.94, 0.86)
@@ -210,10 +211,12 @@ effectsToggle.Name = "EffectsToggle"
 effectsToggle.Position = UDim2.new(0.72, 0, 0, 106)
 effectsToggle.Size = UDim2.new(0.28, -14, 0, 30)
 effectsToggle.TextSize = 12
+local aimToggle=button(hud,"Aim • Shift/Ctrl",Color3.fromRGB(66,114,100))
+require(script:WaitForChild("CombatCamera")).start(player,gui,aimToggle)
 local controls=Instance.new("Frame")
 controls.Position,controls.Size,controls.BackgroundTransparency,controls.Parent=UDim2.fromOffset(14,106),UDim2.new(1,-28,0,76),1,hud
 local boostStatus
-Flow.grid(controls,{toggle,homeButton,musicToggle,effectsToggle},110,2,8,34,function(height)
+Flow.grid(controls,{toggle,homeButton,musicToggle,effectsToggle,aimToggle},110,2,8,34,function(height)
 	hud.Size=UDim2.new(.94,0,0,106+height+64)
 	if boostStatus then boostStatus.Position=UDim2.fromOffset(14,106+height+8) end
 end)
@@ -698,6 +701,10 @@ local function render()
 	rebirthInfo.Text = rebirthMax and "All 50 rebirths completed!"
 		or string.format("Rebirth #%d  •  +%d Golden Chips\n%d/%d cookies  •  $%s/$%s cash + ready",
 			data.rebirths + 1, requirement.Reward, data.unlocked, requirement.Recipes, format(data.cash + data.bank), format(requirement.Cash))
+	if not rebirthMax then
+		rebirthInfo.Text ..= "\n" .. requirement.BaseReward .. " base + " .. requirement.Bonus .. " savings bonus"
+		rebirthInfo.Text ..= requirement.NextCash and (" • Next chip at $" .. format(requirement.NextCash)) or " • Savings bonus MAX"
+	end
 	rebirthButton.Text = rebirthMax and "Rebirths complete" or "Review rebirth"
 	enable(rebirthButton, canRebirth)
 	if confirmation.Visible then

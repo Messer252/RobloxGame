@@ -1230,6 +1230,7 @@ require("./cards_events")(test, equal, near, harness, fakeStore)
 require("./town_update")(test, equal, near, harness, fakeStore)
 require("./review_polish")(test, equal, near)
 require("./npc_motion")(test, equal, near)
+require("./cave_prestige")(test, equal, near, harness, fakeStore)
 require("./global_rankings")(test, equal)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

@@ -19,6 +19,20 @@
       "sha256": "777bda9c0292fee1bbbeb0c6d66247ca4fe4ea91fa28feff2186dc582c1d6dd7"
     },
     {
+      "file": "PinSwing.wav",
+      "seconds": 0.42,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "d7888ddc1a4a396ca9f6ee67a30c1c776eb9c0c64ea238131a660a6b7ca3ac6f"
+    },
+    {
+      "file": "OreHit.wav",
+      "seconds": 0.245,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "008fed9654f79629e2b7120dbd1da8508f3f56630e0a61f632534966f5de614c"
+    },
+    {
       "file": "Claim.wav",
       "seconds": 1.07,
       "sampleRate": 32000,

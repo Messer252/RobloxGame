@@ -10,5 +10,7 @@ return {
 	UserIds = {
 		-- 123456789,
 	},
+	MaxGoldenChipGrant = 10000,
+	MaxStarCrumbGrant = 100000,
 	MaxCashGrant = 1000000000, -- Maximum per admin action; integer cookie cash.
 }

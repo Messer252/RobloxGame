@@ -1,6 +1,7 @@
 -- Continuous height field: the snow is a surface material on the same terrain.
 local Map = if script then require(script.Parent.MapLayout) else require("./MapLayout")
 local Town = if script then require(script.Parent.TownCatalog) else require("./TownCatalog")
+local Mine = if script then require(script.Parent.MiningCatalog) else require("./MiningCatalog")
 local Shape = {}
 local function smooth(x) x = math.clamp(x, 0, 1); return x * x * (3 - 2 * x) end
 local plots = {}
@@ -10,6 +11,8 @@ for slot = 1, Map.PlayerCount do table.insert(plots, Map.plot(slot)) end
 -- voxels, and native grass blades can otherwise grow through the thin parts.
 local function clearanceDistance(x, z)
 	local distance = math.max(math.abs(x) - 20, math.abs(z) - 586)
+	-- Keep the cave workshop and its approach free of terrain and grass.
+	distance = math.min(distance, math.max(math.abs(x + 229) - 15, math.abs(z - 108) - 17))
 	distance = math.min(distance, math.sqrt(x * x + z * z) - 33)
 	for _,point in ipairs({Town.PackStand,Town.Blacksmith}) do
 		distance=math.min(distance,math.max(math.abs(x-point.x)-Town.MarketWidth/2-6,math.abs(z-point.z)-Town.MarketDepth/2-6))
@@ -45,6 +48,9 @@ function Shape.height(x, z)
 	-- the meadow. Ground material on this shoulder also suppresses grass blades.
 	local clearance = 1 - smooth(distance / 12)
 	height += (math.min(height, -6) - height) * clearance
+	-- A continuous grassy/rocky mound surrounds the carved dough cavern.
+	local mound = Mine.mound(x,z)
+	if mound>0 then height = math.max(height, mound) end
 	return height
 end
 function Shape.snow(x, z, height) return height > 158 + 12 * math.sin(x / 71) + 9 * math.cos(z / 91) end

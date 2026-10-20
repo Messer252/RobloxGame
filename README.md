@@ -4,6 +4,8 @@
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
+**Cave and prestige update:** [Five mining galleries, rerolling ores, pin swing sounds, savings-based Golden Chips, admin currency gifts, and Shift/Ctrl aim lock](CAVE-AND-PRESTIGE.md).
+
 **NPC update:** [Reliable customer walking, corrected gait, rebuilt character outfits, and a Pack House attendant](NPC-UPDATE.md).
 
 **Code review and polish:** [Connected starter conveyors, stable menus, reliable audio preferences, clearer purchases and obby rewards](POLISH-REVIEW.md).
@@ -84,6 +86,8 @@ ReplicatedStorage
     Boosts (ModuleScript)           <- src/shared/Boosts.luau
     MapLayout (ModuleScript)        <- src/shared/MapLayout.luau
     NPCMotionRules (ModuleScript)   <- src/shared/NPCMotionRules.luau
+    MiningCatalog (ModuleScript)    <- src/shared/MiningCatalog.luau
+    CameraLockRules (ModuleScript)  <- src/shared/CameraLockRules.luau
     ObbyCatalog (ModuleScript)      <- src/shared/ObbyCatalog.luau
     ObbyProgress (ModuleScript)     <- src/shared/ObbyProgress.luau
     ObbyRewards (ModuleScript)      <- src/shared/ObbyRewards.luau
@@ -111,6 +115,7 @@ ServerScriptService
     ValleyWorld (ModuleScript) <- src/server/ValleyWorld.luau
     WorldWidgets (ModuleScript) <- src/server/WorldWidgets.luau
     DoughCave (ModuleScript) <- src/server/DoughCave.luau
+    MineAccess (ModuleScript) <- src/server/MineAccess.luau
     OvenDesign (ModuleScript) <- src/server/OvenDesign.luau
     BakeryDecorations (ModuleScript) <- src/server/BakeryDecorations.luau
     CustomerStyle (ModuleScript) <- src/server/CustomerStyle.luau
@@ -142,6 +147,7 @@ StarterPlayer
       CardPacksClient (ModuleScript) <- src/client/CardPacksClient.luau
       UIFlow (ModuleScript) <- src/client/UIFlow.luau
       NPCAnimator (ModuleScript) <- src/client/NPCAnimator.luau
+      CombatCamera (ModuleScript) <- src/client/CombatCamera.luau
       MenuRows (ModuleScript) <- src/client/MenuRows.luau
       PreferenceDelivery (ModuleScript) <- src/client/PreferenceDelivery.luau
       AudioController (ModuleScript) <- src/client/AudioController.luau
@@ -169,11 +175,11 @@ No income accrues while logged off or before claiming a plot. The last saved unc
 
 ## Rebirth and Golden Chips
 
-The first rebirth requires **18 unlocked recipes** and **$5 million in cash + uncollected earnings**, and awards **5 Golden Chips**. Subsequent requirements scale with your completed rebirth count `r`:
+The first rebirth requires **18 unlocked recipes** and **$5 million in cash + uncollected earnings**, and awards **at least 5 Golden Chips**. Subsequent requirements scale with your completed rebirth count `r`:
 
 - Required recipes: `min(30, 18 + 2r)`.
 - Required cash + bank: `min(100 billion, 5 million x 2.5^r)`. The cap keeps later rebirths reachable.
-- Golden Chip reward: `5 + 2r`.
+- Base Golden Chip reward: `5 + 2r`. Saving beyond the cash requirement increases the payout with the square root of the cash ratio, up to 5× base. The menu shows the current bonus and next-chip threshold; see [examples](CAVE-AND-PRESTIGE.md#save-cash-for-more-golden-chips).
 - Each rebirth adds another 15% to the rebirth income bonus. There are 50 rebirths available.
 
 Open **Bakery → Golden Chips & rebirth** to review rebirth or buy permanent upgrades. Rebirth requires confirmation and resets wallet cash, banked earnings, recipe unlocks, baking-speed levels, topping modifiers, cash-bought machines, and cookie mastery. Stored cookies reset; cards, Star Crumbs, dough, rolling pins, and dough upgrades survive. It preserves rebirths, Golden Chips, owned passes, audio preferences, quest progress, and these permanent upgrades:
@@ -197,7 +203,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 198 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. Review regressions also cover partial conveyor builds, menu control reuse, audio acknowledgment/retries, and obby quest progress during reward cooldowns. NPC movement checks cover road bounds, floor-height tolerance, progress/timeout recovery and diagonal gait. They do not contact Roblox's live DataStore or payment services.
+The 209 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. Review regressions also cover partial conveyor builds, menu control reuse, audio acknowledgment/retries, and obby quest progress during reward cooldowns. NPC movement checks cover road bounds, floor-height tolerance, progress/timeout recovery and diagonal gait. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 
@@ -211,7 +217,7 @@ Complete these engine checks in Studio:
 - Stand on an unaffordable recipe pad, collect enough cash at the register, and confirm the pad buys once when the server is ready. It must recover from a temporarily busy action without requiring another entry.
 - Buy the first $500 speed upgrade and confirm the displayed interval drops to 2.4 seconds. All ovens should feed the merging conveyor network, with later ovens revealed in sequence.
 - In Server & Clients mode, use two players. Attempt to collect, upgrade, or unlock recipes on the other player's plot: those requests must have no effect. Leave and verify the empty plot becomes claimable without giving its new owner the departing player's progress.
-- In a private test experience, reach rebirth requirements. Review then cancel a rebirth and confirm nothing changes. Confirm a rebirth and verify the reset, 5-chip reward, and 15% income bonus. Buy a permanent upgrade, leave, rejoin, and verify the reward and upgrade persist together.
+- In a private test experience, reach rebirth requirements. Review then cancel a rebirth and confirm nothing changes. Confirm a rebirth and verify the reset, displayed chip reward, and 15% income bonus. Buy a permanent upgrade, leave, rejoin, and verify the reward and upgrade persist together.
 - Stop/rejoin with both wallet cash and uncollected earnings, plus unlocked cookies and oven upgrades. Verify all saved fields restore after claiming a different plot. Check server output for save errors.
 - Check the four tabs, collapsed Golden Chips section, rebirth confirmation, step pads, and instant prompts with Studio's mobile emulator and a controller.
 - Before enabling sales, complete the [purchase checks](MONETIZATION.md#verify-before-enabling-live-offers) using offers belonging to a separate published test experience.

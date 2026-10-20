@@ -1,7 +1,7 @@
 -- Pure permissions. Roblox resolves configured account names on the server;
 -- client attributes, display names, and remote arguments never grant a role.
 local Permissions = {}
-local Actions = { Kick = true, ReturnToSpawn = true, GiveWalletCash = true, GiveBankCash = true,
+local Actions = { Kick = true, ReturnToSpawn = true, GiveWalletCash = true, GiveBankCash = true, GiveGoldenChips = true, GiveStarCrumbs = true,
 	SetInvisible = true, SetFlying = true, GoToPlayer = true, BringPlayer = true }
 
 function Permissions.validId(value)

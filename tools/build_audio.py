@@ -22,6 +22,8 @@ SECONDS_PER_BEAT = 60 / BPM
 
 CUES = {
     "Click": [(0, 84, .12, .20)],
+    "PinSwing": [(0, 60, .09, .16), (.045, 53, .1, .12)],
+    "OreHit": [(0, 43, .12, .34), (.035, 50, .09, .15)],
     "Claim": [(0, 72, .28, .65), (.12, 76, .28, .60), (.24, 79, .35, .60), (.40, 84, .55, .55)],
     "Collect": [(0, 79, .22, .60), (.09, 84, .25, .55), (.18, 88, .40, .50)],
     "BuyRecipe": [(0, 72, .30, .65), (.15, 76, .30, .60), (.30, 79, .30, .60), (.45, 84, .60, .55)],
@@ -123,6 +125,20 @@ def meteor_crash():
     return buffer
 
 
+def pin_swing():
+    """Original short airy whoosh, synthesized from filtered noise and a pitch dive."""
+    t = np.arange(round(.42 * RATE)) / RATE
+    rng = np.random.default_rng(251019)
+    noise = rng.normal(0, 1, len(t))
+    smooth = np.convolve(noise, np.ones(13) / 13, mode="same")
+    envelope = np.sin(np.pi * np.minimum(t / .34, 1)) ** 2
+    dive = np.sin(2 * np.pi * (620 * t - 580 * t * t))
+    signal = (smooth * .7 + dive * .055) * envelope
+    signal -= signal.mean()
+    signal *= np.minimum(1, t / .005) * np.maximum(0, np.minimum(1, (.36 - t) / .03))
+    return np.column_stack((signal, signal))
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     notes = score()
@@ -133,6 +149,9 @@ def main():
         add(buffer, sample, beat * SECONDS_PER_BEAT, gain, pan, wrap=True)
     records = [write_wav("CookieCornerCafe.wav", buffer)]
     for name, cue in CUES.items():
+        if name == "PinSwing":
+            records.append(write_wav("PinSwing.wav", pin_swing()))
+            continue
         if name == "MeteorCrash":
             records.append(write_wav("MeteorCrash.wav", meteor_crash()))
             continue

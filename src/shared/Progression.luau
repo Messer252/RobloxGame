@@ -132,12 +132,25 @@ function Progression.permanentCost(data, key)
 	return upgrade.BaseCost + upgrade.StepCost * data.permanent[key]
 end
 
+local function rebirthThreshold(cash, base, reward)
+	-- Divide first so all integer products stay below the exact-number limit.
+	local denominator = base * base
+	local quotient = math.floor(cash / denominator)
+	local remainder = cash - quotient * denominator
+	return quotient * reward * reward + math.ceil(remainder * reward * reward / denominator)
+end
+
 function Progression.rebirthRequirement(data)
-	return {
-		Cash = math.min(Progression.MAX_REBIRTH_CASH, math.floor(5000000 * 2.5 ^ data.rebirths)),
-		Recipes = math.min(#Recipes, 18 + data.rebirths * 2),
-		Reward = 5 + data.rebirths * 2,
-	}
+	local cash = math.min(Progression.MAX_REBIRTH_CASH, math.floor(5000000 * 2.5 ^ data.rebirths))
+	local base = 5 + data.rebirths * 2
+	local total = data.cash + data.bank
+	local reward = math.min(base * 5, math.floor(base * math.sqrt(math.max(1, total / cash))))
+	-- Integer thresholds avoid granting a chip one dollar early due to rounding.
+	while reward > base and total < rebirthThreshold(cash, base, reward) do reward -= 1 end
+	while reward < base * 5 and total >= rebirthThreshold(cash, base, reward + 1) do reward += 1 end
+	local nextCash = reward < base * 5 and rebirthThreshold(cash, base, reward + 1) or nil
+	return { Cash = cash, Recipes = math.min(#Recipes, 18 + data.rebirths * 2),
+		Reward = reward, BaseReward = base, Bonus = reward - base, MaxReward = base * 5, NextCash = nextCash }
 end
 
 function Progression.collect(data)

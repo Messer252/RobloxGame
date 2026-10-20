@@ -73,6 +73,9 @@ function AudioController.start(player, requestAction)
 		local uri = assetId(id)
 		if uri then self.samples[name] = sound(name, uri, self.effectsGroup, self.folder) end
 	end
+	if not self.samples.PinSwing then
+		self.samples.PinSwing = sound("RollingPinWhoosh", Config.BundledSwing or "rbxasset://sounds/swordslash.wav", self.effectsGroup, self.folder)
+	end
 	for index, id in ipairs(Config.OvenPurchaseVoices or {}) do
 		local uri = assetId(id)
 		if uri then table.insert(self.ovenVoices, sound("BubbyCookieCookie" .. index, uri, self.effectsGroup, self.folder)) end
@@ -279,7 +282,7 @@ function AudioController:PlayCue(name)
 	if name == "BuyRecipe" and self:_playOvenVoice() then return end
 	local sample = self.samples[name]
 	if sample and sample.IsLoaded then
-		sample.Volume = name == "Click" and 0.35 or 0.8
+		sample.Volume = name == "Click" and 0.35 or name == "PinSwing" and .32 or 0.8
 		sample:Stop()
 		sample:Play()
 		return

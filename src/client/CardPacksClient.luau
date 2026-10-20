@@ -62,6 +62,7 @@ function Client.reveal(gui,cardId,ripping,packId,copies)
 	local card=Catalog.Cards[cardId]
 	if not card then return end
 	local shade=Instance.new("TextButton")
+	shade:SetAttribute("BlocksCameraLock",true)
 	shade.Name,shade.Size,shade.Text,shade.BackgroundColor3,shade.BackgroundTransparency,shade.ZIndex,shade.Parent="CardReveal",UDim2.fromScale(1,1),"",Color3.fromRGB(14,18,24),.18,50,gui
 	shade.AutoButtonColor=false
 	local viewport=workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(800,600)

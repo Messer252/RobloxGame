@@ -40,8 +40,9 @@ function Admin.start(remotes, context)
 			return
 		end
 		local resultMessage
-		if action == "GiveWalletCash" or action == "GiveBankCash" then
-			local success, grantMessage = context.GrantCash(target, action, argument, Config.MaxCashGrant)
+		local grantLimits = { GiveWalletCash = Config.MaxCashGrant, GiveBankCash = Config.MaxCashGrant, GiveGoldenChips = Config.MaxGoldenChipGrant or 10000, GiveStarCrumbs = Config.MaxStarCrumbGrant or 100000 }
+		if grantLimits[action] then
+			local success, grantMessage = context.GrantCurrency(target, action, argument, grantLimits[action])
 			if not success then
 				resultRemote:FireClient(actor, false, grantMessage)
 				return
@@ -85,7 +86,7 @@ function Admin.start(remotes, context)
 			end
 		end
 		print(string.format("[Cookie Corner Admin] @%s (%d): %s @%s (%d) %s", actor.Name, actor.UserId, action, target.Name, target.UserId,
-			(action == "GiveWalletCash" or action == "GiveBankCash") and tostring(argument) or ""))
+			grantLimits[action] and tostring(argument) or ""))
 		resultRemote:FireClient(actor, true, resultMessage)
 	end)
 end

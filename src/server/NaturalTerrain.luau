@@ -1,4 +1,5 @@
 local Shape = require(game:GetService("ReplicatedStorage").CookieTycoon.TerrainShape)
+local Mine=require(game:GetService("ReplicatedStorage").CookieTycoon.MiningCatalog)
 local Natural = {}
 function Natural.create()
 	local terrain = workspace.Terrain
@@ -37,8 +38,8 @@ function Natural.create()
 							if Shape.lake(wx, wz) then
 								h = 0; material = bottom > -12 and Enum.Material.Water or Enum.Material.Rock
 							elseif h > 58 and h - bottom < 9 then material = Shape.snow(wx, wz, h) and Enum.Material.Snow or Enum.Material.Rock
-							elseif h - bottom > 8 then material = Enum.Material.Rock end
-							materials[x][y][z], occupancy[x][y][z] = material, math.clamp((h - bottom) / 4, 0, 1)
+							elseif h - bottom > 8 or Mine.interior(wx,wz) and h-bottom>3 then material = Enum.Material.Rock end
+							materials[x][y][z], occupancy[x][y][z] = material, Mine.carve(wx,wz,bottom) and 0 or math.clamp((h - bottom) / 4, 0, 1)
 						end
 					end
 				end
