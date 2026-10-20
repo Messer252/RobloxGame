@@ -135,7 +135,7 @@ If you uploaded through Creator Dashboard as a **Decal**, its listing ID can dif
 3. Join the published game through the Roblox app, then check with a friend's account too. Seeing an asset as its owner in Studio does not prove the experience has permission to use it.
 4. Turn **SFX ON** and raise its slider. Buy several different ovens to check Bubby's random lines. One loaded recording may repeat; multiple loaded recordings avoid immediate repeats.
 5. Turn **Music ON** and raise its slider to check an uploaded background track, if configured.
-6. Open **Cookie Bag → Cards** and use **View card** on cards you own. Check illustrations from each configured sheet as your collection grows. The ZIP's `Preview.png` is a static preview; it does not prove Roblox uploads are connected.
+6. Open **Cookie Bag → Collection** and use **View card** on cards you own. Check illustrations from each configured sheet as your collection grows. The ZIP's `Preview.png` is a static preview; it does not prove Roblox uploads are connected.
 7. Meteors normally arrive after a random **5–30 minutes**. Check the incoming warning and crash when one lands. Their banners still appear if SFX is muted.
 
 ## If something does not work

@@ -64,6 +64,7 @@ local function prompt(target, action, callback, objectText)
 	interaction.HoldDuration = 0
 	interaction.MaxActivationDistance = 12
 	interaction.RequiresLineOfSight = false
+	interaction.Exclusivity = Enum.ProximityPromptExclusivity.OneGlobally
 	interaction.Parent = target
 	interaction.Triggered:Connect(function(player)
 		local character = player.Character
@@ -118,6 +119,7 @@ function World.refresh(plot, data, perks)
 	plot.claimPrompt.Enabled = plot.owner == nil
 	plot.claimPrompt.ObjectText = plot.owner and ("@" .. plot.owner.Name .. "'s bakery") or "Unclaimed bakery"
 	plot.claimText.Text = plot.owner and ("@" .. plot.owner.Name .. "'s bakery") or "Claim bakery"
+	plot.claimText.Parent.Enabled=plot.owner==nil
 	plot.claimSurface.Color = plot.owner and plot.theme or Color3.fromRGB(129, 219, 175)
 	plot.claimSurface.Material = plot.owner and Enum.Material.SmoothPlastic or Enum.Material.Neon
 	World.updateBank(plot, data)

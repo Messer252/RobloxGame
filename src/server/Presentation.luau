@@ -38,15 +38,15 @@ end
 
 function Presentation.lighting()
 	Lighting.ClockTime = 15.5
-	Lighting.Brightness = 2.2
+	Lighting.Brightness = 1.2
 	Lighting.GlobalShadows = true
 	Lighting.ShadowSoftness = 0.4
-	Lighting.Ambient = Color3.fromRGB(130, 112, 112)
-	Lighting.OutdoorAmbient = Color3.fromRGB(162, 151, 135)
-	Lighting.ColorShift_Top = Color3.fromRGB(255, 239, 217)
-	Lighting.EnvironmentDiffuseScale = 0.65
-	Lighting.EnvironmentSpecularScale = 0.4
-	Lighting.ExposureCompensation = 0.05
+	Lighting.Ambient = Color3.fromRGB(78, 83, 94)
+	Lighting.OutdoorAmbient = Color3.fromRGB(108, 120, 130)
+	Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
+	Lighting.EnvironmentDiffuseScale = 0.45
+	Lighting.EnvironmentSpecularScale = 0.12
+	Lighting.ExposureCompensation = -0.3
 	-- LightingStyle replaced the older, restricted Technology property.
 	pcall(function() Lighting.LightingStyle = Enum.LightingStyle.Soft end)
 	for _, name in ipairs({ "CookieAtmosphere", "CookieBloom", "CookieColor", "CookieSun" }) do
@@ -64,20 +64,20 @@ function Presentation.lighting()
 	atmosphere.Parent = Lighting
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "CookieBloom"
-	bloom.Intensity = 0.16
+	bloom.Intensity = 0.025
 	bloom.Size = 24
-	bloom.Threshold = 1.65
+	bloom.Threshold = 2.5
 	bloom.Parent = Lighting
 	local correction = Instance.new("ColorCorrectionEffect")
 	correction.Name = "CookieColor"
-	correction.Brightness = 0.015
-	correction.Contrast = 0.08
-	correction.Saturation = 0.1
+	correction.Brightness = -0.025
+	correction.Contrast = 0.025
+	correction.Saturation = -0.025
 	correction.TintColor = Color3.fromRGB(253, 253, 248)
 	correction.Parent = Lighting
 	local sun = Instance.new("SunRaysEffect")
 	sun.Name = "CookieSun"
-	sun.Intensity = 0.025
+	sun.Intensity = 0.008
 	sun.Spread = 0.8
 	sun.Parent = Lighting
 end
@@ -111,8 +111,8 @@ function Presentation.plot(plot, slot)
 		if object.Name == "Texture_WallTile" then object.Color = cream:Lerp(theme, 0.16) end
 		if object.Name == "Canopy Stripe" and object.Color.R < 0.85 then object.Color = theme end
 		if object.Name == "Texture_BakeryFloor" then
-			object.Color = Color3.fromRGB(240, 221, 195)
-			object.Material = Enum.Material.SmoothPlastic
+			object.Color = Color3.fromRGB(153, 132, 108)
+			object.Material, object.Reflectance = Enum.Material.WoodPlanks, 0
 		end
 	end
 	local function frame(x, y, z)
@@ -123,7 +123,7 @@ function Presentation.plot(plot, slot)
 		for row = 0, 5 do
 			if (column + row) % 2 == 0 then
 				part(plot.model, "Vanilla Floor Tile", Vector3.new(39.8, 0.035, 39.8), frame(-60 + column * 40, 0.525, -100 + row * 40),
-					Color3.fromRGB(255, 243, 223))
+					Color3.fromRGB(174, 155, 127), Enum.Material.WoodPlanks)
 			end
 		end
 	end

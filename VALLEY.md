@@ -1,5 +1,6 @@
 # Cookie valley update
 
+**Current controls and prices:** [Spawn market and bakery update](MARKET-UPDATE.md) covers armor, pin shopping at spawn, pack opening, daily rewards, fitted decorations and hill ownership.
 **Latest behavior:** [Cookie animals and events update](CARDS-AND-EVENTS.md) supersedes older rebirth retention, terrain, entrance placement, decorations, and topping details below.
 **Current controls and mechanics:** see [the Workshop update](WORKSHOP.md), which replaces the earlier mining prompts, quest waypoints, cookie swaps, generic food buffs, and scenery described below.
 Download the latest [Studio ZIP](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip), extract it, and open `CookieCorner.rbxlx`. Publish to your existing start place and **restart outdated servers**. Keep the existing player DataStore name. Before replacing a customized Studio file, copy across any audio IDs, shop product IDs, and friends you added to AdminConfig.
@@ -65,9 +66,9 @@ Trading requires persistent profiles; the explicit session-only Studio preview d
 
 ## Dough mine and rolling pins
 
-The **Cookie Dough Mine** is west of the plaza, around `(-250, 100)`. Everyone receives a rolling-pin Tool. Equip it and hold E on dough ore to strike. Ore shows remaining HP, rewards dough when broken, and regenerates after ten seconds.
+The **Cookie Dough Mine** is west of the plaza, around `(-250, 100)`. Everyone receives a rolling-pin Tool. Equip it and left-click/tap the equipped rolling pin near dough ore to strike. Ore shows remaining HP, rewards dough when broken, and regenerates after ten seconds.
 
-At the mine workshop, open Mine to upgrade:
+Visit Bruno’s blacksmith beside spawn to buy rolling pins. The mine workshop still sells dough upgrades:
 
 | Rolling pin level | Wallet cost to unlock | Damage per hit |
 | --- | --- | --- |
@@ -87,7 +88,7 @@ The compass, direction arrows, item distance markers and guide beams have been r
 
 ## Save upgrade and playtest checklist
 
-Save envelope **8** accepts versions 1–7 and preserves previous cash, paid boosts, receipts, audio, and quest progress. New inventory/dough/machine state lives in the existing `CookieCorner_PlayerData_v1` store. Trade recovery uses `CookieCorner_CookieTrades_v1`. Restart old servers; earlier writers must not drop the new ownership fields.
+Save envelope **9** accepts versions 1–8 and preserves previous cash, paid boosts, receipts, audio, and quest progress. New inventory/dough/machine state lives in the existing `CookieCorner_PlayerData_v1` store. Trade recovery uses `CookieCorner_CookieTrades_v1`. Restart old servers; earlier writers must not drop the new ownership fields.
 
 Automated tests cover inventory validation/capacity, values, buff expiry, costs and rebirth rules, finishing queues, bargaining outcomes, trade confirmation prerequisites, activity locks, journal abort/commit recovery, and lost save responses. Roblox Studio is still required for these engine checks:
 

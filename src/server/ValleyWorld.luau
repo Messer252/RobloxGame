@@ -109,10 +109,10 @@ function Valley.create(parent)
 		while folder.Parent do
 			local hour = (9 + (os.clock() - epoch) * 24 / 1200) % 24
 			local daylight = math.clamp(math.sin((hour - 6) / 12 * math.pi) * 1.6, 0, 1)
-			Lighting.ClockTime, Lighting.Brightness = hour, 0.9 + daylight * 1.5
-			Lighting.Ambient = Color3.fromRGB(57, 69, 92):Lerp(Color3.fromRGB(131, 139, 149), daylight)
-			Lighting.OutdoorAmbient = Color3.fromRGB(66, 83, 113):Lerp(Color3.fromRGB(157, 171, 183), daylight)
-			Lighting.ExposureCompensation = 0.05 + (1 - daylight) * 0.08
+			Lighting.ClockTime, Lighting.Brightness = hour, 0.55 + daylight * .75
+			Lighting.Ambient = Color3.fromRGB(45, 55, 77):Lerp(Color3.fromRGB(86, 94, 107), daylight)
+			Lighting.OutdoorAmbient = Color3.fromRGB(55, 68, 94):Lerp(Color3.fromRGB(113, 128, 139), daylight)
+			Lighting.ExposureCompensation = -.3 + (1 - daylight) * .1
 			task.wait(0.5)
 		end
 	end)

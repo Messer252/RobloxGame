@@ -4,15 +4,15 @@ Polish.WrapZ, Polish.BoxZ = 118.5, 122
 Polish.BeltCosts = { 0, 10000, 250000 }
 Polish.Decorations = {
 	Walls = { Cost = 2500, Name = "Brick walls" }, Windows = { Cost = 6000, Name = "Fitted windows", Requires = "Walls" },
-	Door = { Cost = 4000, Name = "Hinged glass door", Requires = "Walls" }, Plants = { Cost = 750, Name = "Potted plants" },
-	Trees = { Cost = 1500, Name = "Cookie garden" },
-	Roof = { Cost = 25000, Name = "Skylight roof", Requires = "Walls" }, Lights = { Cost = 12000, Name = "Warm pendant lights", Requires = "Roof" },
-	Floor = { Cost = 8000, Name = "Herringbone floor" }, Signs = { Cost = 15000, Name = "Bakery lettering" },
-	Benches = { Cost = 9000, Name = "Cafe seating" }, Fountain = { Cost = 150000, Name = "Cookie fountain" },
-	Display = { Cost = 50000, Name = "Cookie display case" }, FlowerBeds = { Cost = 5000, Name = "Flower borders" },
-	Fence = { Cost = 18000, Name = "Garden fencing" },
+	Door = { Cost = 4000, Name = "Hinged glass door", Requires = "Windows" }, Plants = { Cost = 750, Name = "Potted plants" },
+	Trees = { Cost = 1500, Name = "Cookie garden", Requires = "Plants" },
+	Roof = { Cost = 25000, Name = "Skylight roof", Requires = "Door" }, Lights = { Cost = 12000, Name = "Warm pendant lights", Requires = "Roof" },
+	Floor = { Cost = 8000, Name = "Warm oak floor" }, Signs = { Cost = 15000, Name = "Bakery lettering", Requires = "Display" },
+	Benches = { Cost = 9000, Name = "Cafe seating", Requires = "Floor" }, Fountain = { Cost = 150000, Name = "Cookie fountain", Requires = "Fence" },
+	Display = { Cost = 50000, Name = "Cookie display case", Requires = "Benches" }, FlowerBeds = { Cost = 5000, Name = "Flower borders", Requires = "Trees" },
+	Fence = { Cost = 18000, Name = "Garden fencing", Requires = "FlowerBeds" },
 }
-Polish.DecorationOrder = { "Walls", "Windows", "Door", "Roof", "Lights", "Plants", "Trees", "Floor", "Signs", "Benches", "Fountain", "Display", "FlowerBeds", "Fence" }
+Polish.DecorationOrder = { "Walls", "Windows", "Door", "Roof", "Lights", "Plants", "Trees", "FlowerBeds", "Fence", "Fountain", "Floor", "Benches", "Display", "Signs" }
 -- Name, run speed, jump height, mining damage, income %, sale %, regeneration/sec.
 local buffs = {
 	{ "Chip dash", 8, 0, 0, 0, 0, 0 }, { "Hearty harvest", 2, 0, 2, 0, 0, 1 },

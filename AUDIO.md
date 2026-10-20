@@ -2,7 +2,7 @@
 
 New to uploading assets? Follow [Upload audio and TCG artwork](UPLOAD-ASSETS.md) for the complete walkthrough. **`.ogg` files are supported**; export Ogg Vorbis, 48 kHz or lower, under 20 MB and seven minutes per file.
 
-The current soundtrack is **Valley Afterglow**, a new original 68 BPM ambient composition, about 113 seconds long. It replaces the previously selected friend recording. The quiet built-in score uses Roblox's bundled instrument sample and starts without uploading audio. Independent Music/SFX mute buttons and saved 0–100% sliders remain in the HUD.
+The current soundtrack is **Valley Afterglow**, a new original 68 BPM ambient composition, about 113 seconds long. It replaces the previously selected friend recording. The quiet built-in score uses Roblox's bundled instrument sample and starts without uploading audio. Independent Music/SFX mute buttons remain in the HUD; saved 0–100% sliders are under **Bakery → Audio**.
 
 The full original mix is `assets/audio/CookieCornerCafe.wav`, also included in the Studio ZIP. The built-in score and WAV share the composition; their instrument rendering differs. Original generated music and effects are CC0. The friend's old recording remains archived in `assets/audio/friend` with its separate credit/license and is not selected or bundled in the current Studio ZIP.
 

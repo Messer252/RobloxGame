@@ -1,5 +1,6 @@
 -- Continuous height field: the snow is a surface material on the same terrain.
 local Map = if script then require(script.Parent.MapLayout) else require("./MapLayout")
+local Town = if script then require(script.Parent.TownCatalog) else require("./TownCatalog")
 local Shape = {}
 local function smooth(x) x = math.clamp(x, 0, 1); return x * x * (3 - 2 * x) end
 local plots = {}
@@ -10,6 +11,11 @@ for slot = 1, Map.PlayerCount do table.insert(plots, Map.plot(slot)) end
 local function clearanceDistance(x, z)
 	local distance = math.max(math.abs(x) - 20, math.abs(z) - 586)
 	distance = math.min(distance, math.sqrt(x * x + z * z) - 33)
+	for _,point in ipairs({Town.PackStand,Town.Blacksmith}) do
+		distance=math.min(distance,math.max(math.abs(x-point.x)-Town.MarketWidth/2-6,math.abs(z-point.z)-Town.MarketDepth/2-6))
+	end
+	-- Padded public walkways connect the plaza to both market foundations.
+	distance=math.min(distance,math.max(math.abs(x)-80,math.abs(z-Town.PathZ)-Town.PathHalfWidth-6))
 	for _, plot in ipairs(plots) do
 		-- BakeryFloor is 164 x 244; mirroring does not change its footprint.
 		distance = math.min(distance, math.max(math.abs(x - plot.x) - 88, math.abs(z - plot.z) - 128))

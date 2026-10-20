@@ -3,6 +3,8 @@ local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Life, Recipes, Progression, Polish = require(Shared.BakeryLife), require(Shared.Recipes), require(Shared.Progression), require(Shared.BakeryPolish)
 local CardUI = require(script.Parent.CardPacksClient)
 local CollectionService = game:GetService("CollectionService")
+local Town,Blueprint=require(Shared.TownCatalog),require(Shared.BakeryBlueprint)
+local Flow=require(script.Parent.UIFlow)
 local Client = {}
 function Client.start(player, remotes, gui, hud, openButton, audio)
 	local action, stateRemote, open = remotes:WaitForChild("LifeAction"), remotes:WaitForChild("LifeState"), remotes:WaitForChild("OpenLife")
@@ -37,7 +39,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 		local camera = workspace.CurrentCamera
 		local compact = not camera or camera.ViewportSize.X < 1100
 		announcement.AnchorPoint = Vector2.new(compact and .5 or 1, 0)
-		announcement.Position = compact and UDim2.new(.5, 0, 0, 280) or UDim2.new(1, -20, 0, 22)
+		announcement.Position = compact and UDim2.new(.5,0,0,hud.Position.Y.Offset+hud.AbsoluteSize.Y+10) or UDim2.new(1, -20, 0, 22)
 		headline.Text = kind == "Incoming" and "COOKIE METEOR INCOMING!" or "COOKIE METEOR LANDED!"
 		detail.Text = kind == "Incoming" and "Watch the sky! A Star Crumb meteor is falling." or "Follow the fire. Land 3 rolling-pin hits to earn Star Crumbs."
 		announcement.Visible = true
@@ -46,7 +48,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			if announcement.Parent and version == announcementVersion then announcement.Visible = false end
 		end)
 	end))
-	CardUI.start(remotes, gui)
+	CardUI.start(remotes, gui,audio)
 	local shade = Instance.new("TextButton")
 	shade.Size, shade.Text, shade.BackgroundTransparency, shade.BackgroundColor3, shade.ZIndex, shade.Visible, shade.Parent = UDim2.fromScale(1, 1), "", 0.35, Color3.new(), 25, false, gui
 	local panel = Instance.new("Frame")
@@ -70,6 +72,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 	end
 	local header = label(panel, "COOKIE BAG")
 	header.Position, header.Size = UDim2.fromOffset(14, 12), UDim2.new(1, -70, 0, 28)
+	header.AutomaticSize=Enum.AutomaticSize.None
 	local close = button(panel, "X", function() panel.Visible, shade.Visible = false, false end)
 	close.Position, close.Size = UDim2.new(1, -48, 0, 10), UDim2.fromOffset(34, 34)
 	shade.Activated:Connect(function() panel.Visible, shade.Visible = false, false end)
@@ -80,25 +83,50 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 	layout.Padding, layout.SortOrder, layout.Parent = UDim.new(0, 9), Enum.SortOrder.LayoutOrder, scroll
 	local function send(name, argument) action:FireServer(name, argument) end
 	local render
-	for index, name in ipairs({ "Bag", "Mine", "Machines", "People", "Cards" }) do
-		local b = button(panel, name, function() tab = name ; render() end)
-		b.Position, b.Size = UDim2.new((index - 1) * 0.2, 4, 0, 53), UDim2.new(0.2, -8, 0, 34)
+	local tabBar=Instance.new("Frame")
+	tabBar.Position,tabBar.Size,tabBar.BackgroundTransparency,tabBar.ZIndex,tabBar.Parent=UDim2.fromOffset(14,53),UDim2.new(1,-28,0,38),1,28,panel
+	local tabHeight=38
+	local function placeContent()
+		local market=tab=="PackShop" or tab=="Blacksmith"
+		tabBar.Visible=not market
+		local top=market and 58 or 65+tabHeight
+		scroll.Position,scroll.Size=UDim2.fromOffset(14,top),UDim2.new(1,-28,1,-top-14)
 	end
+	local tabButtons={}
+	for _, name in ipairs({ "Bag", "Mine", "Machines", "People", "Collection" }) do
+		local b = button(panel, name, function() tab = name ; render() end)
+		table.insert(tabButtons,b)
+	end
+	Flow.grid(tabBar,tabButtons,85,5,8,38,function(height) tabHeight=height; placeContent() end)
 	render = function()
+		placeContent()
 		for _, child in ipairs(scroll:GetChildren()) do if child ~= layout then child:Destroy() end end
-		header.Text = ({ Bag = "COOKIE BAG", Mine = "DOUGH MINE", Machines = "BAKERY MACHINES", People = "COOKIES & COMPANY", Cards = "COOKIE ANIMAL CARDS" })[tab]
+		header.Text = ({ Bag = "COOKIE BAG", Mine = "DOUGH MINE", Machines = "BAKERY DESIGN", People = "COOKIES & COMPANY", Collection = "CARD COLLECTION",PackShop="CRUMBKIN PACK HOUSE",Blacksmith="BRUNO'S CRUSTFORGE" })[tab]
 		local count = 0
 		local function row(text, callback)
 			count += 1
 			local element = callback and button(scroll, text, callback) or label(scroll, text)
 			element.LayoutOrder = count
-			if callback then element.Interactable = not snapshot.busy end
+			if callback then element.Interactable = not snapshot.busy and (tab~="PackShop" or snapshot.nearPackShop) and (tab~="Blacksmith" or snapshot.nearBlacksmith) end
 			return element
 		end
 		local data = snapshot.life
 		if snapshot.busy then row("Saving cookie exchange. Please wait...") end
-		if tab == "Cards" then
-			CardUI.render(player, data.cards, row, send, panel)
+		if tab == "Collection" then
+			CardUI.renderCollection(player, data.cards, row, send, panel)
+		elseif tab=="PackShop" then
+			if not snapshot.nearPackShop then row("Return to the Pack House beside spawn to shop.") end
+			CardUI.renderPacks(data.cards,row,send)
+		elseif tab=="Blacksmith" then
+			if not snapshot.nearBlacksmith then row("Visit Bruno's stall beside spawn to purchase gear.") end
+			row("Rolling pin: "..Life.PinNames[data.pin].." • power "..Life.PinPower[data.pin])
+			local pinCost=Life.PinCosts[data.pin+1]
+			if pinCost then row("Buy "..Life.PinNames[data.pin+1].." rolling pin • $"..Progression.format(pinCost),function() send("Pin") end) else row("Best rolling pin owned") end
+			local armor=Town.Armor[data.armor]
+			row(armor and ("Wearing "..armor.Name.." • "..math.floor(armor.Defense*100).."% pin defense") or "No cookie armor equipped")
+			local nextArmor=Town.Armor[data.armor+1]
+			if nextArmor then row("Buy "..nextArmor.Name.." • $"..Progression.format(nextArmor.Cost).."\n"..math.floor(nextArmor.Defense*100).."% defense",function() send("Armor") end) else row("Best cookie armor owned") end
+			row("Gear stays through rebirth. Armor protects you in Cookie Hill combat.")
 		elseif tab == "Bag" then
 			row(#data.inventory .. "/" .. Life.capacity(data) .. " cookies • Hold a conveyor cookie's pickup prompt to store it.")
 			if snapshot.held then row("Eat held cookie • recipe buff + cookie skin", function() send("Eat", snapshot.held) end) end
@@ -112,9 +140,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			end
 		elseif tab == "Mine" then
 			row("Dough: " .. data.dough .. " • " .. Life.PinNames[data.pin] .. " rolling pin (" .. data.pin .. "/5)")
-			row("West of the plaza: enter the cave, equip your rolling pin, then left-click near ore to swing. Visit the mine workshop to buy upgrades.")
-			local cost = Life.PinCosts[data.pin + 1]
-			row(cost and (Life.PinNames[data.pin + 1] .. " rolling pin • $" .. Progression.format(cost)) or "Best rolling pin owned", function() send("Pin") end)
+			row("Left-click with your pin near cave ore. Buy better pins and armor from Bruno beside spawn.")
 			for _, key in ipairs({ "Mixing", "Flow", "Pockets" }) do
 				local level, definition = data.upgrades[key], Life.DoughUpgrades[key]
 				local bonus = ({ Mixing = "+10% cookie income", Flow = "+5% baking speed", Pockets = "+4 cookie slots" })[key]
@@ -132,13 +158,14 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			row("Rename cookie shop • $20 million", function() send("RenameShop", name.Text) end)
 			local beltCost = Polish.BeltCosts[data.belt + 1]
 			row(beltCost and ("Build conveyor line " .. (data.belt + 1) .. " • " .. (beltCost == 0 and "FREE" or "$" .. Progression.format(beltCost))) or "All three conveyor lines built", function() send("BuildBelt") end)
-			for _, key in ipairs(Polish.DecorationOrder) do
+			for _, key in ipairs(Blueprint.available(data)) do
 				local definition = Polish.Decorations[key]
-				row(definition.Name .. " • " .. (data.decorations[key] and "Owned" or "$" .. Progression.format(definition.Cost)), function() send("Decoration", key) end)
+				row(definition.Name .. " • $"..Progression.format(definition.Cost), function() send("Decoration", key) end)
 			end
 			for _, key in ipairs({ "Packager", "Boxer", "FinishingOven" }) do
 				local owned = data.machines[key]
-				row(key .. " • " .. (owned and "Owned" or "$" .. Progression.format(Life.Machines[key].Cost)) .. "\n" .. ({ Packager = "+25% production and picked-cookie value", Boxer = "+50% production and picked-cookie value", FinishingOven = "20 seconds • finish one inventory cookie for 3x value" })[key], function() send("Machine", key) end)
+				if Life.machineAvailable(data,key) then row(key.." • $"..Progression.format(Life.Machines[key].Cost),function() send("Machine",key) end)
+				elseif owned then row(key.." installed") end
 			end
 			if data.machines.FinishingOven then row("Finish held cookie (at your oven pad)", function() send("Bake") end) end
 		else
@@ -163,11 +190,16 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			if focused and focused:IsDescendantOf(panel) then pendingRender = true else render() end
 		end
 	end))
-	table.insert(connections, open.OnClientEvent:Connect(function(name) tab = name == "Bag" and "Bag" or (name == "Mine" and "Mine" or "People"); if name == "Gift" then pcall(function() game:GetService("StarterGui"):SetCore("SendNotification", { Title = "Cookie gift", Text = "Someone wants to give you a cookie. Accept or decline here.", Duration = 8 }) end) end; panel.Visible, shade.Visible = true, true ; render() end))
+	table.insert(connections, open.OnClientEvent:Connect(function(name)
+		tab=({Bag="Bag",Mine="Mine",PackShop="PackShop",Blacksmith="Blacksmith",Decorations="Machines"})[name] or "People"
+		if name=="Gift" then pcall(function() game:GetService("StarterGui"):SetCore("SendNotification",{Title="Cookie gift",Text="Someone wants to give you a cookie.",Duration=8}) end) end
+		panel.Visible,shade.Visible=true,true
+		render()
+	end))
 	table.insert(connections, player:GetAttributeChangedSignal("DataReady"):Connect(function() if player:GetAttribute("DataReady") then send("Snapshot") end end))
 	send("Snapshot")
 	local status = label(hud, "Star Crumbs")
-	status.Position, status.Size, status.AutomaticSize, status.TextSize, status.ZIndex = UDim2.fromOffset(14, 236), UDim2.new(1, -28, 0, 22), Enum.AutomaticSize.None, 11, 2
+	status.Position, status.Size, status.AutomaticSize, status.TextSize, status.ZIndex = UDim2.new(0,14,1,-26), UDim2.new(1, -28, 0, 22), Enum.AutomaticSize.None, 11, 2
 	status.TextScaled = true
 	local statusSize = Instance.new("UITextSizeConstraint")
 	statusSize.MinTextSize, statusSize.MaxTextSize, statusSize.Parent = 9, 12, status
@@ -243,9 +275,16 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			local range = sign:GetAttribute("OwnerUserId") == player.UserId and 180 or 55
 			sign.Enabled = root ~= nil and anchor and anchor:IsA("BasePart") and (root.Position - anchor.Position).Magnitude <= range or false
 		end
+		for _,crumb in ipairs(CollectionService:GetTagged("TrailStarCrumb")) do
+			local id=tostring(crumb:GetAttribute("CrumbPickupId"))
+			local available=(snapshot.life.cards.pickups[id] or 0)<=os.time()
+			crumb.LocalTransparencyModifier=available and 0 or 1
+			local prompt=crumb:FindFirstChild("TrailCrumbPrompt")
+			if prompt then prompt.Enabled=available end
+		end
 		if not root or not camera then return end
 		local buff = player:GetAttribute("CookieBuffName") or ""
-		status.Text = snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")
+		status.Text = snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("OwnsCookieHill") and " • Hill income" or player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")
 		if panel.Visible and tab == "Bag" and snapshot.life.oven.id then
 			local second = os.time()
 			if second ~= lastGuide then lastGuide = second ; render() end

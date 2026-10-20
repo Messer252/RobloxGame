@@ -79,6 +79,16 @@ local function pinModel(tool, level)
 	return handle
 end
 
+function Tools.displayPin(level,parent,pivot)
+	local model=Instance.new("Model")
+	model.Name=Life.PinNames[level].." Display Pin"
+	model.PrimaryPart=pinModel(model,level)
+	for _,part in ipairs(model:GetChildren()) do if part:IsA("BasePart") then part.Anchored=true end end
+	model:PivotTo(pivot)
+	model:ScaleTo(.6)
+	model.Parent=parent
+	return model
+end
 function Tools.pin(player, level, onSwing)
 	local tool = Instance.new("Tool")
 	tool.Name, tool.CanBeDropped = Life.PinNames[level] .. " Rolling Pin", false

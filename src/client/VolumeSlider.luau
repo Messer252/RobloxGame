@@ -69,7 +69,7 @@ function Slider.create(parent, name, y, read, write)
 		label.Text = name .. " " .. math.floor(value * 100 + 0.5) .. "%"
 		fill.Size = UDim2.fromScale(value, 1)
 		thumb.Position = UDim2.new(value, 0, 0.5, 0)
-	end
+	end,row
 end
 
 return Slider

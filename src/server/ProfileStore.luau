@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 8 adds persistent cards and Star Crumbs while retaining existing
--- ownership, paid receipt, gift recovery, and job progress records.
-ProfileStore.CURRENT_VERSION = 8
+-- Version 9 adds armor and daily/trail/obby crumb claim state. Versions 1-8
+-- retain progression, paid receipts, gift recovery and owned cards.
+ProfileStore.CURRENT_VERSION = 9
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0

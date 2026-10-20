@@ -28,6 +28,7 @@ function Life.normalize(raw)
 	raw = type(raw) == "table" and raw or {}
 	local data = { inventory = {}, dough = integer(raw.dough, 0, 0, 1e9), pin = integer(raw.pin, 1, 1, 5),
 		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "", belt = integer(raw.belt, 0, 0, 3), decorations = {}, contract = Contracts.normalize(raw.contract), cards = Cards.normalize(raw.cards), shopName = type(raw.shopName) == "string" and string.sub(raw.shopName, 1, 60) or "" }
+	data.armor=integer(raw.armor,0,0,5)
 	for key in pairs(Polish.Decorations) do data.decorations[key] = type(raw.decorations) == "table" and raw.decorations[key] == true or false end
 	local seen = {}
 	if type(raw.inventory) == "table" then
@@ -93,10 +94,15 @@ end
 function Life.buyMachine(profile, key)
 	local definition = Life.Machines[key]
 	if not definition or profile.life.machines[key] then return false, "Machine unavailable or already owned." end
+	if not Life.machineAvailable(profile.life,key) then return false,"Build a conveyor, then unlock the previous processing machine first." end
 	if profile.cash < definition.Cost then return false, "Collect more wallet cash for this machine." end
 	profile.cash -= definition.Cost
 	profile.life.machines[key] = true
 	return true, key .. " installed!"
+end
+function Life.machineAvailable(life,key)
+	if not Life.Machines[key] or life.machines[key] or life.belt<1 then return false end
+	return key=="Packager" or key=="Boxer" and life.machines.Packager or key=="FinishingOven" and life.machines.Boxer or false
 end
 function Life.upgradeRecipe(profile, index)
 	if type(index) ~= "number" or index % 1 ~= 0 or not Recipes[index] or index > profile.unlocked then return false, "Unlock that recipe first." end

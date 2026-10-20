@@ -74,7 +74,7 @@ return function(test, equal, near, harness, fakeStore)
 	end)
 	test("machine, recipe mastery, pin, and dough purchases charge the correct balance once", function()
 		local p = Progression.newData()
-		p.cash, p.life.dough = 1e8, 10000
+		p.cash, p.life.dough, p.life.belt = 1e8, 10000, 1
 		local before = p.cash
 		assert(Life.buyMachine(p, "Packager"))
 		equal(p.cash, before - 25000)

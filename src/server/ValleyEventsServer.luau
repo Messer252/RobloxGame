@@ -1,6 +1,7 @@
 local Players, Tween, Debris = game:GetService("Players"), game:GetService("TweenService"), game:GetService("Debris")
 local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Rules, Cards, Polish, Life = require(Shared.ValleyEvents), require(Shared.CardEconomy), require(Shared.BakeryPolish), require(Shared.BakeryLife)
+local Town = require(Shared.TownCatalog)
 local W, Assets = require(script.Parent.WorldWidgets), require(script.Parent.AssetLibrary)
 local Events = {}
 Events.__index = Events
@@ -89,7 +90,7 @@ local function buildHill(self, folder)
 end
 
 function Events.start(context)
-	local self = setmetatable({ context = context, nextMeteor = os.clock() + Rules.meteorDelay(math.random()), cooldowns = {}, born = {} }, Events)
+	local self = setmetatable({ context = context, nextMeteor = os.clock() + Rules.meteorDelay(math.random()), cooldowns = {}, born = {}, hill = {} }, Events)
 	local folder = Instance.new("Folder")
 	folder.Name, folder.Parent = "Star Crumb Events", context.World
 	self.folder = folder
@@ -155,6 +156,7 @@ function Events:Swing(player, pinTool)
 	if now - (self.cooldowns[player] or -math.huge) < .5 then return true end
 	self.cooldowns[player] = now
 	local state = self.context.Usable(player)
+	if not state then return true end
 	local meteor = self.meteor
 	if meteor and meteor.landed and meteor.hp > 0 and (meteor.core.Position - root.Position).Magnitude <= 16 then
 		local damage = math.min(20, Life.PinPower[state.data.life.pin] + Polish.active(state.data.life, os.time()).Mine + Cards.bonuses(state.data.life.cards, state.perks.ThirdCardSlot).Mine)
@@ -173,7 +175,7 @@ function Events:Swing(player, pinTool)
 			if delta.Magnitude <= 9 and delta:Dot(root.CFrame.LookVector) > 0 then
 				local otherState = self.context.GetState(other)
 				local attack, defense = Polish.active(state.data.life, os.time()), Polish.active(otherState.data.life, os.time())
-				targetHum:TakeDamage(Rules.damage(state.data.life.pin, attack.Damage, defense.Defense))
+				targetHum:TakeDamage(Rules.damage(state.data.life.pin, attack.Damage, defense.Defense + Town.defense(otherState.data.life)))
 				local flat = Vector3.new(delta.X, 0, delta.Z)
 				if flat.Magnitude > .1 then target:ApplyImpulse((flat.Unit * 18 + Vector3.yAxis * 4) * target.AssemblyMass) end
 				return true
@@ -183,29 +185,27 @@ function Events:Swing(player, pinTool)
 	return true
 end
 function Events:Step()
-	local now, occupants = os.clock(), {}
+	local now, occupants, online = os.clock(), {}, {}
 	for _, player in ipairs(Players:GetPlayers()) do
+		local profile=self.context.GetState(player)
+		if profile and not profile.closing and not profile.profile.lost and not player:GetAttribute("AdminFlying") and not player:GetAttribute("AdminInvisible") then online[player.UserId]=true end
 		local root = self:Eligible(player)
 		local inside = root and Rules.onHill(root.Position.X, root.Position.Y, root.Position.Z) or false
 		player:SetAttribute("InCookiePVP", inside)
 		player:SetAttribute("NextMeteorSeconds", math.max(0, math.floor(self.nextMeteor - now)))
-		if inside then table.insert(occupants, player) end
+		if inside then table.insert(occupants, player.UserId) end
 	end
-	if #occupants == 1 then
-		local owner = occupants[1]
-		if self.candidate ~= owner then self.candidate, self.capture, self.owner = owner, now, nil end
-		if not self.owner and now - self.capture >= Rules.CaptureSeconds then self.owner, self.nextPayout = owner, now + Rules.PayoutSeconds end
-		self.hillText.Text = self.owner and ("@" .. owner.Name .. " owns COOKIE HILL\n" .. rewardText .. " • PVP ON") or ("@" .. owner.Name .. " capturing\n" .. math.max(0, math.ceil(Rules.CaptureSeconds - (now-self.capture))) .. "s • PVP ON")
-		if self.owner and now >= self.nextPayout then
-			self.nextPayout = now + Rules.PayoutSeconds
-			local state = self.context.Usable(owner)
-			if state then Cards.award(state.data.life.cards, Rules.HillReward, state.perks.ThirdCardSlot); self.context.Changed(owner, state) end
-		end
-	else
-		self.candidate, self.owner = nil, nil
-		self.hillText.Text = #occupants > 1 and "COOKIE HILL CONTESTED\nNo rewards until one baker remains • PVP ON" or idleText
+	local payout=Rules.hillStep(self.hill,occupants,online,now)
+	local owner=self.hill.owner and Players:GetPlayerByUserId(self.hill.owner)
+	local candidate=self.hill.candidate and Players:GetPlayerByUserId(self.hill.candidate)
+	if payout then
+		local player=Players:GetPlayerByUserId(payout)
+		local state=player and self.context.Usable(player)
+		if state then Cards.award(state.data.life.cards,Rules.HillReward,state.perks.ThirdCardSlot); self.context.Changed(player,state) end
 	end
-	local hillColor = #occupants > 1 and Color3.fromRGB(255, 113, 94) or self.owner and Color3.fromRGB(124, 235, 169) or gold
+	self.hillText.Text=#occupants>1 and "COOKIE HILL CONTESTED\nRewards paused • PVP ON" or candidate and ("@"..candidate.Name.." capturing • "..math.max(0,math.ceil(Rules.CaptureSeconds-(now-self.hill.capture))).."s\n"..(owner and "Held by @"..owner.Name or "Claim the hill")) or owner and ("@"..owner.Name.." owns COOKIE HILL\n"..rewardText.." • Defend your flag!") or idleText
+	for _,player in ipairs(Players:GetPlayers()) do player:SetAttribute("OwnsCookieHill",self.hill.owner==player.UserId) end
+	local hillColor = #occupants > 1 and Color3.fromRGB(255, 113, 94) or owner and Color3.fromRGB(124, 235, 169) or gold
 	if self.hillColor ~= hillColor then
 		self.hillColor, self.flag.Color, self.hillText.TextColor3 = hillColor, hillColor, hillColor
 		for _, rim in ipairs(self.hillTrim) do rim.Color = hillColor end

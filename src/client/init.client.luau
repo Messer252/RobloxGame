@@ -7,6 +7,7 @@ local AudioController = require(script:WaitForChild("AudioController"))
 local VolumeSlider = require(script:WaitForChild("VolumeSlider"))
 local AdminPanel = require(script:WaitForChild("AdminPanel"))
 local LifeClient = require(script:WaitForChild("BakeryLifeClient"))
+local Flow=require(script:WaitForChild("UIFlow"))
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("CookieTycoon")
@@ -78,7 +79,7 @@ hud.Parent = gui
 round(hud, 16)
 local hudStroke = finish(hud, gold)
 local hudLimit = Instance.new("UISizeConstraint")
-hudLimit.MaxSize = Vector2.new(420, 264)
+hudLimit.MaxSize = Vector2.new(420, 400)
 hudLimit.Parent = hud
 local cookieIcon = Instance.new("Frame")
 cookieIcon.Position = UDim2.fromOffset(15, 9)
@@ -208,10 +209,14 @@ effectsToggle.Name = "EffectsToggle"
 effectsToggle.Position = UDim2.new(0.72, 0, 0, 106)
 effectsToggle.Size = UDim2.new(0.28, -14, 0, 30)
 effectsToggle.TextSize = 12
-local drawMusicVolume = VolumeSlider.create(hud, "Music", 166,
-	function() return audio.musicVolume end, function(value) audio:SetVolume("music", value) end)
-local drawEffectsVolume = VolumeSlider.create(hud, "SFX", 200,
-	function() return audio.effectsVolume end, function(value) audio:SetVolume("effects", value) end)
+local controls=Instance.new("Frame")
+controls.Position,controls.Size,controls.BackgroundTransparency,controls.Parent=UDim2.fromOffset(14,106),UDim2.new(1,-28,0,76),1,hud
+local boostStatus
+Flow.grid(controls,{toggle,homeButton,musicToggle,effectsToggle},110,2,8,34,function(height)
+	hud.Size=UDim2.new(.94,0,0,106+height+64)
+	if boostStatus then boostStatus.Position=UDim2.fromOffset(14,106+height+8) end
+end)
+local drawMusicVolume,drawEffectsVolume=function() end,function() end
 local function renderAudio()
 	musicToggle.Text = audio.music and "Music ON" or "Music OFF"
 	if audio.music then
@@ -229,7 +234,8 @@ musicToggle.Activated:Connect(function() audio:SetMusicEnabled(not audio.music) 
 effectsToggle.Activated:Connect(function() audio:SetEffectsEnabled(not audio.effects) end)
 audio.Changed.Event:Connect(renderAudio)
 renderAudio()
-local boostStatus = fixedLabel(hud, 143, 19, 12, gold)
+boostStatus = fixedLabel(hud, 190, 19, 12, gold)
+boostStatus.Position=UDim2.fromOffset(14,106+controls.Size.Y.Offset+8)
 boostStatus.TextScaled = true
 local boostTextSize = Instance.new("UITextSizeConstraint")
 boostTextSize.MinTextSize, boostTextSize.MaxTextSize, boostTextSize.Parent = 10, 12, boostStatus
@@ -237,22 +243,13 @@ local bakeryTab = button(menu, "Bakery", Color3.fromRGB(130, 87, 49))
 local robuxTab = button(menu, "Shop", Color3.fromRGB(92, 66, 48))
 local workshopTab = button(menu, "Toppings", Color3.fromRGB(92, 66, 48))
 local challengesTab = button(menu, "Quests", Color3.fromRGB(92, 66, 48))
+local audioTab=button(menu,"Audio",Color3.fromRGB(92,66,48))
 local tabBar = Instance.new("Frame")
 tabBar.Position = UDim2.fromOffset(14, 82)
 tabBar.Size = UDim2.new(1, -28, 0, 32)
 tabBar.BackgroundTransparency = 1
 tabBar.Parent = menu
-local tabLayout = Instance.new("UIListLayout")
-tabLayout.FillDirection = Enum.FillDirection.Horizontal
-tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabLayout.Padding = UDim.new(0, 8)
-tabLayout.Parent = tabBar
-for index, tab in ipairs({ bakeryTab, workshopTab, challengesTab, robuxTab }) do
-	tab.Parent = tabBar
-	tab.LayoutOrder = index
-	tab.Size = UDim2.new(0.25, -6, 1, 0)
-	tab.TextSize = 13
-end
+for _,tab in ipairs({bakeryTab,workshopTab,challengesTab,robuxTab,audioTab}) do tab.TextSize=13 end
 
 local scroll = Instance.new("ScrollingFrame")
 scroll.Position = UDim2.fromOffset(14, 124)
@@ -288,13 +285,26 @@ local challengesScroll = scroll:Clone()
 challengesScroll.Name = "Challenges"
 challengesScroll.Visible = false
 challengesScroll.Parent = menu
+local audioScroll=scroll:Clone()
+audioScroll.Name,audioScroll.Visible,audioScroll.Parent="AudioSettings",false,menu
+Flow.grid(tabBar,{bakeryTab,workshopTab,challengesTab,robuxTab,audioTab},82,5,8,34,function(height)
+	for _,area in ipairs({scroll,shopScroll,workshopScroll,challengesScroll,audioScroll}) do
+		area.Position,area.Size=UDim2.fromOffset(14,92+height),UDim2.new(1,-28,1,-106-height)
+	end
+end)
+local musicRow,effectsRow
+drawMusicVolume,musicRow=VolumeSlider.create(audioScroll,"Music",0,function() return audio.musicVolume end,function(value) audio:SetVolume("music",value) end)
+drawEffectsVolume,effectsRow=VolumeSlider.create(audioScroll,"SFX",0,function() return audio.effectsVolume end,function(value) audio:SetVolume("effects",value) end)
+musicRow.LayoutOrder,effectsRow.LayoutOrder=1,2
+renderAudio()
 local function showTab(tabName)
 	scroll.Visible = tabName == "Bakery"
 	workshopScroll.Visible = tabName == "Workshop"
 	shopScroll.Visible = tabName == "Robux"
 	challengesScroll.Visible = tabName == "Challenges"
-	title.Text = ({ Bakery = "YOUR BAKERY", Workshop = "COOKIE TOPPINGS", Robux = "ROBUX SHOP", Challenges = "BAKER'S QUESTS" })[tabName] or "YOUR BAKERY"
-	for tab, name in pairs({ [bakeryTab] = "Bakery", [workshopTab] = "Workshop", [robuxTab] = "Robux", [challengesTab] = "Challenges" }) do
+	audioScroll.Visible=tabName=="Audio"
+	title.Text = ({ Bakery = "YOUR BAKERY", Workshop = "COOKIE TOPPINGS", Robux = "ROBUX SHOP", Challenges = "BAKER'S QUESTS",Audio="AUDIO LEVELS" })[tabName] or "YOUR BAKERY"
+	for tab, name in pairs({ [bakeryTab] = "Bakery", [workshopTab] = "Workshop", [robuxTab] = "Robux", [challengesTab] = "Challenges",[audioTab]="Audio" }) do
 		tab.BackgroundColor3 = name == tabName and Color3.fromRGB(130, 87, 49) or Color3.fromRGB(92, 66, 48)
 	end
 end
@@ -302,6 +312,7 @@ bakeryTab.Activated:Connect(function() showTab("Bakery") end)
 workshopTab.Activated:Connect(function() showTab("Workshop") end)
 robuxTab.Activated:Connect(function() showTab("Robux") end)
 challengesTab.Activated:Connect(function() showTab("Challenges") end)
+audioTab.Activated:Connect(function() showTab("Audio") end)
 local order = 0
 local function ordered(object)
 	order += 1

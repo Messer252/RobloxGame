@@ -2,15 +2,17 @@
 
 [Download the current Studio ZIP](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Open `CookieCorner.rbxlx`, copy across your customized product IDs/admin list, publish into the same experience, and restart outdated servers. Keep the existing DataStore names.
 
+**Newest update:** [Spawn shops, armor, lighting, decoration paths and easier Star Crumbs](MARKET-UPDATE.md).
+
 ## Rebirth and your bakery
 
 Rebirth now **empties the cookie bag**, clears held-cookie tools, resets the conveyor build tier to zero, removes built conveyor geometry and the delivery box, resets machines/mastery/toppings/food effects, and removes purchased decorations. The starter oven remains; build its first conveyor again for free.
 
-**Cards, equipped cards, Star Crumbs, dough, rolling pins, dough upgrades, Golden Chip upgrades, paid passes, audio choices, shop name, and quest progress remain.** Wallet/collection cash resets as before. A pending gift or pack save must settle before rebirth can proceed.
+**Cards, equipped cards, Star Crumbs, dough, rolling pins, cookie armor, dough upgrades, Golden Chip upgrades, paid passes, audio choices, shop name, and quest progress remain.** Wallet/collection cash resets as before. A pending gift or pack save must settle before rebirth can proceed.
 
 All plots now put their entrance, claim pad, personal spawn and register beside the road. The first recipe lane is on that side too. The collector's gold pad is next to this starting area. A compact floating sign shows the account username and bakery name. Your own sign appears within **180 studs**; other bakery signs appear only within **55 studs** of your character. Signs no longer draw through scenery, and their ownership updates when a bakery is claimed or released. In Cookie Bag → Machines, enter a name and buy **Rename cookie shop** for **$20 million**. Roblox filters the name before charging; a filtering failure charges nothing. Stored names are filtered again when loaded for display.
 
-There are now **14 decoration purchases**: walls, windows, hinged door, skylight roof, pendant lights, plants, cookie trees, herringbone floor, lettering, cafe benches, cookie fountain, display case, flower beds, and fencing. Windows/door/roof require walls; lights require the roof. Frames fit actual wall openings. The door leaf, handle and rails rotate together around a fixed visible hinge. Purchases and their prices appear on the rear decoration pads and Machines page.
+There are now **14 decoration purchases**: walls, windows, hinged door, skylight roof, pendant lights, plants, cookie trees, warm oak floor, lettering, cafe benches, cookie fountain, display case, flower beds, and fencing. Structure purchases unlock in order: walls → windows → door → roof → lights. Garden and café purchases have separate upgrade paths. Frames fit actual wall openings. The door leaf, handle and rails rotate together around a fixed visible hinge. Purchases and their prices appear on the rear decoration pads and Machines page.
 
 ## Natural terrain and cookie moon
 
@@ -22,7 +24,7 @@ Terrain now stays six studs below the road, spawn plaza and all eight bakery flo
 
 ## Packs and collection
 
-Open **Cookie Bag → Cards**. Five packs each award **one** cookie-animal card. The price and exact rarity odds are shown before opening. All animals within a rarity have equal odds. The server rolls the result; the charge and ownership grant are committed together before the ripping/reveal animation.
+Visit the **Crumbkin Pack House beside spawn** to buy/rip packs. View and equip cards in **Cookie Bag → Collection**. Five packs each award **one** cookie-animal card. The price is shown before opening; select **Show odds** for its exact rarity probabilities. All animals within a rarity have equal odds. The server rolls the result; the charge and ownership grant are committed together before the ripping/reveal animation.
 
 | Pack | Star Crumbs | Common | Uncommon | Rare | Legendary | Mythical |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -54,11 +56,14 @@ The in-game compass has been removed completely. The HUD retains Star Crumbs, ac
 
 The intended grind mixes short jobs, normal bakery play and occasional public events:
 
-- **Biscuit jobs:** 25 base crumbs per completed paid-out task. Accepting or swapping a job awards none.
-- **Dough mining:** 1 base crumb for breaking an ore, at most once every 20 seconds per player. Dough rewards remain separate.
-- **Production milestones:** 10 base crumbs per 120 bakery batches, capped at 300 base crumbs per UTC day. This source requires a claimed bakery and built conveyor; no offline production is counted.
+- **Daily gift:** 100 base crumbs at the spawn Pack House once per UTC day.
+- **Trail pickups:** 5 base crumbs each, a personal three-minute cooldown, up to 600 base crumbs per UTC day.
+- **Obbys:** Easy/Medium/Hard give 20/35/50 base crumbs with separate saved five-minute cooldowns.
+- **Biscuit jobs:** 50 base crumbs per completed paid-out task. Accepting or swapping a job awards none.
+- **Dough mining:** 3 base crumbs for breaking an ore, at most once every 10 seconds per player. Dough rewards remain separate.
+- **Production milestones:** 10 base crumbs per 60 bakery batches, capped at 600 base crumbs per UTC day. This source requires a claimed bakery and built conveyor; no offline production is counted.
 - **Cookie meteors:** a fresh server schedules a random arrival after **5–30 minutes**, then continues at randomized intervals. The cookie falls with fire into an outer meadow and can be mined with rolling pins. It has 180 HP; hit damage is capped at 20. Players who contribute at least **three hits** each receive their own **100–350 base crumbs** when it breaks. There is no last-hit-only reward. It expires after five minutes if unfinished; eligible present players have 45 seconds after breaking for pending saves to settle and rewards to apply.
-- **Cookie Hill:** hold the marked hill in the west meadow alone for **8 seconds**, then receive **10 base crumbs every 10 seconds** while it remains uncontested. Another player pauses rewards and restarts capture. There are no currency rewards for kills.
+- **Cookie Hill:** hold the marked hill in the west meadow alone for **8 seconds**, then receive **10 base crumbs every 10 seconds** while it remains uncontested. The captured owner keeps earning elsewhere in that server while online. Multiple occupants pause payouts; another player can take ownership after eight seconds alone. Logout releases ownership. There are no currency rewards for kills.
 
 Equipped crumb cards multiply awards; whole-number rewards round down. The production cap counts base crumbs, before card bonuses. Start with jobs and mining, join meteor events when announced, and choose whether to risk the hill. This should make the first inexpensive pack a goal within a normal session, while premium packs reward saving across sessions. **Actual session timing still needs live-player balance testing**; adjust prices/reward constants after watching first-pack times and how often players save for higher packs.
 
@@ -92,7 +97,7 @@ The two prices remain tied to unlock cost: `$100 + 25%` and `$350 + 50%`. Older 
 
 ## Save upgrade and Studio checks
 
-Save envelope **8** accepts **1–7**, retaining `CookieCorner_PlayerData_v1` and the existing trade journal. New card/currency fields default safely on older saves. Restart outdated servers after publishing.
+Save envelope **9** accepts **1–8**, retaining `CookieCorner_PlayerData_v1` and the existing trade journal. New card/currency fields default safely on older saves. Restart outdated servers after publishing.
 
 Automated tests cover exact pack probabilities, unique buffs, equip entitlement/caps, atomic charges and lost-response recovery, rebirth cleanup, daily milestones, meteor bounds, hill damage/bounds, terrain continuity, topping limits, decoration prerequisites, global offline ranking imports, cross-server save races, and ranking service outages. Complete these Roblox engine checks before public rollout:
 

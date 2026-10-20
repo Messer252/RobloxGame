@@ -181,7 +181,7 @@ local function onAction(player, action, argument, sourcePlot)
 		if state.data.challenges.active then success, message, reward = Challenges.interact(state.data, Progression.MAX_CASH)
 		else success, message, reward = Contracts.interact(state.data, os.time(), math.random(), math.random(), math.random(), argument == "Skip") end
 		if success then
-			if (reward or 0) > 0 then Cards.award(state.data.life.cards, 25, state.perks.ThirdCardSlot) end
+			if (reward or 0) > 0 then Cards.award(state.data.life.cards, 50, state.perks.ThirdCardSlot) end
 			sync(player, state)
 			if state.plot then World.updateBank(state.plot, state.data) end
 			state.nextSave = math.min(state.nextSave, now + 2)
@@ -301,7 +301,9 @@ ObbyWorld.create(workspace.CookieTycoonWorld, function(player, difficulty)
 	local state = usable(player)
 	if not state then return false end
 	local success, message = Boosts.awardObby(state.data, difficulty, os.time())
-	if success then
+	local crumbs=Cards.obby(state.data.life.cards,difficulty,os.time(),state.perks.ThirdCardSlot)
+	if crumbs>0 then message=(message or "Course completed!").." +"..crumbs.." Star Crumbs!" end
+	if success or crumbs>0 then
 		Contracts.record(state.data, "Obby", 1)
 		sync(player, state)
 		state.nextSave = math.min(state.nextSave, os.clock() + 2)

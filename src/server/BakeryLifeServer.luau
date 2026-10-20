@@ -8,6 +8,8 @@ local Packaging = require(script.Parent.CookiePackaging)
 local Polish = require(Shared.BakeryPolish)
 local Contracts = require(Shared.BakeryContracts)
 local Cards, CardCatalog = require(Shared.CardEconomy), require(Shared.CardCatalog)
+local Town = require(Shared.TownCatalog)
+local TownWorld,Armor = require(script.Parent.TownWorld),require(script.Parent.CookieArmor)
 local TextService = game:GetService("TextService")
 local Server = {}
 Server.__index = Server
@@ -24,6 +26,7 @@ function Server.start(context)
 	context.Announce = function(kind) self.announcement:FireAllClients(kind) end
 	self.events = require(script.Parent.ValleyEventsServer).start(context)
 	self.features = Features.create(context.World, context.Plots, function(...) self:Action(...) end)
+	self.town = TownWorld.create(context.World,function(...) self:Action(...) end)
 	self.customers = Customers.create(context.World, function(player, customer) self:OfferCustomer(player, customer) end)
 	context.OnCookie(function(...) self:Cookie(...) end, function(...) self:ProcessCookie(...) end)
 	self.action.OnServerEvent:Connect(function(player, action, argument) self:Action(player, action, argument) end)
@@ -76,6 +79,7 @@ function Server.start(context)
 					end
 					if runtime.bargain and (runtime.bargain.expires < os.clock() or not W.near(player, runtime.bargain.customer.root.Position, 16)) then self:CloseBargain(runtime) end
 					Appearance.step(player, runtime)
+					Armor.step(player,runtime)
 					self:Refresh(player)
 				end
 			end
@@ -86,7 +90,8 @@ function Server.start(context)
 end
 function Server:OpenPack(player, packId)
 	local state = self.context.Usable(player)
-	if not state or not state.plot or not CardCatalog.Packs[packId] then return end
+	if not state or not CardCatalog.Packs[packId] then return end
+	if not self:NearTown(player,Town.PackStand) then self.context.Notify(player,"Visit the Crumbkin Pack House beside spawn to open packs."); return end
 	local runtime, pack = self:Runtime(player), CardCatalog.Packs[packId]
 	if runtime.opening or os.clock() - (runtime.lastPack or -math.huge) < 3 then return end
 	if state.data.life.cards.crumbs < pack.Cost then self.context.Notify(player, "Earn more Star Crumbs first."); return end
@@ -114,6 +119,10 @@ function Server:OpenPack(player, packId)
 			else self.context.Notify(player, "Pack saving could not finish. Rejoin to recover; any committed card and charge stay together.") end
 		elseif ok then self.context.Profiles:Save(state.profile, true) end
 	end)
+end
+function Server:NearTown(player,point)
+	local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	return root and W.near(player,root.Position,1) and Town.near(point,root.Position.X,root.Position.Y,root.Position.Z) or false
 end
 function Server:Swing(player)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -145,6 +154,7 @@ function Server:Refresh(player)
 	local b, trade = runtime.bargain, self.offers[player]
 	local snapshot = { life = Life.normalize(state.data.life), held = self:Held(player), hasPlot = state.plot ~= nil,
 		busy = state.profile.activityLock ~= nil or state.profile.transacting == true }
+	snapshot.nearPackShop,snapshot.nearBlacksmith=self:NearTown(player,Town.PackStand),self:NearTown(player,Town.Blacksmith)
 	snapshot.life.cards.milestone, snapshot.life.cards.daily, snapshot.life.cards.dailyEarned = 0, 0, 0
 	if b then snapshot.bargain = { name = b.customer.name, price = b.price, attempts = b.attempts, item = b.item, personality = b.customer.traits.Style, favorite = Recipes[b.customer.traits.Favorite].Name } end
 	if trade then snapshot.trade = { id = trade.id, from = trade.a.Name, to = trade.b.Name,
@@ -304,6 +314,21 @@ function Server:Action(player, action, argument, plot)
 	if not state then return end
 	local data, ok, message = state.data, false, nil
 	if action == "OpenPack" then self:OpenPack(player, argument); return
+	elseif action=="OpenPackShop" or action=="OpenBlacksmith" then
+		local point=action=="OpenPackShop" and Town.PackStand or Town.Blacksmith
+		if self:NearTown(player,point) then self.open:FireClient(player,action=="OpenPackShop" and "PackShop" or "Blacksmith") end
+		return
+	elseif action=="DailyCrumbs" then
+		if not self:NearTown(player,Town.PackStand) then self.context.Notify(player,"Claim daily crumbs at the Pack House."); return end
+		local reward
+		ok,reward=Cards.claimDaily(data.life.cards,os.time(),state.perks.ThirdCardSlot)
+		message=ok and ("Daily gift: +"..reward.." Star Crumbs!") or reward
+	elseif action=="TrailCrumb" then
+		local crumb=type(argument)=="number" and self.town.pickups[argument]
+		if not crumb or not W.near(player,crumb.Position,10) then return end
+		local reward
+		ok,reward=Cards.pickup(data.life.cards,argument,os.time(),state.perks.ThirdCardSlot)
+		message=ok and ("+"..reward.." Star Crumbs! Explore for more.") or reward
 	elseif action == "EquipCard" then ok, message = Cards.equip(data.life.cards, argument, state.perks.ThirdCardSlot)
 	elseif action == "RenameShop" then
 		if type(argument) ~= "string" or #argument > 80 or not state.plot then return end
@@ -353,20 +378,23 @@ function Server:Action(player, action, argument, plot)
 		node.bar.Size = UDim2.fromScale(node.hp / node.maximum, 1)
 		if node.hp == 0 then
 			Contracts.record(data, "Mine", 1)
-			if os.time() >= (runtime.nextOreCrumb or 0) then Cards.award(data.life.cards, 1, state.perks.ThirdCardSlot); runtime.nextOreCrumb = os.time() + 20 end
+			if os.time() >= (runtime.nextOreCrumb or 0) then Cards.award(data.life.cards, 3, state.perks.ThirdCardSlot); runtime.nextOreCrumb = os.time() + 10 end
 			data.life.dough = math.min(1e9, data.life.dough + node.reward)
 			node.ready, node.part.Transparency, node.part.CanCollide = os.clock() + 10, 1, false
 			node.label.Parent.Enabled = false
 			for _, chip in ipairs(node.chips) do chip.Transparency = 1 end
 			ok, message = true, "+" .. node.reward .. " cookie dough!"
 		end
-	elseif action == "Pin" or action == "Dough" then
-		if not W.near(player, self.features.mine, 22) then self.context.Notify(player, "Visit the dough mine workshop to upgrade.") ; return end
-		if action == "Pin" then ok, message = Life.upgradePin(data) else ok, message = Life.upgradeDough(data, argument) end
+	elseif action=="Pin" or action=="Armor" then
+		if not self:NearTown(player,Town.Blacksmith) then self.context.Notify(player,"Visit Bruno at the spawn blacksmith."); return end
+		if action=="Pin" then ok,message=Life.upgradePin(data) else ok,message=Town.buyArmor(data) end
+	elseif action=="Dough" then
+		if not W.near(player,self.features.mine,22) then self.context.Notify(player,"Visit the dough mine workshop to upgrade."); return end
+		ok,message=Life.upgradeDough(data,argument)
 	elseif action == "BuildBelt" or action == "Decoration" then
 		if not state.plot or (plot and state.plot ~= plot) then return end
-		local point = action == "BuildBelt" and self.features.buildPads[state.plot].pad.Position or W.position(state.plot, 50, 1, -67)
-		if not W.near(player, point, action == "BuildBelt" and 16 or 32) then self.context.Notify(player, "Visit the purchase pads in your bakery."); return end
+		local record=action=="BuildBelt" and self.features.buildPads[state.plot] or self.features.decorationPads[state.plot][argument]
+		if not record or not record.pad.Parent or not W.near(player,record.pad.Position,16) then self.context.Notify(player,"Visit an available purchase pad in your bakery."); return end
 		if action == "BuildBelt" then ok, message = Polish.buyBelt(data) else ok, message = Polish.buyDecoration(data, argument) end
 	elseif action == "Machine" or action == "Bake" then
 		local key = action == "Bake" and "FinishingOven" or argument

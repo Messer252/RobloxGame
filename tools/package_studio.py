@@ -37,7 +37,7 @@ The scripts build the bakeries when a server starts. This is expected.
 PLAYING THE GAME
 Claim a free bakery at its green pad. You arrive beside the starter oven.
 Stand on the next gold cookie pad to buy it with cookie cash; no held E key.
-Open Bakery for short controls, Toppings, Quests, and the optional Robux shop.
+Open Bakery for Toppings, Quests, Audio levels, and the optional Robux shop.
 Talk to Baker Biscuit in the plaza to start a hidden-item hunt for a cash bonus.
 
 WANT TO PREVIEW AN UNPUBLISHED FILE IN STUDIO?
@@ -66,7 +66,7 @@ wallet/earnings cash gifts, and self-invisibility. Full guide: ADMINS.md in this
 
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
-servers: save formats 1-7 migrate to version 8 with existing progress and receipts preserved.
+servers: save formats 1-8 migrate to version 9 with existing progress and receipts preserved.
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 The conveyor update widens the tracks, adds taller rounded outer rails, closes
@@ -81,6 +81,15 @@ The map includes a cookie forest, lake/waterfall, mountains, and day/night.
 Before replacing a customized place, copy across your audio IDs, product IDs,
 and friends added to AdminConfig. Restart outdated servers after publishing.
 
+SPAWN MARKET UPDATE
+See MARKET-UPDATE.md in this ZIP for controls, prices and playtests.
+Visit Bruno at the spawn blacksmith for cookie armor and better rolling pins.
+Claim 100 daily crumbs at the Pack House; earn more from public trail pickups,
+jobs, mining, production and obbys. Captured hills keep paying while you remain
+online in that server until contested or recaptured. Logging out releases them.
+Decoration pads unlock in three spaced paths. New fitted walls/windows/doors,
+roof and soft lighting leave conveyor lanes clear. Floors are less bright.
+
 NEW WORKSHOP CONTROLS AND MUSIC
 Select Cookie Bag in the Roblox hotbar to open inventory. Enter the cave and
 left-click with your rolling pin to swing; there is no E mining prompt.
@@ -91,7 +100,8 @@ Biscuit gives varied randomized jobs; item waypoints have been removed.
 See CARDS-AND-EVENTS.md for the latest features, prices, and playtests.
 Rebirth clears bag cookies, conveyors, machines and decorations; cards and Star
 Crumbs survive. Entrances/registers now face the road and terrain is continuous.
-Cookie Bag > Cards has 40 animals, five earned-currency packs and two free slots.
+Visit the Crumbkin Pack House beside spawn to buy and rip five earned-currency
+packs. Cookie Bag > Collection views/equips your 40 animal cards (two free slots).
 Upload CookieTCG_01.png through CookieTCG_04.png as Roblox images and set
 each matching Id in CardCatalog.ArtSheets. The compass is removed.
 Preview.png shows the card artwork. The optional browser gallery is not included
@@ -107,6 +117,7 @@ Existing saves import gradually in the background; boards refresh every minute.
 
 Valley Afterglow is the new original ambient soundtrack. Its built-in score
 plays immediately; Music and SFX retain independent saved volume sliders.
+Volume sliders are now under Bakery > Audio.
 CookieCornerCafe.wav is the optional full mix. To use it, upload it to Roblox,
 grant your experience access, and put its numeric ID in AudioConfig.MusicAssetId.
 The previous friend's song is no longer selected or included in this ZIP.
@@ -154,6 +165,7 @@ def main():
         archive.write(ROOT / "ADMINS.md", "ADMINS.md")
         archive.write(ROOT / "VALLEY.md", "VALLEY.md")
         archive.write(ROOT / "WORKSHOP.md", "WORKSHOP.md")
+        archive.write(ROOT / "MARKET-UPDATE.md", "MARKET-UPDATE.md")
         archive.write(ROOT / "CARDS-AND-EVENTS.md", "CARDS-AND-EVENTS.md")
         for sheet in sorted((ROOT / "assets/cards").glob("CookieTCG_*.png")):
             archive.write(sheet, sheet.name)
@@ -171,6 +183,7 @@ def main():
             assert not entry.flag_bits & 1, "Unexpected encrypted ZIP entry"
         assert "CardGallery.html" not in archive.namelist(), "Browser preview must not be bundled"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read("MARKET-UPDATE.md") == (ROOT / "MARKET-UPDATE.md").read_bytes(), "Packaged market guide is stale"
         assert archive.read("UPLOAD-ASSETS.md") == (ROOT / "UPLOAD-ASSETS.md").read_bytes(), "Packaged upload guide is stale"
         assert archive.read(MUSIC.name) == MUSIC.read_bytes(), "Packaged song differs from the supplied original"
         for effect in METEOR_AUDIO:

@@ -1,5 +1,6 @@
 # Workshop polish update
 
+**Current controls and prices:** [Spawn market and bakery update](MARKET-UPDATE.md) covers armor, pin shopping at spawn, pack opening, daily rewards, fitted decorations and hill ownership.
 **Latest behavior:** [Cookie animals and events update](CARDS-AND-EVENTS.md) supersedes older rebirth retention, terrain, entrance placement, decorations, and topping details below.
 [Download the Studio game](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Extract it and open `CookieCorner.rbxlx`. Copy your customized product IDs, audio IDs (if you want an optional uploaded mix), and AdminConfig usernames before replacing your old place. Publish into the same experience and restart outdated servers.
 
@@ -69,7 +70,7 @@ Admins open **Bakery → Admin tools → My flight**. WASD steers with the camer
 
 ## Save and Studio checks
 
-Save envelope **8** accepts versions **1–7**, retaining the same `CookieCorner_PlayerData_v1` and trade journal. New saved fields include build tier, decorations, and the current randomized job. Keep the stores and restart older servers after publishing.
+Save envelope **9** accepts versions **1–8**, retaining the same `CookieCorner_PlayerData_v1` and trade journal. New saved fields include build tier, decorations, and the current randomized job. Keep the stores and restart older servers after publishing.
 
 Automated checks cover the economy, packaging thresholds, unique buffs/expiry, customer rolls/budgets, job rewards/migration, gift persistence, and flight permissions. Roblox Studio is still required to verify:
 

@@ -22,6 +22,7 @@ end
 function W.prompt(target, text, hold, callback)
 	local p = Instance.new("ProximityPrompt")
 	p.ActionText, p.ObjectText, p.HoldDuration, p.MaxActivationDistance, p.RequiresLineOfSight = text, target.Name, hold or 0, 9, false
+	p.Exclusivity = Enum.ProximityPromptExclusivity.OneGlobally
 	p.Parent = target
 	p.Triggered:Connect(function(player) if W.near(player, target.Position) then callback(player) end end)
 	return p

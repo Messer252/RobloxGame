@@ -4,21 +4,23 @@
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
-**Latest update:** [40 animal cards, five packs, Star Crumbs, meteors, Cookie Hill PvP, natural terrain, rebirth fixes, road-side entrances and expanded decoration purchases](CARDS-AND-EVENTS.md). Four revised anime TCG art sheets and a static card preview are included in the Studio download; upload the images and enter their IDs in CardCatalog.ArtSheets. The optional source-code browser gallery is not bundled. The compass is removed. Two card slots are free; the optional third-slot pass remains disabled until configured.
+**Newest update:** [Softer lighting, responsive buttons, fitted decorations, easier Star Crumbs, persistent online hill income, spawn pack shop with animated ripping, and Bruno’s cookie armor/rolling-pin blacksmith](MARKET-UPDATE.md).
+
+**Cards and valley:** [40 animal cards, five packs, Star Crumbs, meteors, Cookie Hill PvP, natural terrain, rebirth fixes, road-side entrances and expanded decoration purchases](CARDS-AND-EVENTS.md). Four revised anime TCG art sheets and a static card preview are included in the Studio download; upload the images and enter their IDs in CardCatalog.ArtSheets. The optional source-code browser gallery is not bundled. The compass is removed. Two card slots are free; the optional third-slot pass remains disabled until configured.
 
 An eight-player Roblox cookie tycoon with 30 recipes, 15 baking-speed levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Each bakery has **three wide, curved feeder conveyors merging into one delivery line**, with taller rounded rails, connected flat surfaces, ovens unlocked along the lanes, and a cookie collection box at the end. Claim a free bakery to arrive beside your starter oven and first purchase; respawning returns you there while you own that plot. Bake automatically, collect earnings, and progress along the belt.
 
-Stand on your next cookie's purchase pad for about **0.28 seconds** to buy it with cookie cash; no held key is needed. Step off before buying again. The speed pad works the same way. The **Bakery** button opens four short tabs: **Bakery**, **Toppings**, **Quests**, and **Shop**. Unlock cookies or speed up production from Bakery; collect earnings at your own register or gold collection pad; expand **Golden Chips & rebirth** for permanent upgrades and rebirth confirmation.
+Stand on your next cookie's purchase pad for about **0.28 seconds** to buy it with cookie cash; no held key is needed. Step off before buying again. The speed pad works the same way. The **Bakery** button opens five tabs: **Bakery**, **Toppings**, **Quests**, **Shop**, and **Audio**. Unlock cookies or speed up production from Bakery; collect earnings at your own register or gold collection pad; expand **Golden Chips & rebirth** for permanent upgrades and rebirth confirmation.
 
 See [the full cookie valley feature guide and playtest checklist](VALLEY.md) for mirrored plots, the fast road and Home button, cookie forests, lake/waterfall, mountain scenery, day/night and the cookie sun. Pick up, eat, sell, or trade stored cookies; buy conveyor machines, mine dough, upgrade rolling pins, and follow the written quest clues. Nearby conveyor cookies show their current value. Cash from production and customer sales must be collected at your own register.
 
 The [Workshop update](WORKSHOP.md) adds a hotbar cookie bag, left-click rolling-pin mining inside a cave, paid conveyor expansion and decorations, thirty different cookie buffs, recipe-themed ovens, varied NPC personalities/appearances, free gifts with notifications, randomized activity quests without waypoints, harder obbys, admin flight, and improved mountain/waterfall/leaderboard models. New players build their first conveyor for free; old saves retain built lines.
 
-**Valley Afterglow** is a new original ambient soundtrack. Its built-in score plays immediately; an optional full WAV mix is included in the Studio ZIP. Music and SFX have separate saved mute buttons and 0–100% volume sliders. The friend's old song is no longer selected. Six configurable voice slots can replace new-oven purchase sounds with Bubby's recordings once uploaded. See [audio setup](AUDIO.md).
+**Valley Afterglow** is a new original ambient soundtrack. Its built-in score plays immediately; an optional full WAV mix is included in the Studio ZIP. Music and SFX have separate saved mute buttons and 0–100% volume sliders under Bakery → Audio. The friend's old song is no longer selected. Six configurable voice slots can replace new-oven purchase sounds with Bubby's recordings once uploaded. See [audio setup](AUDIO.md).
 
 Meteors now have server-wide incoming/impact banners and an original [8-bit crash WAV](assets/audio/MeteorCrash.wav). Built-in cues work immediately; upload the WAV and set its audio ID for the full effect. Plaza leaderboards now show global saved cash and rebirth rankings, including offline players, with a gradual import of existing saves. See [global ranking details](CARDS-AND-EVENTS.md#global-cash-and-rebirth-boards).
 
-Recipes have **six rarity tiers**, from Common (1×) to Mythic (6×). In **Toppings**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible decorations. See [rarity and topping details](CRAFTING.md).
+Recipes have **six rarity tiers**, from Common (1×) to Mythic (6×). In **Toppings**, buy two signature upgrades for each recipe to increase its value and add matching visible details. See [rarity and topping details](CRAFTING.md).
 
 Meet **Baker Biscuit** in the plaza for four saved scavenger hunts. Get randomized mining, selling, eating, gifting, baking, obby, or occasional search tasks in **Quests**, then return for a cash bonus. Old active hunts remain finishable. Job state survives rebirth and rejoining. See [quests and rewards](QUESTS.md).
 
@@ -53,6 +55,8 @@ Without Rojo, create this structure in a new Baseplate place and paste each file
 ```text
 ReplicatedStorage
   CookieTycoon (Folder)
+    TownCatalog (ModuleScript) <- src/shared/TownCatalog.luau
+    BakeryBlueprint (ModuleScript) <- src/shared/BakeryBlueprint.luau
     CardCatalog (ModuleScript) <- src/shared/CardCatalog.luau
     CardEconomy (ModuleScript) <- src/shared/CardEconomy.luau
     TerrainShape (ModuleScript) <- src/shared/TerrainShape.luau
@@ -117,6 +121,8 @@ ServerScriptService
     ChallengeWorld (ModuleScript)   <- src/server/ChallengeWorld.luau
     BakerAvatar (ModuleScript)      <- src/server/BakerAvatar.luau
     ConveyorWorld (ModuleScript)    <- src/server/ConveyorWorld.luau
+    TownWorld (ModuleScript) <- src/server/TownWorld.luau
+    CookieArmor (ModuleScript) <- src/server/CookieArmor.luau
     ObbyWorld (ModuleScript)        <- src/server/ObbyWorld.luau
     PlazaExtras (ModuleScript)      <- src/server/PlazaExtras.luau
 StarterPlayer
@@ -127,6 +133,7 @@ StarterPlayer
       TradingCardFrame (ModuleScript) <- src/client/TradingCardFrame.luau
       CardArt (ModuleScript) <- src/client/CardArt.luau
       CardPacksClient (ModuleScript) <- src/client/CardPacksClient.luau
+      UIFlow (ModuleScript) <- src/client/UIFlow.luau
       AudioController (ModuleScript) <- src/client/AudioController.luau
       VolumeSlider (ModuleScript)    <- src/client/VolumeSlider.luau
       AdminPanel (ModuleScript)      <- src/client/AdminPanel.luau
@@ -144,7 +151,7 @@ The server generates the map and remotes. Set the experience's maximum player co
 
 Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after important upgrades and quest changes, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
 
-The current **version-8 save envelope** accepts existing versions 1–7 and preserves progression, receipts, quests, and audio while adding inventory, dough upgrades, machines, and trade recovery. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-8 records.
+The current **version-9 save envelope** accepts existing versions 1–8 and preserves progression, receipts, quests, and audio including armor and daily/trail/obby reward state. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-9 records.
 
 For offline Studio development only, explicitly set `AllowStudioSessionOnly = true` in Settings. If DataStore access is unavailable, Studio then starts a clearly labeled temporary session that **does not save**. This fallback never writes temporary data into a saved profile and is ignored on live servers. Locked or incompatible saves do not fall back.
 
@@ -180,7 +187,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 172 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. They do not contact Roblox's live DataStore or payment services.
+The 185 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 

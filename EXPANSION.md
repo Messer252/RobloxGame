@@ -53,6 +53,6 @@ The cloud cannot run Roblox physics, avatars, multiplayer, or purchase prompts. 
 
 The deterministic conveyor checks use the actual floor/rail geometry and test **180 horizontal trajectories**: all 30 ovens at two speeds and three starting offsets. They check rail clearance, full cookie-footprint support across joints, curve continuity, outlet release, and counter clearance. These are geometry and steering checks, not a Roblox physics simulation.
 
-Save envelope **8** migrates versions 1–7. Keep `CookieCorner_PlayerData_v1` and the latest save code; older servers cannot read the new envelope. Studio's optional session-only preview does not save and disables purchases.
+Save envelope **9** migrates versions 1–8. Keep `CookieCorner_PlayerData_v1` and the latest save code; older servers cannot read the new envelope. Studio's optional session-only preview does not save and disables purchases.
 
 The [cookie valley update](VALLEY.md) adds mirrored plots, travel, scenery, inventory, machines, mining, trading, and improved obby finish detection. Use its current playtest checklist alongside this guide.
