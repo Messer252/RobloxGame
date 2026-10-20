@@ -11,12 +11,16 @@ function Natural.create()
 		-- Bounded chunks keep peak memory low; yield so joining players can load.
 		for chunkX = -1056, 1024, 32 do
 			for chunkZ = -1248, 1216, 32 do
-				local heights, highest = {}, 0
+				local heights, surfaces, highest = {}, {}, 0
 				for x = 1, 8 do
-					heights[x] = {}
+					heights[x], surfaces[x] = {}, {}
 					for z = 1, 8 do
-						local h = Shape.height(chunkX + (x - 0.5) * 4, chunkZ + (z - 0.5) * 4)
+						local wx, wz = chunkX + (x - 0.5) * 4, chunkZ + (z - 0.5) * 4
+						local h = Shape.height(wx, wz)
 						heights[x][z] = h
+						surfaces[x][z] = Shape.grassAllowed(wx, wz) and Enum.Material.Grass or Enum.Material.Ground
+						-- Dirt walking trails through the outer forest.
+						if math.abs(wx) > 210 and math.abs(wx) < 420 and math.abs(wx - (wx < 0 and -205 or 205) - math.sin(wz / 70) * 12) < 5 then surfaces[x][z] = Enum.Material.Ground end
 						highest = math.max(highest, h)
 					end
 				end
@@ -29,13 +33,11 @@ function Natural.create()
 						materials[x][y], occupancy[x][y] = {}, {}
 						for z = 1, 8 do
 							local wx, wz, bottom = chunkX + (x - 0.5) * 4, chunkZ + (z - 0.5) * 4, -20 + (y - 1) * 4
-							local h, material = heights[x][z], Enum.Material.Grass
+							local h, material = heights[x][z], surfaces[x][z]
 							if Shape.lake(wx, wz) then
 								h = 0; material = bottom > -12 and Enum.Material.Water or Enum.Material.Rock
 							elseif h > 58 and h - bottom < 9 then material = Shape.snow(wx, wz, h) and Enum.Material.Snow or Enum.Material.Rock
 							elseif h - bottom > 8 then material = Enum.Material.Rock end
-							-- Dirt walking trails through the outer forest, never over a bakery.
-							if math.abs(wx) > 210 and math.abs(wx) < 420 and math.abs(wx - (wx < 0 and -205 or 205) - math.sin(wz / 70) * 12) < 5 then material = Enum.Material.Ground end
 							materials[x][y][z], occupancy[x][y][z] = material, math.clamp((h - bottom) / 4, 0, 1)
 						end
 					end

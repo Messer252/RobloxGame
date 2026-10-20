@@ -18,6 +18,8 @@ The disconnected wedge mountains/snowcaps have been removed. A continuous Roblox
 
 At night, a new **chocolate-chip cookie moon** has a baked golden rim, warm cookie face, irregular chocolate chunks, and tiny baked pores. It follows the night sky and hides in daylight. The cookie sun and shared day/night cycle remain.
 
+Terrain now stays six studs below the road, spawn plaza and all eight bakery floors, with a padded border for voxel smoothing. Those areas and their blended shoulders use ground material so native grass cannot poke through the pavers or floors. The surrounding meadow still has grass. Republish the updated place and restart outdated servers to regenerate the terrain.
+
 ## Packs and collection
 
 Open **Cookie Bag → Cards**. Five packs each award **one** cookie-animal card. The price and exact rarity odds are shown before opening. All animals within a rarity have equal odds. The server rolls the result; the charge and ownership grant are committed together before the ripping/reveal animation.

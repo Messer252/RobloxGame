@@ -154,6 +154,34 @@ return function(test, equal, near, harness, fakeStore)
 			if Shape.snow(x,z,h) then assert(h>130) end
 		end end
 		assert(Shape.lake(-285,-370)); assert(not Shape.lake(0,0))
-		near(Shape.height(0,0),-.6)
+		near(Shape.height(0,0),-6)
+	end)
+	test("terrain and grass stay below all eight bakery floors including voxel edges", function()
+		local Map = require("../src/shared/MapLayout")
+		for slot=1,Map.PlayerCount do
+			local plot=Map.plot(slot)
+			-- Include neighbouring voxel centres beyond each edge, not just the origin.
+			for x=plot.x-86,plot.x+86,4 do for z=plot.z-126,plot.z+126,4 do
+				assert(Shape.height(x,z)<=-6)
+				assert(not Shape.grassAllowed(x,z))
+			end end
+		end
+	end)
+	test("road pavers, shoulders and spawn plaza cannot sprout native grass", function()
+		for x=-18,18,2 do for z=-582,582,4 do
+			assert(Shape.height(x,z)<=-6)
+			assert(not Shape.grassAllowed(x,z))
+		end end
+		for angle=0,math.pi*2,.1 do
+			local x,z=math.cos(angle)*29,math.sin(angle)*29
+			assert(Shape.height(x,z)<=-6 and not Shape.grassAllowed(x,z))
+		end
+	end)
+	test("clearance blends smoothly into grassy meadow without changing distant mountains or lake", function()
+		assert(Shape.grassAllowed(205,300))
+		near(Shape.height(205,300),-.6)
+		assert(Shape.height(900,900)>100 and Shape.grassAllowed(900,900))
+		assert(Shape.lake(-285,-370) and Shape.grassAllowed(-285,-370))
+		for x=180,215,.25 do assert(math.abs(Shape.height(x+.25,300)-Shape.height(x,300))<.3) end
 	end)
 end
