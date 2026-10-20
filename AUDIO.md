@@ -18,6 +18,24 @@ Do not enter a filename, universe ID, place ID, or web URL in `MusicAssetId`. Yo
 
 `AudioConfig.Effects` accepts optional uploaded IDs for the included action WAV files; 0 uses the built-in cues. Music and SFX use separate local SoundGroups. Muting and volume affect only the current player and are saved with the bakery profile. Playback does not restart when moving a volume slider.
 
+## Bubby's oven purchase voices
+
+Six slots are ready for Bubby's different **"cookie cookie"** recordings. A random loaded line replaces the normal purchase sound **only after the server confirms buying a new cookie oven/recipe**. Failed purchases, baking-speed upgrades, toppings, cash collection, and other actions keep their own sounds. Only the buyer hears the line, through their SFX mute/volume settings. The next purchase avoids repeating the previous recording when another is available; rapid purchases replace the prior line instead of overlapping voices. Playback keeps his original voice pitch.
+
+1. Record/export six short clips, preferably WAV, MP3, or OGG, with similar loudness and little silence at either end.
+2. Upload each in **Roblox Creator Dashboard → Creations → Development Items → Audio** (menu names can vary). Use the account/group that owns the game and wait for moderation/processing.
+3. In each audio asset's permissions, grant the game/experience access if needed. An audio ID alone does not grant permission.
+4. In Studio, stop Play and open **ReplicatedStorage → CookieTycoon → AudioConfig**. Replace the six zeros in `OvenPurchaseVoices`, for example:
+
+   ```lua
+   OvenPurchaseVoices = { 1111111111, 2222222222, 3333333333, 4444444444, 5555555555, 6666666666 },
+   ```
+
+   Those are example numbers; enter your actual numeric audio asset IDs. You can start with fewer uploaded clips and leave unused slots at 0.
+5. Publish the place and restart outdated servers. You can open and test the game before the recordings are uploaded; empty or unavailable slots use the existing purchase cue.
+
+The recordings have not been supplied yet. No substitute voice is included. Keep your configured audio IDs when downloading a newer game file.
+
 Regenerate the original composition and effects with `python tools/build_audio.py`. Its score is exported to `src/shared/MusicScore.luau`, and audio hashes/durations to `assets/audio/manifest.json`. Python requires NumPy. Rebuild the Studio downloads after any source or audio change.
 
 ## Check in Studio and Roblox
@@ -28,5 +46,6 @@ Regenerate the original composition and effects with `python tools/build_audio.p
 - Reset the avatar and verify no duplicate music players or cue bursts.
 - Check the loop boundary, quiet passages, cue levels, and mobile controls at comfortable device volume.
 - If using the uploaded full mix, verify it loads for another account in the published experience, not just its owner. Test permission failure and sampler fallback.
+- Configure Bubby's clips and buy several different ovens. Confirm varied lines, no immediate repeat when multiple recordings are loaded, and no overlapping voices. A failed purchase or speed upgrade must not trigger them. Test SFX mute, 0% volume, a second client, and an unavailable clip's fallback.
 
 The cloud environment validates WAV integrity, levels, loop continuity, score bounds, scripts, and packaging. Roblox Studio/live clients are required to validate engine audio playback and uploaded-asset permissions.

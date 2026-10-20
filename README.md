@@ -14,7 +14,7 @@ See [the full cookie valley feature guide and playtest checklist](VALLEY.md) for
 
 The [Workshop update](WORKSHOP.md) adds a hotbar cookie bag, left-click rolling-pin mining inside a cave, paid conveyor expansion and decorations, thirty different cookie buffs, recipe-themed ovens, varied NPC personalities/appearances, free gifts with notifications, randomized activity quests without waypoints, harder obbys, admin flight, and improved mountain/waterfall/leaderboard models. New players build their first conveyor for free; old saves retain built lines.
 
-**Valley Afterglow** is a new original ambient soundtrack. Its built-in score plays immediately; an optional full WAV mix is included in the Studio ZIP. Music and SFX have separate saved mute buttons and 0–100% volume sliders. The friend's old song is no longer selected. See [audio setup](AUDIO.md).
+**Valley Afterglow** is a new original ambient soundtrack. Its built-in score plays immediately; an optional full WAV mix is included in the Studio ZIP. Music and SFX have separate saved mute buttons and 0–100% volume sliders. The friend's old song is no longer selected. Six configurable voice slots can replace new-oven purchase sounds with Bubby's recordings once uploaded. See [audio setup](AUDIO.md).
 
 Recipes have **six rarity tiers**, from Common (1×) to Mythic (6×). In **Toppings**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible decorations. See [rarity and topping details](CRAFTING.md).
 

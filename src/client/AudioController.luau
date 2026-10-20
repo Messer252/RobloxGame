@@ -39,7 +39,7 @@ function AudioController.start(player, requestAction)
 		musicStatus = Config.FallbackMusicEnabled and "Ready" or "Unconfigured",
 		ready = false, dirty = false, alive = true, revision = 0,
 		musicCursor = 0, effectCursor = 0, noteIndex = 1, epoch = os.clock(),
-		lastCues = {}, connections = {}, voices = {}, samples = {}, effectEpoch = 0,
+		lastCues = {}, connections = {}, voices = {}, samples = {}, ovenVoices = {}, effectEpoch = 0,
 	}, AudioController)
 	self.folder = Instance.new("Folder")
 	self.folder.Name = "CookieCornerAudio"
@@ -67,6 +67,10 @@ function AudioController.start(player, requestAction)
 	for name, id in pairs(Config.Effects) do
 		local uri = assetId(id)
 		if uri then self.samples[name] = sound(name, uri, self.effectsGroup, self.folder) end
+	end
+	for index, id in ipairs(Config.OvenPurchaseVoices or {}) do
+		local uri = assetId(id)
+		if uri then table.insert(self.ovenVoices, sound("BubbyCookieCookie" .. index, uri, self.effectsGroup, self.folder)) end
 	end
 	local musicUri = assetId(Config.MusicAssetId)
 	if musicUri then
@@ -119,7 +123,13 @@ function AudioController.start(player, requestAction)
 		local preload = { self.voices[1].sound }
 		if self.track then table.insert(preload, self.track) end
 		for _, sample in pairs(self.samples) do table.insert(preload, sample) end
+		for _, voice in ipairs(self.ovenVoices) do table.insert(preload, voice) end
 		pcall(function() ContentProvider:PreloadAsync(preload) end)
+		if self.alive and #self.ovenVoices > 0 then
+			local loaded = false
+			for _, voice in ipairs(self.ovenVoices) do if voice.IsLoaded then loaded = true end end
+			if not loaded then warn("Cookie Corner: Bubby's oven voices could not load. Check audio IDs, moderation and experience permissions; the normal purchase cue remains available. See AUDIO.md.") end
+		end
 		if self.alive and not self.voices[1].sound.IsLoaded then
 			warn("Cookie Corner: bundled chime unavailable. Upload the included WAVs and configure AudioConfig for this experience.")
 		end
@@ -196,6 +206,7 @@ function AudioController:_apply()
 	if not self.effects then
 		self:_stopVoices(false)
 		for _, sample in pairs(self.samples) do sample:Stop() end
+		for _, voice in ipairs(self.ovenVoices) do voice:Stop() end
 	end
 	self.Changed:Fire()
 end
@@ -243,12 +254,33 @@ function AudioController:SetVolume(channel, value)
 	self:_queueSave()
 end
 
+function AudioController:_playOvenVoice()
+	local loaded, fresh = {}, {}
+	for _, voice in ipairs(self.ovenVoices) do
+		if voice.IsLoaded then
+			table.insert(loaded, voice)
+			if voice.SoundId ~= self.lastOvenVoice then table.insert(fresh, voice) end
+		end
+	end
+	-- Avoid an immediate repeat when another recording is ready. Unavailable
+	-- recordings never delay a purchase or suppress the normal fallback cue.
+	local choices = #fresh > 0 and fresh or loaded
+	if #choices == 0 then return false end
+	local chosen = choices[math.random(#choices)]
+	for _, voice in ipairs(self.ovenVoices) do voice:Stop() end
+	self.lastOvenVoice = chosen.SoundId
+	chosen.Volume, chosen.PlaybackSpeed, chosen.TimePosition = .8, 1, 0
+	chosen:Play()
+	return true
+end
+
 function AudioController:PlayCue(name)
 	local cue = Score.Cues[name]
-	if not self.alive or not self.ready or not self.effects or not cue then return end
+	if not self.alive or not self.ready or not self.effects or self.effectsVolume == 0 or not cue then return end
 	local now = os.clock()
 	if now - (self.lastCues[name] or -math.huge) < (name == "Click" and 0.06 or 0.18) then return end
 	self.lastCues[name] = now
+	if name == "BuyRecipe" and self:_playOvenVoice() then return end
 	local sample = self.samples[name]
 	if sample and sample.IsLoaded then
 		sample.Volume = name == "Click" and 0.35 or 0.8
