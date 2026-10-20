@@ -56,11 +56,13 @@ The intended grind mixes short jobs, normal bakery play and occasional public ev
 - **Dough mining:** 1 base crumb for breaking an ore, at most once every 20 seconds per player. Dough rewards remain separate.
 - **Production milestones:** 10 base crumbs per 120 bakery batches, capped at 300 base crumbs per UTC day. This source requires a claimed bakery and built conveyor; no offline production is counted.
 - **Cookie meteors:** a fresh server schedules a random arrival after **5–30 minutes**, then continues at randomized intervals. The cookie falls with fire into an outer meadow and can be mined with rolling pins. It has 180 HP; hit damage is capped at 20. Players who contribute at least **three hits** each receive their own **100–350 base crumbs** when it breaks. There is no last-hit-only reward. It expires after five minutes if unfinished; eligible present players have 45 seconds after breaking for pending saves to settle and rewards to apply.
-- **Cookie Hill:** hold the marked hill in the west meadow alone for **8 seconds**, then receive **2 base crumbs every 10 seconds** while it remains uncontested. Another player pauses rewards and restarts capture. There are no currency rewards for kills.
+- **Cookie Hill:** hold the marked hill in the west meadow alone for **8 seconds**, then receive **10 base crumbs every 10 seconds** while it remains uncontested. Another player pauses rewards and restarts capture. There are no currency rewards for kills.
 
 Equipped crumb cards multiply awards; whole-number rewards round down. The production cap counts base crumbs, before card bonuses. Start with jobs and mining, join meteor events when announced, and choose whether to risk the hill. This should make the first inexpensive pack a goal within a normal session, while premium packs reward saving across sessions. **Actual session timing still needs live-player balance testing**; adjust prices/reward constants after watching first-pack times and how often players save for higher packs.
 
 ## Hill combat and food
+
+Cookie Hill now has a raised cookie arena with chocolate inlays, a brass plinth, wide stairs facing the bakeries, an entrance arch, four tall banners, and a crowned cookie trophy with a warm beacon. The elevated sign is visible from farther away. The lit ring marks the actual PvP boundary: gold while available/capturing, green when owned, and red when contested. The arena stays clear of terrain grass and its floor trim has no collision to snag players during combat.
 
 **PvP is restricted to Cookie Hill.** Equip a rolling pin and left-click to swing. Both attacker and target must be living characters inside the hill's horizontal/height bounds, close together and in front of the attacker. Swings have a server cooldown. Damage and knockback do not apply on roads, in bakeries, or elsewhere. New characters receive five seconds of event protection. Invisible/flying admins cannot contest, earn, or fight on the hill.
 

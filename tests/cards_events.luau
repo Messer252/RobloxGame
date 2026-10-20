@@ -118,6 +118,16 @@ return function(test, equal, near, harness, fakeStore)
 		assert(Events.damage(5,14,.3)<Events.damage(5,14,0))
 		equal(Events.damage(5,14,1),Events.damage(5,14,.45))
 	end)
+	test("hill payouts award ten base crumbs and still apply equipped bonuses and the wallet cap", function()
+		local data=Cards.normalize(nil)
+		equal(Cards.award(data,Events.HillReward,false),10)
+		equal(data.crumbs,10)
+		data=Cards.normalize({owned={["34"]=1,["40"]=1},equipped={34,40}})
+		equal(Cards.award(data,Events.HillReward,false),16)
+		data.crumbs=Cards.MaxCrumbs-5
+		equal(Cards.award(data,Events.HillReward,false),5)
+		equal(data.crumbs,Cards.MaxCrumbs)
+	end)
 	test("each recipe has only two signature toppings and removed universal coatings cannot be purchased", function()
 		for index, recipe in ipairs(Recipes) do
 			local a,b = assert(Crafting.option(index,"Glaze")), assert(Crafting.option(index,"Sprinkles"))
@@ -155,6 +165,11 @@ return function(test, equal, near, harness, fakeStore)
 		end end
 		assert(Shape.lake(-285,-370)); assert(not Shape.lake(0,0))
 		near(Shape.height(0,0),-6)
+		for x=-309,-261,4 do for z=376,424,4 do
+			if Events.onHill(x,11,z) then
+				assert(Shape.height(x,z)<=6 and not Shape.grassAllowed(x,z))
+			end
+		end end
 	end)
 	test("terrain and grass stay below all eight bakery floors including voxel edges", function()
 		local Map = require("../src/shared/MapLayout")

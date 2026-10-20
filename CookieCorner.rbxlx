@@ -1706,7 +1706,9 @@ local function clearanceDistance(x, z)
 	return distance
 end
 
-function Shape.grassAllowed(x, z) return clearanceDistance(x, z) >= 12 end
+function Shape.grassAllowed(x, z)
+	return clearanceDistance(x, z) >= 12 and (x + 285)^2 + (z - 400)^2 > 34^2
+end
 function Shape.lake(x, z) return x > -355 and x < -215 and z > -425 and z < -315 end
 function Shape.height(x, z)
 	local distance = clearanceDistance(x, z)
@@ -1720,7 +1722,8 @@ function Shape.height(x, z)
 		if public then height += smooth((math.abs(x) - 215) / 110) * (2.3 + 2.5 * math.sin(z / 51) * math.cos(x / 71)) end
 	end
 	local hillDistance = math.sqrt((x + 285)^2 + (z - 400)^2)
-	if hillDistance < 60 then height = math.max(height, 8 * (1 - smooth((hillDistance - 25) / 35))) end
+	-- A broad, grass-free crown supports the arena without clipping its deck.
+	if hillDistance < 60 then height = math.max(height, 6 * (1 - smooth((hillDistance - 31) / 29))) end
 	-- Keep the terrain well below constructed surfaces, then blend back into
 	-- the meadow. Ground material on this shoulder also suppresses grass blades.
 	local clearance = 1 - smooth(distance / 12)
@@ -1735,7 +1738,7 @@ return Shape
       <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">ValleyEvents</string>
-          <string name="Source"><![CDATA[local Events = { HillX = -285, HillZ = 400, HillRadius = 24, CaptureSeconds = 8, PayoutSeconds = 10 }
+          <string name="Source"><![CDATA[local Events = { HillX = -285, HillZ = 400, HillRadius = 24, CaptureSeconds = 8, PayoutSeconds = 10, HillReward = 10 }
 function Events.onHill(x, y, z) return (x - Events.HillX)^2 + (z - Events.HillZ)^2 <= Events.HillRadius^2 and y >= 7 and y <= 21 end
 function Events.damage(pin, attack, defense) return math.max(1, math.floor((10 + math.clamp(pin, 1, 5) * 2 + (attack or 0)) * (1 - math.clamp(defense or 0, 0, .45)))) end
 function Events.meteorDelay(roll) return 300 + math.min(1500, math.floor(math.clamp(roll, 0, 1) * 1501)) end
@@ -5494,17 +5497,96 @@ local Rules, Cards, Polish, Life = require(Shared.ValleyEvents), require(Shared.
 local W, Assets = require(script.Parent.WorldWidgets), require(script.Parent.AssetLibrary)
 local Events = {}
 Events.__index = Events
+local gold, cocoa = Color3.fromRGB(255, 205, 97), Color3.fromRGB(77, 47, 37)
+local rewardText = Rules.HillReward .. " Star Crumbs / " .. Rules.PayoutSeconds .. "s"
+local idleText = "COOKIE HILL • PVP ZONE\nHold alone " .. Rules.CaptureSeconds .. "s • " .. rewardText
+
+local function decoration(part)
+	part.CanCollide, part.CanTouch, part.CanQuery = false, false, false
+	return part
+end
+
+local function buildHill(self, folder)
+	local center = Vector3.new(Rules.HillX, 0, Rules.HillZ)
+	local function piece(name, size, offset, tint, material)
+		return W.part(folder, name, size, center + offset, tint, material)
+	end
+	local function disc(name, radius, y, thickness, tint, material)
+		local p = piece(name, Vector3.new(thickness, radius * 2, radius * 2), Vector3.new(0, y, 0), tint, material)
+		p.Shape, p.CFrame = Enum.PartType.Cylinder, p.CFrame * CFrame.Angles(0, 0, math.pi / 2)
+		return p
+	end
+	disc("Hill Slate Foundation", 29, 6.25, .9, Color3.fromRGB(87, 103, 107), Enum.Material.Slate)
+	disc("Hill Brass Plinth", 26.5, 7.15, .9, gold, Enum.Material.Metal)
+	disc("KOTH Cookie Hill", Rules.HillRadius, 8, .6, Color3.fromRGB(206, 153, 91), Enum.Material.Sandstone)
+	-- The illuminated ring follows the server's actual PvP radius. All trim is
+	-- non-colliding, leaving an open fighting floor without snags or railings.
+	self.hillTrim = {}
+	for index = 1, 64 do
+		local angle = index / 64 * math.pi * 2
+		local offset = Vector3.new(math.cos(angle) * Rules.HillRadius, 8.4, math.sin(angle) * Rules.HillRadius)
+		local rim = decoration(piece("PvP Boundary Light", Vector3.new(2.4, .16, .45), offset, gold, Enum.Material.Neon))
+		rim.CFrame = CFrame.lookAt(rim.Position, center + Vector3.new(0, 8.4, 0))
+		table.insert(self.hillTrim, rim)
+	end
+	for index = 1, 14 do
+		local angle, radius = index * 2.39996, 5 + (index % 4) * 4
+		local chip = decoration(piece("Arena Chocolate Inlay", Vector3.new(2.3, .08, 1.7), Vector3.new(math.cos(angle) * radius, 8.34, math.sin(angle) * radius), cocoa, Enum.Material.SmoothPlastic))
+		chip.CFrame *= CFrame.Angles(0, angle, 0)
+	end
+	-- Wide steps face the bakeries. Solid risers follow the natural hill slope.
+	for step = 1, 8 do
+		piece("Hill Entrance Step", Vector3.new(4.2, step + 1, 14), Vector3.new(58 - step * 4, (step - 1) / 2, 0), Color3.fromRGB(143, 157, 153), Enum.Material.Slate)
+		decoration(piece("Step Brass Edge", Vector3.new(.2, .06, 14), Vector3.new(60 - step * 4, step + .04, 0), gold, Enum.Material.Metal))
+	end
+	for _, side in ipairs({-1, 1}) do
+		piece("Entrance Stone Foot", Vector3.new(4, 1.5, 4), Vector3.new(41, 5, side * 10), cocoa, Enum.Material.Slate)
+		piece("Entrance Pillar", Vector3.new(1.4, 15, 1.4), Vector3.new(41, 12.5, side * 10), cocoa, Enum.Material.Wood)
+		local lantern = decoration(piece("Hill Entrance Lantern", Vector3.new(2, 2, 2), Vector3.new(41, 20.8, side * 10), gold, Enum.Material.Neon))
+		local light = Instance.new("PointLight")
+		light.Color, light.Brightness, light.Range, light.Parent = gold, 1.5, 24, lantern
+	end
+	local arch = piece("Cookie Hill Entrance Arch", Vector3.new(2, 2.2, 24), Vector3.new(41, 20, 0), cocoa, Enum.Material.Wood)
+	local entryText = W.label(arch, "COOKIE HILL\nFight inside the gold ring • Hold alone to earn", 100)
+	entryText.Parent.Size, entryText.Parent.StudsOffset = UDim2.fromOffset(310, 55), Vector3.new(0, 4, 0)
+	entryText.TextColor3 = gold
+	for index = 1, 4 do
+		local angle = math.pi / 4 + (index - 1) * math.pi / 2
+		local offset = Vector3.new(math.cos(angle) * 33, 0, math.sin(angle) * 33)
+		piece("Arena Banner Foot", Vector3.new(3, 1, 3), offset + Vector3.new(0, 6.5, 0), cocoa, Enum.Material.Slate)
+		piece("Arena Banner Pole", Vector3.new(.45, 17, .45), offset + Vector3.new(0, 15, 0), gold, Enum.Material.Metal)
+		local banner = decoration(piece("Gold Arena Banner", Vector3.new(4.5, 7, .18), offset + Vector3.new(2, 19, 0), Color3.fromRGB(154, 79, 52), Enum.Material.Fabric))
+		decoration(piece("Banner Gold Emblem", Vector3.new(1.5, 1.5, .22), banner.Position - center + Vector3.new(0, .5, .1), gold, Enum.Material.Metal))
+	end
+	-- A tall cookie trophy and warm beacon make the hill visible over the forest.
+	local pole = piece("Hill Flagpole", Vector3.new(.7, 27, .7), Vector3.new(-27, 20, 0), gold, Enum.Material.Metal)
+	self.flag = decoration(piece("Hill Flag", Vector3.new(9, 5, .18), Vector3.new(-22.5, 28, 0), gold, Enum.Material.Fabric))
+	local trophy = decoration(piece("Champion Cookie Trophy", Vector3.new(.9, 9, 9), Vector3.new(-27, 36, 0), Color3.fromRGB(219, 161, 89), Enum.Material.Sandstone))
+	trophy.Shape, trophy.CFrame = Enum.PartType.Cylinder, trophy.CFrame * CFrame.Angles(0, math.pi / 2, 0)
+	for index = 1, 9 do
+		local angle, radius = index * 2.39996, 1 + (index % 3) * 1.15
+		local chip = decoration(piece("Trophy Chocolate Chip", Vector3.new(.8, .9, .25), Vector3.new(-27 + math.cos(angle) * radius, 36 + math.sin(angle) * radius, .55), cocoa))
+		chip.CFrame *= CFrame.Angles(0, 0, angle)
+	end
+	decoration(piece("Champion Crown Band", Vector3.new(6, .65, 1.2), Vector3.new(-27, 41, 0), gold, Enum.Material.Metal))
+	for index = -1, 1 do
+		decoration(piece("Champion Crown Point", Vector3.new(1.2, index == 0 and 2.8 or 2, 1.2), Vector3.new(-27 + index * 2.2, 42, 0), gold, Enum.Material.Metal))
+	end
+	local beacon = decoration(piece("Hill Golden Beacon", Vector3.new(.5, 32, .5), Vector3.new(-27, 59, 0), gold, Enum.Material.Neon))
+	beacon.Transparency, beacon.CastShadow = .65, false
+	self.hillText = W.label(pole, idleText, 420)
+	self.hillText.Parent.Size, self.hillText.Parent.StudsOffset = UDim2.fromOffset(360, 78), Vector3.new(0, 27, 0)
+	self.hillText.TextSize, self.hillText.TextColor3 = 18, gold
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius, corner.Parent = UDim.new(0, 12), self.hillText
+end
+
 function Events.start(context)
 	local self = setmetatable({ context = context, nextMeteor = os.clock() + Rules.meteorDelay(math.random()), cooldowns = {}, born = {} }, Events)
 	local folder = Instance.new("Folder")
 	folder.Name, folder.Parent = "Star Crumb Events", context.World
 	self.folder = folder
-	local hill = W.part(folder, "KOTH Cookie Hill", Vector3.new(.6, 48, 48), Vector3.new(Rules.HillX, 8, Rules.HillZ), Color3.fromRGB(162, 125, 75), Enum.Material.Slate)
-	hill.Shape, hill.CFrame = Enum.PartType.Cylinder, hill.CFrame * CFrame.Angles(0, 0, math.pi/2)
-	local pole = W.part(folder, "Hill Flagpole", Vector3.new(.4, 19, .4), Vector3.new(Rules.HillX, 17, Rules.HillZ), Color3.fromRGB(186, 169, 135), Enum.Material.Metal)
-	self.flag = W.part(folder, "Hill Flag", Vector3.new(8, 4, .15), pole.Position + Vector3.new(4, 6, 0), Color3.fromRGB(220, 185, 98))
-	self.hillText = W.label(pole, "COOKIE HILL • PVP ZONE\nHold alone 8s • 2 Star Crumbs / 10s", 110)
-	self.hillText.Parent.Size, self.hillText.Parent.StudsOffset = UDim2.fromOffset(300, 65), Vector3.new(0, 8, 0)
+	buildHill(self, folder)
 	local function mark(player)
 		self.born[player] = os.clock()
 		player.CharacterAdded:Connect(function() self.born[player] = os.clock() end)
@@ -5598,15 +5680,20 @@ function Events:Step()
 		local owner = occupants[1]
 		if self.candidate ~= owner then self.candidate, self.capture, self.owner = owner, now, nil end
 		if not self.owner and now - self.capture >= Rules.CaptureSeconds then self.owner, self.nextPayout = owner, now + Rules.PayoutSeconds end
-		self.hillText.Text = self.owner and ("@" .. owner.Name .. " owns COOKIE HILL\n2 Star Crumbs every 10s • PVP ON") or ("@" .. owner.Name .. " capturing\n" .. math.max(0, math.ceil(Rules.CaptureSeconds - (now-self.capture))) .. "s • PVP ON")
+		self.hillText.Text = self.owner and ("@" .. owner.Name .. " owns COOKIE HILL\n" .. rewardText .. " • PVP ON") or ("@" .. owner.Name .. " capturing\n" .. math.max(0, math.ceil(Rules.CaptureSeconds - (now-self.capture))) .. "s • PVP ON")
 		if self.owner and now >= self.nextPayout then
 			self.nextPayout = now + Rules.PayoutSeconds
 			local state = self.context.Usable(owner)
-			if state then Cards.award(state.data.life.cards, 2, state.perks.ThirdCardSlot); self.context.Changed(owner, state) end
+			if state then Cards.award(state.data.life.cards, Rules.HillReward, state.perks.ThirdCardSlot); self.context.Changed(owner, state) end
 		end
 	else
 		self.candidate, self.owner = nil, nil
-		self.hillText.Text = #occupants > 1 and "COOKIE HILL CONTESTED\nNo rewards until one baker remains • PVP ON" or "COOKIE HILL • PVP ZONE\nHold alone 8s • 2 Star Crumbs / 10s"
+		self.hillText.Text = #occupants > 1 and "COOKIE HILL CONTESTED\nNo rewards until one baker remains • PVP ON" or idleText
+	end
+	local hillColor = #occupants > 1 and Color3.fromRGB(255, 113, 94) or self.owner and Color3.fromRGB(124, 235, 169) or gold
+	if self.hillColor ~= hillColor then
+		self.hillColor, self.flag.Color, self.hillText.TextColor3 = hillColor, hillColor, hillColor
+		for _, rim in ipairs(self.hillTrim) do rim.Color = hillColor end
 	end
 	if not self.meteor and now >= self.nextMeteor then self:SpawnMeteor(); self.nextMeteor = now + Rules.meteorDelay(math.random()) end
 	local meteor = self.meteor

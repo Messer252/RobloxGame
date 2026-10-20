@@ -17,7 +17,9 @@ local function clearanceDistance(x, z)
 	return distance
 end
 
-function Shape.grassAllowed(x, z) return clearanceDistance(x, z) >= 12 end
+function Shape.grassAllowed(x, z)
+	return clearanceDistance(x, z) >= 12 and (x + 285)^2 + (z - 400)^2 > 34^2
+end
 function Shape.lake(x, z) return x > -355 and x < -215 and z > -425 and z < -315 end
 function Shape.height(x, z)
 	local distance = clearanceDistance(x, z)
@@ -31,7 +33,8 @@ function Shape.height(x, z)
 		if public then height += smooth((math.abs(x) - 215) / 110) * (2.3 + 2.5 * math.sin(z / 51) * math.cos(x / 71)) end
 	end
 	local hillDistance = math.sqrt((x + 285)^2 + (z - 400)^2)
-	if hillDistance < 60 then height = math.max(height, 8 * (1 - smooth((hillDistance - 25) / 35))) end
+	-- A broad, grass-free crown supports the arena without clipping its deck.
+	if hillDistance < 60 then height = math.max(height, 6 * (1 - smooth((hillDistance - 31) / 29))) end
 	-- Keep the terrain well below constructed surfaces, then blend back into
 	-- the meadow. Ground material on this shoulder also suppresses grass blades.
 	local clearance = 1 - smooth(distance / 12)
