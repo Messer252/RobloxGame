@@ -13,9 +13,11 @@ The art is delivered in **four 5-column × 2-row illustration sheets**, ten anim
 
 ![TCG card preview](Preview.png)
 
-Open **Gallery.html** in this folder, or **CardGallery.html** from the Studio ZIP, to browse the finished card designs. Keep all four PNGs beside the HTML. Search by creature name or filter by rarity.
+**Preview.png** shows the finished card designs and is included in the Studio ZIP. An optional **Gallery.html** remains in this source folder for developers; it is not included in the Studio download and is not used by the Roblox game.
 
 ## Use the illustrated cards in Roblox
+
+For a beginner walkthrough covering both the card sheets and audio, see [Upload audio and TCG artwork](https://github.com/Messer252/RobloxGame/blob/main/UPLOAD-ASSETS.md).
 
 1. Upload the four **CookieTCG_*.png** images through Studio Asset Manager or Creator Dashboard using the experience's creator account/group.
 2. Open **ReplicatedStorage → CookieTycoon → CardCatalog → ArtSheets**.

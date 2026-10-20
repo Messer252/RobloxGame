@@ -52,6 +52,11 @@ Studio Access to API Services in its Experience Settings > Security.
 FULL SETUP, SAVING, AND PUBLIC ACCESS GUIDE:
 https://github.com/Messer252/RobloxGame/blob/main/STUDIO_SETUP.md
 
+AUDIO AND TCG IMAGE UPLOAD GUIDE:
+Open UPLOAD-ASSETS.md in this ZIP, or read it on GitHub:
+https://github.com/Messer252/RobloxGame/blob/main/UPLOAD-ASSETS.md
+OGG audio is supported. The guide covers permissions and every asset ID slot.
+
 ADMIN TOOLS
 unbenator is configured as an admin. To add friends, stop the playtest and open
 ServerScriptService > Tycoon > AdminConfig. Add their account usernames inside
@@ -89,8 +94,8 @@ Crumbs survive. Entrances/registers now face the road and terrain is continuous.
 Cookie Bag > Cards has 40 animals, five earned-currency packs and two free slots.
 Upload CookieTCG_01.png through CookieTCG_04.png as Roblox images and set
 each matching Id in CardCatalog.ArtSheets. The compass is removed.
-CardGallery.html previews the TCG artwork, abilities and quips. Keep all four
-PNG sheets beside it when opening it in a browser.
+Preview.png shows the card artwork. The optional browser gallery is not included
+in this Studio download; the game does not need it.
 The optional third card-slot pass needs your own ID and a 150 Robux price in
 Creator Dashboard. It stays disabled at ID 0. See the full guide for setup.
 Meteors arrive every random 5-30 minutes; Cookie Hill is the only PvP area.
@@ -145,19 +150,28 @@ def main():
         for effect in METEOR_AUDIO:
             archive.write(effect, effect.name)
         archive.write(ROOT / "AUDIO.md", "AUDIO.md")
+        archive.write(ROOT / "UPLOAD-ASSETS.md", "UPLOAD-ASSETS.md")
         archive.write(ROOT / "ADMINS.md", "ADMINS.md")
         archive.write(ROOT / "VALLEY.md", "VALLEY.md")
         archive.write(ROOT / "WORKSHOP.md", "WORKSHOP.md")
         archive.write(ROOT / "CARDS-AND-EVENTS.md", "CARDS-AND-EVENTS.md")
         for sheet in sorted((ROOT / "assets/cards").glob("CookieTCG_*.png")):
             archive.write(sheet, sheet.name)
-        archive.write(ROOT / "assets/cards/Gallery.html", "CardGallery.html")
         archive.write(ROOT / "assets/cards/Preview.png", "Preview.png")
         archive.write(ROOT / "assets/cards/README.md", "CARD_ART_SETUP.md")
         archive.write(ROOT / "assets/LICENSE.txt", "ASSET_LICENSE.txt")
     with ZipFile(ARCHIVE) as archive:
         assert archive.testzip() is None, "Download ZIP failed its integrity check"
+        # Keep browser previews and OS scripts/executables out of game downloads.
+        # Every entry is a plain root-level place, image, audio file or guide.
+        allowed = {".rbxlx", ".png", ".wav", ".md", ".txt"}
+        for entry in archive.infolist():
+            path = Path(entry.filename)
+            assert path.name == entry.filename and path.suffix.lower() in allowed, "Unexpected download file type/path"
+            assert not entry.flag_bits & 1, "Unexpected encrypted ZIP entry"
+        assert "CardGallery.html" not in archive.namelist(), "Browser preview must not be bundled"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read("UPLOAD-ASSETS.md") == (ROOT / "UPLOAD-ASSETS.md").read_bytes(), "Packaged upload guide is stale"
         assert archive.read(MUSIC.name) == MUSIC.read_bytes(), "Packaged song differs from the supplied original"
         for effect in METEOR_AUDIO:
             assert archive.read(effect.name) == effect.read_bytes(), "Packaged meteor effect differs from the generated WAV"

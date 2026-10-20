@@ -42,7 +42,7 @@ Star Crumbs have no cash-to-crumb or Robux-to-crumb conversion. Cards/crumbs sur
 
 The forty cookie animals now use original **hand-drawn anime TCG illustrations** with inked contours, cel shading, action poses and richer rare/fantasy scenes. Card faces have nameplates, rarity pips, framed art, ability panels, flavor text, collector numbers, and animated foil borders for legendary/mythical cards. Names, abilities and quips remain typeset by the UI rather than baked into images.
 
-The ZIP includes four **CookieTCG_01.png** through **CookieTCG_04.png** sheets, ten illustrations per image in a 5×2 grid. It also includes **CardGallery.html**; keep the four images beside it and open it in a browser to search/filter the complete collection.
+The ZIP includes four **CookieTCG_01.png** through **CookieTCG_04.png** sheets, ten illustrations per image in a 5×2 grid, plus a static **Preview.png**. The optional browser gallery remains in the source repository and is not bundled with the Studio download. The game does not need an HTML file.
 
 Upload the four PNGs as Roblox images. In **ReplicatedStorage → CookieTycoon → CardCatalog → ArtSheets**, set each sheet's `Id` to its matching numeric image asset ID. Keep the supplied dimensions, grid and card ranges unchanged. These replace the earlier single CookieAnimals atlas. Native 3D previews work until the new sheet IDs are configured. This cloud environment cannot upload assets into your Roblox account.
 

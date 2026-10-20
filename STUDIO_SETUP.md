@@ -2,6 +2,8 @@
 
 This guide takes you from the supplied game file to a published, playable Roblox game. You do not need a terminal, Rojo, or any plugins when using the ready-made place file.
 
+For the card illustrations, Bubby's voice recordings, meteor crash, and optional full music mix, follow the separate [audio and TCG artwork upload guide](UPLOAD-ASSETS.md). OGG audio is supported.
+
 The place includes all game scripts, 30 cookie models, 20 bakery props, three merging physical conveyors per bakery, rarities, toppings, Golden Chip rebirths, NPC scavenger hunts, calm music, and progress saving. Robux purchases remain disabled until you configure your own offers.
 
 ## 1. Download the game and install Studio

@@ -4,7 +4,7 @@
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
-**Latest update:** [40 animal cards, five packs, Star Crumbs, meteors, Cookie Hill PvP, natural terrain, rebirth fixes, road-side entrances and expanded decoration purchases](CARDS-AND-EVENTS.md). Four revised anime TCG art sheets and a searchable card gallery are included; upload the images and enter their IDs in CardCatalog.ArtSheets. The compass is removed. Two card slots are free; the optional third-slot pass remains disabled until configured.
+**Latest update:** [40 animal cards, five packs, Star Crumbs, meteors, Cookie Hill PvP, natural terrain, rebirth fixes, road-side entrances and expanded decoration purchases](CARDS-AND-EVENTS.md). Four revised anime TCG art sheets and a static card preview are included in the Studio download; upload the images and enter their IDs in CardCatalog.ArtSheets. The optional source-code browser gallery is not bundled. The compass is removed. Two card slots are free; the optional third-slot pass remains disabled until configured.
 
 An eight-player Roblox cookie tycoon with 30 recipes, 15 baking-speed levels, Golden Chip rebirths, three permanent upgrade paths, and saved progress. Each bakery has **three wide, curved feeder conveyors merging into one delivery line**, with taller rounded rails, connected flat surfaces, ovens unlocked along the lanes, and a cookie collection box at the end. Claim a free bakery to arrive beside your starter oven and first purchase; respawning returns you there while you own that plot. Bake automatically, collect earnings, and progress along the belt.
 
@@ -35,6 +35,8 @@ Try the **Easy, Medium, and Hard obbys** east of the bakeries for **+10%, +30%, 
 ## Open in Roblox Studio
 
 **New to Studio? Use the game download above and follow the [full upload, saving, testing, and publishing guide](STUDIO_SETUP.md).** The steps below are for developers building or assembling the GitHub source.
+
+For audio recordings and the four TCG illustration sheets, use the [step-by-step asset upload guide](UPLOAD-ASSETS.md). It includes OGG support, experience permissions, and the exact places to paste your audio/image IDs.
 
 With Rojo **7.7.1** installed:
 
