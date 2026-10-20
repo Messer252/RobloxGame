@@ -14,5 +14,6 @@ return {
 	Effects = {
 		Click = 0, Claim = 0, Collect = 0, BuyRecipe = 0, UpgradeOven = 0,
 		BuyModifier = 0, UpgradePermanent = 0, Rebirth = 0, Error = 0,
+		MeteorIncoming = 0, MeteorCrash = 0,
 	},
 }

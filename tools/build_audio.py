@@ -30,6 +30,8 @@ CUES = {
     "UpgradePermanent": [(0, 72, .32, .60), (.15, 79, .32, .55), (.30, 84, .32, .55), (.45, 88, .60, .50)],
     "Rebirth": [(i * .13, note, .65, .62) for i, note in enumerate((60, 64, 67, 72, 76, 79, 84, 88))],
     "Error": [(0, 60, .17, .35), (.16, 59, .23, .30)],
+    "MeteorIncoming": [(0, 84, .18, .40), (.20, 79, .18, .40), (.40, 72, .35, .45)],
+    "MeteorCrash": [(0, 48, .6, .65), (.035, 36, .95, .7), (.09, 43, .4, .3), (.20, 38, .55, .4), (.42, 36, .6, .3)],
 }
 
 
@@ -97,6 +99,30 @@ def write_wav(name, buffer):
             "channels": 2, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def meteor_crash():
+    """Original arcade impact: stepped square-wave dive, crunchy noise, bass tail."""
+    seconds = 2.1
+    t = np.arange(round(seconds * RATE)) / RATE
+    # Sample-and-hold noise and amplitude quantization give a retro console feel.
+    rng = np.random.default_rng(2522026)
+    held = np.repeat(rng.uniform(-1, 1, math.ceil(len(t) / 8)), 8)[:len(t)]
+    dive_hz = np.round((1400 * np.exp(-t * 9) + 65) / 12) * 12
+    dive = np.sign(np.sin(2 * np.pi * np.cumsum(dive_hz) / RATE)) * np.exp(-t * 10)
+    impact_t = np.maximum(0, t - .32)
+    impact = (t >= .32).astype(float)
+    noise = held * np.exp(-impact_t * 4.3) * impact
+    bass_hz = 35 + 95 * np.exp(-impact_t * 12)
+    bass = np.sign(np.sin(2 * np.pi * np.cumsum(bass_hz) / RATE)) * np.exp(-impact_t * 4) * impact
+    signal = np.round((dive * .22 + noise * .52 + bass * .25) * 64) / 64
+    signal -= signal.mean()
+    signal *= np.minimum(1, t / .003) * np.minimum(1, (seconds - t) / .06)
+    buffer = np.zeros((len(t), 2))
+    add(buffer, signal, 0, .85)
+    add(buffer, signal * np.exp(-t * 2), .21, .12, -.35)
+    add(buffer, signal * np.exp(-t * 3), .38, .08, .35)
+    return buffer
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     notes = score()
@@ -107,6 +133,9 @@ def main():
         add(buffer, sample, beat * SECONDS_PER_BEAT, gain, pan, wrap=True)
     records = [write_wav("CookieCornerCafe.wav", buffer)]
     for name, cue in CUES.items():
+        if name == "MeteorCrash":
+            records.append(write_wav("MeteorCrash.wav", meteor_crash()))
+            continue
         length = max(start + duration for start, _, duration, _ in cue) + .12
         buffer = np.zeros((round(length * RATE), 2))
         for start, midi, duration, gain in cue:

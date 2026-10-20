@@ -36,7 +36,7 @@ The Shop's separate [permanent income stages](MONETIZATION.md#permanent-escalati
 
 Baker Biscuit is a standard Roblox R6 Humanoid character in chef clothes. The game requests a Roblox-generated avatar, with a standard R6 jointed fallback if avatar loading is unavailable. The original spoon, whisk, and sugar cube now use rounded metal geometry, curved whisk wires, and a granular sugar surface. They need no texture uploads.
 
-Two boards rank **current-server players** by spendable wallet cash and rebirths, refreshing every two seconds. Ties use user IDs for stable ordering. These are not global or lifetime rankings. Roblox's player list also retains Cash, Rebirths, and GoldenChips. A taped cardboard box labeled **Zach's Box** sits beside the central spawn plaza.
+Two boards show **global saved wallet cash and rebirth rankings**, including offline players, refreshing about once a minute. Existing offline saves import gradually. Cash excludes uncollected earnings and is not a lifetime total. See [global leaderboard details](CARDS-AND-EVENTS.md#global-cash-and-rebirth-boards). Roblox's player list retains the current server's Cash, Rebirths, and GoldenChips. A taped cardboard box labeled **Zach's Box** sits beside the central spawn plaza.
 
 ## Playtest in Roblox Studio
 
@@ -48,7 +48,7 @@ The cloud cannot run Roblox physics, avatars, multiplayer, or purchase prompts. 
 4. Complete all three obbys. Check +10%, +30%, and +50%, the HUD countdown, expiry after five minutes, stronger/same-course refresh, weaker-course rejection, fall reset, and return prompt. Skipping a checkpoint, jumping straight to the finish, or resetting a character must not grant the bonus.
 5. Rebirth with a boost active, then leave and rejoin. Verify the permanent tier stays and the obby keeps its original wall-clock expiry. Check a temporary bonus expiring while logged off.
 6. Verify Biscuit's character and prompts in online and asset-unavailable previews. Complete a hunt and inspect the spoon, whisk, and sugar cube on mobile too.
-7. Collect/spend wallet cash and rebirth as different players. Verify both plaza rankings update, departure removes the row, and Zach's Box label is readable.
+7. Use two published test servers. Save cash/rebirth changes, leave, and verify offline rows remain on both global boards after refresh. Check the initial offline import, cash decreases after spending/rebirth, cached boards during service failures, and Zach's Box label.
 8. Before enabling sales, follow the [purchase checks](MONETIZATION.md#verify-before-enabling-live-offers), including cancel, durable receipt, next-tier eligibility, rebirth, and rejoin.
 
 The deterministic conveyor checks use the actual floor/rail geometry and test **180 horizontal trajectories**: all 30 ovens at two speeds and three starting offsets. They check rail clearance, full cookie-footprint support across joints, curve continuity, outlet release, and counter clearance. These are geometry and steering checks, not a Roblox physics simulation.

@@ -60,6 +60,18 @@ The intended grind mixes short jobs, normal bakery play and occasional public ev
 
 Equipped crumb cards multiply awards; whole-number rewards round down. The production cap counts base crumbs, before card bonuses. Start with jobs and mining, join meteor events when announced, and choose whether to risk the hill. This should make the first inexpensive pack a goal within a normal session, while premium packs reward saving across sessions. **Actual session timing still needs live-player balance testing**; adjust prices/reward constants after watching first-pack times and how often players save for higher packs.
 
+Meteor falls now trigger a prominent incoming banner for everyone in that server, followed by a landing banner, crash cue and expanding impact flash. The original 8-bit `MeteorCrash.wav` and optional warning WAV are in the Studio ZIP. Upload the crash and configure `AudioConfig.Effects.MeteorCrash` to hear the full sound; built-in cues work while that ID is 0. See [audio setup](AUDIO.md#meteor-announcement-and-original-8-bit-crash).
+
+## Global cash and rebirth boards
+
+The two plaza signs show the top eight **saved wallet cash** and **rebirth** rankings across all servers of this experience, including offline players. Account usernames are resolved even when the player is absent. The regular Roblox player list still shows the current server's players.
+
+Boards refresh about once a minute. Profile saves queue ranking updates; each index write reads the latest committed profile rather than unsaved gameplay data. Cash means current saved wallet cash, so spending or rebirth can lower it; collection-bank cash and lifetime earnings are excluded. Expect roughly one to two minutes for ordinary gameplay changes to appear, with longer delays during Roblox service outages. The last successful board stays visible if a refresh fails, labeled as cached.
+
+On the first update, a single server gradually imports existing offline profiles from the game's current DataStore. A saved cursor and renewable lease resume interrupted imports. Larger histories take longer to appear, and players do not need to rejoin for this import. Live joins and successful saves also update their entries. Preview-only Studio profiles never supply ranking scores. No profile or currency is modified by ranking import.
+
+The indexes are `<DataStoreName>_GlobalCash_v1` and `<DataStoreName>_GlobalRebirths_v1`; import progress is `<DataStoreName>_GlobalBackfill_v1`. They use Roblox's shared experience DataStores automatically. Keep the existing `Settings.DataStoreName` to retain the same save history. For Studio persistence tests, use a separate published test experience with Studio API access enabled.
+
 ## Hill combat and food
 
 Cookie Hill now has a raised cookie arena with chocolate inlays, a brass plinth, wide stairs facing the bakeries, an entrance arch, four tall banners, and a crowned cookie trophy with a warm beacon. The elevated sign is visible from farther away. The lit ring marks the actual PvP boundary: gold while available/capturing, green when owned, and red when contested. The arena stays clear of terrain grass and its floor trim has no collision to snag players during combat.
@@ -80,9 +92,9 @@ The two prices remain tied to unlock cost: `$100 + 25%` and `$350 + 50%`. Older 
 
 Save envelope **8** accepts **1–7**, retaining `CookieCorner_PlayerData_v1` and the existing trade journal. New card/currency fields default safely on older saves. Restart outdated servers after publishing.
 
-Automated tests cover exact pack probabilities, unique buffs, equip entitlement/caps, atomic charges and lost-response recovery, rebirth cleanup, daily milestones, meteor bounds, hill damage/bounds, terrain continuity, topping limits, and decoration prerequisites. Complete these Roblox engine checks before public rollout:
+Automated tests cover exact pack probabilities, unique buffs, equip entitlement/caps, atomic charges and lost-response recovery, rebirth cleanup, daily milestones, meteor bounds, hill damage/bounds, terrain continuity, topping limits, decoration prerequisites, global offline ranking imports, cross-server save races, and ranking service outages. Complete these Roblox engine checks before public rollout:
 
-1. Test opposite plots, road-side claim/spawn/register positions, large banners, all fourteen decorations, roof/light purchases, door hinges and window fit.
+1. Test opposite plots, road-side claim/spawn/register positions, compact signs and owner/proximity visibility, all fourteen decorations, roof/light purchases, door hinges and window fit.
 2. Rebirth with a full bag, held cookie, developed bakery, equipped cards, crumbs and food. Verify empty bag, cleared conveyors/box/decorations, retained cards/crumbs and free first-line rebuilding; rejoin too.
 3. Let terrain generation finish; walk the meadow/trails, inspect connected mountain/snow surfaces, lake, cave, forest, and nighttime cookie moon. Test eight-client/mobile performance.
 4. Upload the four TCG sheets and inspect all forty crops, quips, reveal animation, touch/controller controls, rare art and holographic frames. Test fallback previews with each sheet Id set to 0.
@@ -91,3 +103,5 @@ Automated tests cover exact pack probabilities, unique buffs, equip entitlement/
 7. Temporarily shorten meteor scheduling only in a private test copy. Test landing, fire, three-hit participation, multiple contributors, damage cap, timeout, and rewards after a busy save.
 8. With two players, capture/contest/leave the hill, test pin hit direction/range, food damage/defense, knockback, new-character protection, and zero PvP damage outside the hill. Test flying/invisible admin exclusion.
 9. Rename with sufficient/insufficient cash, a filtered name, text-filter failure and rejoin. Confirm filtering failure charges nothing and the public banner never exposes unchecked stored text.
+
+10. Test global boards across two published test servers, leave ranked players offline, and allow the initial old-save import to finish. Check spending/rebirth decreases, username lookup failures, and cached boards during an index outage.

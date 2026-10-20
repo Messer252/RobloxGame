@@ -330,7 +330,7 @@ adminButton.Size, adminButton.Visible = UDim2.new(1, 0, 0, 40), false
 AdminPanel.start(player, remotes, gui, adminButton)
 local bagButton = ordered(button(scroll, "Cookie bag • mine • machines", Color3.fromRGB(66, 114, 100)))
 bagButton.Size = UDim2.new(1, 0, 0, 42)
-LifeClient.start(player, remotes, gui, hud, bagButton)
+LifeClient.start(player, remotes, gui, hud, bagButton, audio)
 local collectButton = ordered(button(scroll, "Collect earnings", Color3.fromRGB(134, 100, 35)))
 local recipeButton = ordered(button(scroll, "Unlock next cookie"))
 local ovenButton = ordered(button(scroll, "Faster conveyor", Color3.fromRGB(103, 82, 147)))

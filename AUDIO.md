@@ -38,6 +38,14 @@ The recordings have not been supplied yet. No substitute voice is included. Keep
 
 Regenerate the original composition and effects with `python tools/build_audio.py`. Its score is exported to `src/shared/MusicScore.luau`, and audio hashes/durations to `assets/audio/manifest.json`. Python requires NumPy. Rebuild the Studio downloads after any source or audio change.
 
+## Meteor announcement and original 8-bit crash
+
+Everyone in the current server receives a **COOKIE METEOR INCOMING!** banner when the fall begins, followed by **COOKIE METEOR LANDED!** at impact three seconds later. The impact banner explains the three-hit participation reward, and an expanding shockwave marks the landing. These announcements stay visible even with SFX muted. They concern the meteor in that server; they do not announce unrelated meteors in other servers.
+
+The new original **MeteorCrash.wav** is a 2.1-second arcade crash made from a stepped square-wave dive, crunchy quantized noise, bass impact and short stereo echoes. **MeteorIncoming.wav** is the optional warning cue. Both are CC0, included in the Studio ZIP, and available under `assets/audio/`. A built-in descending alert/impact cue works immediately; Roblox cannot play a local WAV file directly from a place.
+
+To hear the **full 8-bit crash**, upload `MeteorCrash.wav` as Roblox audio under the game's creator, grant the experience access, and enter its numeric ID in **ReplicatedStorage → CookieTycoon → AudioConfig → Effects → MeteorCrash**. Optionally upload `MeteorIncoming.wav` and configure `Effects.MeteorIncoming` too. Publish and restart outdated servers. Zero IDs, pending moderation, or unavailable recordings keep the built-in cue. Both use each listener's saved SFX mute and volume; music volume stays independent.
+
 ## Check in Studio and Roblox
 
 - Hear the new composition with MusicAssetId 0 and fallback enabled. Confirm the old friend recording never starts.
@@ -47,5 +55,6 @@ Regenerate the original composition and effects with `python tools/build_audio.p
 - Check the loop boundary, quiet passages, cue levels, and mobile controls at comfortable device volume.
 - If using the uploaded full mix, verify it loads for another account in the published experience, not just its owner. Test permission failure and sampler fallback.
 - Configure Bubby's clips and buy several different ovens. Confirm varied lines, no immediate repeat when multiple recordings are loaded, and no overlapping voices. A failed purchase or speed upgrade must not trigger them. Test SFX mute, 0% volume, a second client, and an unavailable clip's fallback.
+- In a private two-player test, trigger a meteor and confirm both clients see the incoming and impact banners, one crash per impact, and the shockwave. Test different SFX levels/mute states, the built-in fallback, and the uploaded crash's experience permissions.
 
 The cloud environment validates WAV integrity, levels, loop continuity, score bounds, scripts, and packaging. Roblox Studio/live clients are required to validate engine audio playback and uploaded-asset permissions.

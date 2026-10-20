@@ -1,5 +1,3 @@
-local Players = game:GetService("Players")
-local Ranks = require(game:GetService("ReplicatedStorage").CookieTycoon.LeaderboardRanks)
 local Progression = require(game:GetService("ReplicatedStorage").CookieTycoon.Progression)
 local Extras = {}
 
@@ -34,7 +32,7 @@ local function ranking(board, key)
 		return t
 	end
 	text(key == "cash" and "BAKERY FORTUNES" or "GOLDEN LEGENDS", 34, 20, 640, 58, 39, Color3.fromRGB(242, 203, 128))
-	text(key == "cash" and "MOST WALLET CASH • THIS SERVER" or "MOST REBIRTHS • THIS SERVER", 36, 83, 630, 30, 20)
+	text(key == "cash" and "MOST SAVED WALLET CASH • ALL SERVERS" or "MOST REBIRTHS • ALL SERVERS", 36, 83, 630, 30, 20)
 	local rows = {}
 	for i = 1, 8 do
 		local y = 133 + (i - 1) * 55
@@ -47,11 +45,11 @@ local function ranking(board, key)
 		amount.TextXAlignment = Enum.TextXAlignment.Right
 		table.insert(rows, { name = name, amount = amount })
 	end
-	text("COOKIE CORNER  /  BAKE • BUILD • REBIRTH", 36, 600, 640, 28, 18, Color3.fromRGB(155, 185, 179))
-	return rows
+	local status = text("Loading global rankings…", 36, 600, 640, 28, 18, Color3.fromRGB(155, 185, 179))
+	return { rows = rows, status = status }
 end
 
-function Extras.create(parent, getState)
+function Extras.create(parent, rankings)
 	local folder = Instance.new("Folder")
 	folder.Name, folder.Parent = "Plaza Extras", parent
 	local boards = {}
@@ -77,16 +75,10 @@ function Extras.create(parent, getState)
 	end
 	task.spawn(function()
 		while folder.Parent do
-			local records = {}
-			for _, player in ipairs(Players:GetPlayers()) do
-				local state = getState(player)
-				if state and not state.closing then
-					table.insert(records, { name = player.DisplayName, userId = player.UserId, cash = state.data.cash, rebirths = state.data.rebirths })
-				end
-			end
-			for key, rows in pairs(boards) do
-				local ordered = Ranks.sort(records, key)
-				for index, row in ipairs(rows) do
+			for key, board in pairs(boards) do
+				local ordered, status = rankings:Get(key)
+				board.status.Text = status
+				for index, row in ipairs(board.rows) do
 					local record = ordered[index]
 					row.name.Text = record and record.name or "—"
 					row.amount.Text = record and ((key == "cash" and "$" or "") .. Progression.format(record[key])) or ""

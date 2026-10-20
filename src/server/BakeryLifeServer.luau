@@ -20,6 +20,8 @@ function Server.start(context)
 	end
 	self.action, self.stateRemote, self.open = remote("LifeAction"), remote("LifeState"), remote("OpenLife")
 	self.packResult = remote("PackResult")
+	self.announcement = remote("WorldAnnouncement")
+	context.Announce = function(kind) self.announcement:FireAllClients(kind) end
 	self.events = require(script.Parent.ValleyEventsServer).start(context)
 	self.features = Features.create(context.World, context.Plots, function(...) self:Action(...) end)
 	self.customers = Customers.create(context.World, function(player, customer) self:OfferCustomer(player, customer) end)

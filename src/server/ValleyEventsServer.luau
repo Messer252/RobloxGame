@@ -114,8 +114,8 @@ function Events:Eligible(player)
 	if not state or state.closing or state.profile.lost or state.profile.closed then return nil end
 	return root, hum
 end
-function Events:Announce(text)
-	for _, player in ipairs(Players:GetPlayers()) do self.context.Notify(player, text) end
+function Events:Announce(kind)
+	self.context.Announce(kind)
 end
 function Events:SpawnMeteor()
 	local spots = { Vector3.new(270, 3, -490), Vector3.new(-265, 3, -500), Vector3.new(285, 3, 510), Vector3.new(-280, 3, 270) }
@@ -136,9 +136,17 @@ function Events:SpawnMeteor()
 	meteor.label = W.label(core, "COOKIE METEOR\nStrike with your rolling pin • 180 HP", 100)
 	meteor.label.Parent.StudsOffset, meteor.label.Parent.Size = Vector3.new(0, 12, 0), UDim2.fromOffset(300, 65)
 	self.meteor = meteor
-	self:Announce("A cookie meteor is falling! Follow its fire in the outer meadow for Star Crumbs.")
+	self:Announce("Incoming")
 	Tween:Create(value, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = CFrame.new(target) }):Play()
-	task.delay(3, function() if self.meteor == meteor then meteor.landed = true end end)
+	task.delay(3, function()
+		if self.meteor ~= meteor or not model.Parent then return end
+		meteor.landed = true
+		self:Announce("Impact")
+		local ring = decoration(W.part(self.folder, "Meteor Impact Shockwave", Vector3.new(.15, 8, 8), target - Vector3.new(0, 1.8, 0), gold, Enum.Material.Neon))
+		ring.Shape, ring.CFrame, ring.Transparency = Enum.PartType.Cylinder, ring.CFrame * CFrame.Angles(0, 0, math.pi / 2), .25
+		Tween:Create(ring, TweenInfo.new(.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = Vector3.new(.1, 64, 64), Transparency = 1 }):Play()
+		Debris:AddItem(ring, 1)
+	end)
 end
 function Events:Swing(player, pinTool)
 	local root = self:Eligible(player)

@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLACE = ROOT / "CookieCorner.rbxlx"
 ARCHIVE = ROOT / "CookieCorner_Studio.zip"
 MUSIC = ROOT / "assets/audio/CookieCornerCafe.wav"
+METEOR_AUDIO = [ROOT / "assets/audio/MeteorCrash.wav", ROOT / "assets/audio/MeteorIncoming.wav"]
 
 START_HERE = """COOKIE CORNER TYCOON - OPEN IN ROBLOX STUDIO
 
@@ -93,6 +94,11 @@ PNG sheets beside it when opening it in a browser.
 The optional third card-slot pass needs your own ID and a 150 Robux price in
 Creator Dashboard. It stays disabled at ID 0. See the full guide for setup.
 Meteors arrive every random 5-30 minutes; Cookie Hill is the only PvP area.
+Meteor arrivals and impacts have server-wide banners and built-in audio cues.
+Upload the included MeteorCrash.wav to Roblox for the full original 8-bit crash,
+grant the experience permission, then set AudioConfig.Effects.MeteorCrash.
+Both plaza boards now show saved global rankings, including offline players.
+Existing saves import gradually in the background; boards refresh every minute.
 
 Valley Afterglow is the new original ambient soundtrack. Its built-in score
 plays immediately; Music and SFX retain independent saved volume sliders.
@@ -136,6 +142,8 @@ def main():
         archive.write(PLACE, PLACE.name)
         archive.writestr("START_HERE.txt", START_HERE)
         archive.write(MUSIC, MUSIC.name)
+        for effect in METEOR_AUDIO:
+            archive.write(effect, effect.name)
         archive.write(ROOT / "AUDIO.md", "AUDIO.md")
         archive.write(ROOT / "ADMINS.md", "ADMINS.md")
         archive.write(ROOT / "VALLEY.md", "VALLEY.md")
@@ -151,6 +159,8 @@ def main():
         assert archive.testzip() is None, "Download ZIP failed its integrity check"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
         assert archive.read(MUSIC.name) == MUSIC.read_bytes(), "Packaged song differs from the supplied original"
+        for effect in METEOR_AUDIO:
+            assert archive.read(effect.name) == effect.read_bytes(), "Packaged meteor effect differs from the generated WAV"
         sheets = sorted((ROOT / "assets/cards").glob("CookieTCG_*.png"))
         assert len(sheets) == 4, "Expected four TCG art sheets"
         for sheet in sheets:

@@ -73,6 +73,20 @@
       "sampleRate": 32000,
       "channels": 2,
       "sha256": "2fd7f77979fb6cda5893a82f5ea56efab5f1521b4ee88c1c76426d93ae13d0ce"
+    },
+    {
+      "file": "MeteorIncoming.wav",
+      "seconds": 0.87,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "4803bf257e887084943a540d4e7ea96ef10e61a59d6edff85a4c7abe69530ac4"
+    },
+    {
+      "file": "MeteorCrash.wav",
+      "seconds": 2.1,
+      "sampleRate": 32000,
+      "channels": 2,
+      "sha256": "76c52b2c98ed0c2c946e85b12e4754a542b7dac991353ff86f9bdf7ba414a9bf"
     }
   ]
 }

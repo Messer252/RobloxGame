@@ -18,6 +18,7 @@ local World = require(script.World)
 local ChallengeWorld = require(script.ChallengeWorld)
 local ObbyWorld = require(script.ObbyWorld)
 local PlazaExtras = require(script.PlazaExtras)
+local LeaderboardServer = require(script.LeaderboardServer)
 local CommerceServer = require(script.CommerceServer)
 local AdminServer = require(script.AdminServer)
 local AdminRewards = require(script.AdminRewards)
@@ -51,6 +52,7 @@ end
 local profiles = ProfileStore.new(store, {
 	clock = os.time, wait = task.wait, copy = Progression.normalize, lease = Settings.SessionLeaseSeconds,
 })
+local rankings = LeaderboardServer.start(store, Settings)
 local journalOk, journal = pcall(function() return DataStoreService:GetDataStore("CookieCorner_CookieTrades_v1") end)
 if not journalOk then journal = { UpdateAsync = function() error("Cookie trade saving unavailable") end } end
 local trades = CookieTrades.new(journal, profiles, task.wait)
@@ -107,6 +109,7 @@ local function saveState(player, state, release)
 	if not release and (state.profile.saving or state.profile.closing or state.profile.transacting or state.profile.activityLock or (state.receiptWorkers or 0) > 0) then return false end
 	if not state.closing then player:SetAttribute("DataStatus", "Saving") end
 	local ok, reason, detail = profiles:Save(state.profile, release)
+	if ok then rankings:Queue(player.UserId) end
 	if not state.closing then
 		local purchasePending = state.profile.transacting or (state.receiptWorkers or 0) > 0
 		player:SetAttribute("DataStatus", purchasePending and "PurchasePending" or ok and "Saved" or "SaveFailed")
@@ -131,6 +134,7 @@ local commerce = CommerceServer.start({
 	Notify = notify,
 	Refresh = function(player, state)
 		sync(player, state)
+		if not state.profile.sessionOnly then rankings:Queue(player.UserId) end
 		if state.plot then World.refresh(state.plot, state.data, state.perks) end
 	end,
 }, requestPurchase, refreshPasses)
@@ -307,7 +311,7 @@ ObbyWorld.create(workspace.CookieTycoonWorld, function(player, difficulty)
 	return true -- A stronger existing boost also counts as a completed course.
 end, notify)
 
-PlazaExtras.create(workspace.CookieTycoonWorld, function(player) return sessions[player] end)
+PlazaExtras.create(workspace.CookieTycoonWorld, rankings)
 
 LifeServer.start({
 	Remotes = remotes, World = workspace.CookieTycoonWorld, Plots = plots, Trades = trades, Profiles = profiles,
@@ -373,6 +377,7 @@ local function addPlayer(player)
 		nextSave = os.clock() + Settings.AutosaveSeconds + math.random() * 5,
 	}
 	sessions[player] = state
+	if not profile.sessionOnly then rankings:Queue(player.UserId) end
 	state.characterConnection = player.CharacterAdded:Connect(function()
 		if not state.closing and state.plot then task.spawn(World.spawnPlayer, player, state.plot) end
 	end)
@@ -454,5 +459,6 @@ game:BindToClose(function()
 	for player in pairs(sessions) do task.spawn(closePlayer, player) end
 	local deadline = os.clock() + 25
 	while (next(sessions) or next(pendingLoads)) and os.clock() < deadline do task.wait(0.1) end
+	rankings:Shutdown(deadline)
 	if next(sessions) or next(pendingLoads) then warn("Cookie Corner: shutdown ended before every save request completed.") end
 end)

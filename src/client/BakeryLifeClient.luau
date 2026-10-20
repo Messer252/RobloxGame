@@ -4,10 +4,48 @@ local Life, Recipes, Progression, Polish = require(Shared.BakeryLife), require(S
 local CardUI = require(script.Parent.CardPacksClient)
 local CollectionService = game:GetService("CollectionService")
 local Client = {}
-function Client.start(player, remotes, gui, hud, openButton)
+function Client.start(player, remotes, gui, hud, openButton, audio)
 	local action, stateRemote, open = remotes:WaitForChild("LifeAction"), remotes:WaitForChild("LifeState"), remotes:WaitForChild("OpenLife")
 	local snapshot, tab, renameDraft = { life = Life.normalize(nil) }, "Bag", ""
 	local connections, pendingRender = {}, false
+	local announcement = Instance.new("Frame")
+	announcement.Name, announcement.AnchorPoint = "MeteorAnnouncement", Vector2.new(.5, 0)
+	announcement.Size, announcement.Position = UDim2.new(.9, 0, 0, 84), UDim2.new(.5, 0, 0, 22)
+	announcement.BackgroundColor3, announcement.BorderSizePixel = Color3.fromRGB(55, 35, 30), 0
+	announcement.Visible, announcement.ZIndex, announcement.Parent = false, 80, gui
+	local announcementLimit = Instance.new("UISizeConstraint")
+	announcementLimit.MaxSize, announcementLimit.Parent = Vector2.new(590, 84), announcement
+	local announcementCorner = Instance.new("UICorner")
+	announcementCorner.CornerRadius, announcementCorner.Parent = UDim.new(0, 14), announcement
+	local announcementStroke = Instance.new("UIStroke")
+	announcementStroke.Color, announcementStroke.Thickness, announcementStroke.Parent = Color3.fromRGB(255, 184, 87), 2, announcement
+	local headline, detail
+	for index = 1, 2 do
+		local text = Instance.new("TextLabel")
+		text.BackgroundTransparency, text.TextWrapped, text.TextScaled = 1, true, true
+		text.Position, text.Size = UDim2.fromOffset(12, index == 1 and 8 or 39), UDim2.new(1, -24, 0, index == 1 and 27 or 36)
+		text.Font, text.TextColor3, text.ZIndex, text.Parent = Enum.Font.GothamBold, Color3.fromRGB(255, 229, 184), 81, announcement
+		local size = Instance.new("UITextSizeConstraint")
+		size.MinTextSize, size.MaxTextSize, size.Parent = 11, index == 1 and 22 or 14, text
+		if index == 1 then headline = text else detail = text end
+	end
+	local announcementVersion = 0
+	table.insert(connections, remotes:WaitForChild("WorldAnnouncement").OnClientEvent:Connect(function(kind)
+		if kind ~= "Incoming" and kind ~= "Impact" then return end
+		announcementVersion += 1
+		local version = announcementVersion
+		local camera = workspace.CurrentCamera
+		local compact = not camera or camera.ViewportSize.X < 1100
+		announcement.AnchorPoint = Vector2.new(compact and .5 or 1, 0)
+		announcement.Position = compact and UDim2.new(.5, 0, 0, 280) or UDim2.new(1, -20, 0, 22)
+		headline.Text = kind == "Incoming" and "COOKIE METEOR INCOMING!" or "COOKIE METEOR LANDED!"
+		detail.Text = kind == "Incoming" and "Watch the sky! A Star Crumb meteor is falling." or "Follow the fire. Land 3 rolling-pin hits to earn Star Crumbs."
+		announcement.Visible = true
+		audio:PlayCue(kind == "Incoming" and "MeteorIncoming" or "MeteorCrash")
+		task.delay(kind == "Incoming" and 6 or 9, function()
+			if announcement.Parent and version == announcementVersion then announcement.Visible = false end
+		end)
+	end))
 	CardUI.start(remotes, gui)
 	local shade = Instance.new("TextButton")
 	shade.Size, shade.Text, shade.BackgroundTransparency, shade.BackgroundColor3, shade.ZIndex, shade.Visible, shade.Parent = UDim2.fromScale(1, 1), "", 0.35, Color3.new(), 25, false, gui

@@ -16,6 +16,8 @@ The [Workshop update](WORKSHOP.md) adds a hotbar cookie bag, left-click rolling-
 
 **Valley Afterglow** is a new original ambient soundtrack. Its built-in score plays immediately; an optional full WAV mix is included in the Studio ZIP. Music and SFX have separate saved mute buttons and 0–100% volume sliders. The friend's old song is no longer selected. Six configurable voice slots can replace new-oven purchase sounds with Bubby's recordings once uploaded. See [audio setup](AUDIO.md).
 
+Meteors now have server-wide incoming/impact banners and an original [8-bit crash WAV](assets/audio/MeteorCrash.wav). Built-in cues work immediately; upload the WAV and set its audio ID for the full effect. Plaza leaderboards now show global saved cash and rebirth rankings, including offline players, with a gradual import of existing saves. See [global ranking details](CARDS-AND-EVENTS.md#global-cash-and-rebirth-boards).
+
 Recipes have **six rarity tiers**, from Common (1×) to Mythic (6×). In **Toppings**, buy Glaze, Sprinkles, Chocolate Drizzle, Caramel Swirl, and Gold Leaf for individual recipes to increase their value and add visible decorations. See [rarity and topping details](CRAFTING.md).
 
 Meet **Baker Biscuit** in the plaza for four saved scavenger hunts. Get randomized mining, selling, eating, gifting, baking, obby, or occasional search tasks in **Quests**, then return for a cash bonus. Old active hunts remain finishable. Job state survives rebirth and rejoining. See [quests and rewards](QUESTS.md).
@@ -26,7 +28,7 @@ The game includes an original **free asset pack**: 30 cookie models, 20 bakery p
 
 The **Shop** tab includes permanent 2× income and 2× baking-speed passes plus repeatable $10K/$100K/$1M cash bundles. Sales are disabled until you create the Roblox offers and enter their IDs. Follow the [step-by-step monetization setup](MONETIZATION.md). Roblox supplies live prices and confirmation prompts; the server verifies ownership and saves product rewards with their receipt IDs before acknowledging them.
 
-Try the **Easy, Medium, and Hard obbys** east of the bakeries for **+10%, +30%, and +50% cookie income for five minutes**. The strongest active bonus wins. The Shop supports permanent income stages starting at **2× for 20 Robux**, then **4× for 40**, doubling each stage; sales remain disabled until you create the matching developer products. See [map, conveyors, obbys, and playtest checks](EXPANSION.md) and [purchase setup](MONETIZATION.md). The plaza includes live server cash/rebirth rankings and **Zach's Box**. Biscuit now uses a standard Roblox R6 character with improved treasure props.
+Try the **Easy, Medium, and Hard obbys** east of the bakeries for **+10%, +30%, and +50% cookie income for five minutes**. The strongest active bonus wins. The Shop supports permanent income stages starting at **2× for 20 Robux**, then **4× for 40**, doubling each stage; sales remain disabled until you create the matching developer products. See [map, conveyors, obbys, and playtest checks](EXPANSION.md) and [purchase setup](MONETIZATION.md). The plaza includes saved global cash/rebirth rankings, including offline players, and **Zach's Box**. Biscuit now uses a standard Roblox R6 character with improved treasure props.
 
 **Admin tools:** `unbenator` is configured as an admin. Add friends by account username in **ServerScriptService → Tycoon → AdminConfig**, publish, and restart outdated servers. Admins open **Bakery → Admin tools** to kick, return/teleport/bring players, grant wallet or uncollected cash, toggle self-invisibility, and fly. See [the admin setup guide](ADMINS.md).
 
@@ -84,6 +86,8 @@ ServerScriptService
     AdminServer (ModuleScript)      <- src/server/AdminServer.luau
     AdminVisibility (ModuleScript)  <- src/server/AdminVisibility.luau
     ProfileStore (ModuleScript)     <- src/server/ProfileStore.luau
+    GlobalRankings (ModuleScript)   <- src/server/GlobalRankings.luau
+    LeaderboardServer (ModuleScript) <- src/server/LeaderboardServer.luau
     BakeryFeatures (ModuleScript) <- src/server/BakeryFeatures.luau
     BakeryLifeServer (ModuleScript) <- src/server/BakeryLifeServer.luau
     CookieAppearance (ModuleScript) <- src/server/CookieAppearance.luau
@@ -174,7 +178,7 @@ luau tests/run.luau
 find src tests -name '*.luau' -print0 | xargs -0 luau-analyze
 ```
 
-The 157 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. They do not contact Roblox's live DataStore or payment services.
+The 170 deterministic Luau tests exercise the actual economy and storage adapter with an in-memory DataStore: rebirth requirements and resets, upgrade costs and caps, save/rejoin restoration, retries, in-flight saves, conflicting sessions, stale writes, unsupported save formats, progression pacing, paid-pass stacking, receipt replay protection, lost purchase-save responses, rarity values, modifier stacking and encoding, duplicate topping purchases, save migration, persisted audio preferences, music/cue bounds, conveyor geometry and pad entry/retries, quest progress and rewards, eight-plot geometry, merging lane connections, ordered obby completion, timed bonus expiry, permanent tier migration/receipts, leaderboard sorting, rail clearance, connected floor coverage, 180 cookie trajectories through the curves, admin identity checks, protected actions, cash-grant limits, and gift save/rejoin behavior. Additional tests cover inventory, food buffs, dough upgrades, finishing queues, and durable trade commit/abort recovery. They do not contact Roblox's live DataStore or payment services.
 
 To regenerate and check the original art, install Python 3, Pillow, and NumPy, then run `python tools/build_assets.py` and `python -m unittest discover -s tests -p 'test_assets.py'`. The eight asset checks cover model completeness, script-free contents, valid pivots and transforms, texture hashes, tiling edges, and game integration. Previews in `assets/previews` are offline renders of the geometry, not Roblox screenshots.
 
