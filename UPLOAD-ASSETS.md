@@ -149,9 +149,24 @@ If you uploaded through Creator Dashboard as a **Decal**, its listing ID can dif
 | The card shows a native 3D creature | That sheet's `Id` is still 0 or invalid. |
 | The card art is blank | Check image moderation, experience access, and whether you copied an image ID or a decal listing ID. |
 | The wrong animal appears | Verify that the IDs match filenames 01–04 and that the sheet dimensions/grid/ranges were not changed. |
+| The illustration looks soft/blurry | Use the updated `CardArt` renderer described below, allow the image to finish loading, and confirm you uploaded the original sheets rather than `Preview.png` or a screenshot. |
 | Only old servers show old assets | Publish the configuration changes and restart outdated servers. |
 | Chrome/antivirus blocks a download | Keep protection enabled and check the exact file and threat name in Protection history. An older Studio ZIP included an optional `CardGallery.html` preview; it has been removed from the current Studio ZIP. If the new package is still flagged, stop and report the new detection rather than bypassing it. |
 
 You do **not** need to put your files on sale, publish them to the public Creator Store, or make the game public just to test these uploads. Upload/moderate the assets, give the experience access, and publish its configured asset IDs.
+
+## Update the card renderer without re-entering your audio/image IDs
+
+The updated renderer displays the complete uploaded sheet behind a clipped illustration window instead of using a small `ImageRectSize` crop. This gives Roblox a larger image to render, keeps the correct animal selected when an uploaded texture is resampled, and preserves the illustration's proportions. It also preloads the viewed sheet. The original four uploads and IDs still work.
+
+For an existing configured game, you can replace **one ModuleScript**:
+
+1. Stop the playtest in Studio.
+2. In Explorer, open **StarterPlayer → StarterPlayerScripts → TycoonUI → CardArt**.
+3. Open the [updated CardArt source on GitHub](https://github.com/Messer252/RobloxGame/blob/main/src/client/CardArt.luau). Use GitHub's **Copy raw file** button to copy the complete code.
+4. Replace the contents of the existing `CardArt` ModuleScript with that code. Updating only this module preserves your `AudioConfig` and `CardCatalog` asset IDs, product IDs, and other settings.
+5. Publish and start a fresh playtest/server.
+
+Roblox can still serve lower-resolution textures while loading or on devices with restricted texture memory. Rendering changes cannot restore detail already missing from an uploaded source. If it remains blurry, compare the original PNG with the in-game illustration and check whether the surrounding text is also blurry.
 
 Official references: [Roblox audio requirements and upload steps](https://create.roblox.com/docs/audio/assets), [Asset Manager](https://create.roblox.com/docs/projects/assets/manager), and [asset permissions](https://create.roblox.com/docs/projects/assets/privacy).

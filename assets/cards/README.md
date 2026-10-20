@@ -26,4 +26,6 @@ For a beginner walkthrough covering both the card sheets and audio, see [Upload 
 
 Four sheets give each creature more image detail than the earlier forty-cell sheet. Roblox needs hosted image IDs; PNG files inside a local ZIP cannot supply ImageLabel textures by themselves. Native 3D previews remain available until the corresponding sheet is configured.
 
+The updated `CardArt` renderer draws the full uploaded sheet behind a clipping frame, preserving proportions and selecting the animal with relative sheet coordinates. It preloads the viewed sheet and avoids the small sprite-crop rendering path. Existing image IDs remain valid. For a configured Studio game, [update only CardArt](https://github.com/Messer252/RobloxGame/blob/main/UPLOAD-ASSETS.md#update-the-card-renderer-without-re-entering-your-audioimage-ids) to keep all existing audio and image settings.
+
 `CardCatalog.luau` defines names, rarities, buffs, quips and sheet mapping. `TradingCardFrame.luau` draws the original TCG face. `tools/build_card_gallery.py` rebuilds the offline gallery without modifying images. Gameplay effects, pack odds, currency and saves are unchanged by this art update.

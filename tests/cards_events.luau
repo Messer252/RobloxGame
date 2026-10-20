@@ -8,7 +8,40 @@ local Crafting = require("../src/shared/CookieCrafting")
 local Recipes = require("../src/shared/Recipes")
 local Polish = require("../src/shared/BakeryPolish")
 local Layout = require("../src/shared/ConveyorLayout")
+local Art = require("../src/client/CardArt")
 return function(test, equal, near, harness, fakeStore)
+	test("card illustration windows show only their own animal without stretching or atlas bleed", function()
+		for id=1,40 do
+			local sheet,index=Catalog.art(id)
+			local cw,ch=sheet.Width/sheet.Columns,sheet.Height/sheet.Rows
+			local left,top=math.floor(index%sheet.Columns*cw)+2,math.floor(math.floor(index/sheet.Columns)*ch)+2
+			local right,bottom=math.floor((index%sheet.Columns+1)*cw)-2,math.floor((math.floor(index/sheet.Columns)+1)*ch)-2
+			for _,size in ipairs({{308,246},{600,200},{200,600},{154,123}}) do
+				local w,h=size[1],size[2]
+				local t=assert(Art.layout(sheet,index,w,h))
+				local x0,y0=-t.X*sheet.Width/t.Width,-t.Y*sheet.Height/t.Height
+				local x1,y1=x0+sheet.Width/t.Width,y0+sheet.Height/t.Height
+				assert(x0>=left-.00001 and y0>=top-.00001)
+				assert(x1<=right+.00001 and y1<=bottom+.00001)
+				near(t.Width*w/sheet.Width,t.Height*h/sheet.Height)
+			end
+		end
+	end)
+	test("card sheet placement survives uniform UI scaling and upload-resolution changes", function()
+		local sheet,index=Catalog.art(37)
+		local a,b=Art.layout(sheet,index,308,246),Art.layout(sheet,index,154,123)
+		for _,key in ipairs({"Width","Height","X","Y"}) do near(a[key],b[key]) end
+		equal(Art.layout(sheet,index,0,0),nil)
+		-- The renderer uses relative sheet coordinates, not absolute texture
+		-- pixel crops. Resampling the same upload does not change its card cell.
+		for _,textureWidth in ipairs({512,1024,1983}) do
+			local textureHeight=textureWidth*sheet.Height/sheet.Width
+			local x=-(a.X/a.Width)*textureWidth
+			local y=-(a.Y/a.Height)*textureHeight
+			equal(math.floor(x/(textureWidth/sheet.Columns)),index%sheet.Columns)
+			equal(math.floor(y/(textureHeight/sheet.Rows)),math.floor(index/sheet.Columns))
+		end
+	end)
 	test("forty unique animal cards match rarity counts and each has a distinct useful buff", function()
 		local counts, names, signatures = {}, {}, {}
 		for id, card in ipairs(Catalog.Cards) do

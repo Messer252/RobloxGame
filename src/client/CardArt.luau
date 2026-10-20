@@ -1,15 +1,48 @@
-local Catalog = require(game:GetService("ReplicatedStorage").CookieTycoon.CardCatalog)
+local Catalog = if script then require(game:GetService("ReplicatedStorage").CookieTycoon.CardCatalog) else require("../shared/CardCatalog")
 local Art = {}
+
+-- Position the complete sheet behind a clipping frame. Relative coordinates
+-- stay correct if Roblox serves a smaller texture or the UI uses UIScale.
+function Art.layout(sheet, index, width, height)
+	if width <= 0 or height <= 0 then return nil end
+	local col, row = index % sheet.Columns, math.floor(index / sheet.Columns)
+	local cellW, cellH = sheet.Width / sheet.Columns, sheet.Height / sheet.Rows
+	local left, top = math.floor(col * cellW) + 2, math.floor(row * cellH) + 2
+	local cropW = math.floor((col + 1) * cellW) - 2 - left
+	local cropH = math.floor((row + 1) * cellH) - 2 - top
+	local scale = math.max(width / cropW, height / cropH)
+	return {
+		Width = sheet.Width * scale / width, Height = sheet.Height * scale / height,
+		X = .5 - (left + cropW / 2) * scale / width,
+		Y = .5 - (top + cropH / 2) * scale / height,
+	}
+end
+
 function Art.mount(parent, card, size)
 	local sheet, index = Catalog.art(card.Id)
 	if sheet and type(sheet.Id) == "number" and sheet.Id > 0 and sheet.Width > 0 and sheet.Height > 0 then
+		local window = Instance.new("Frame")
+		window.Name, window.Size, window.BackgroundTransparency = "CardIllustration", size, 1
+		window.BorderSizePixel, window.ClipsDescendants, window.Parent = 0, true, parent
 		local image = Instance.new("ImageLabel")
-		image.ScaleType = Enum.ScaleType.Crop
-		image.BackgroundTransparency, image.Size, image.Image = 1, size, "rbxassetid://" .. sheet.Id
-		local w, h = sheet.Width / sheet.Columns, sheet.Height / sheet.Rows
-		image.ImageRectOffset = Vector2.new(math.floor(index % sheet.Columns * w) + 2, math.floor(math.floor(index / sheet.Columns) * h) + 2)
-		image.ImageRectSize, image.Parent = Vector2.new(math.floor(w) - 4, math.floor(h) - 4), parent
-		return image
+		image.Name, image.BackgroundTransparency, image.BorderSizePixel = "FullResolutionSheet", 1, 0
+		image.ScaleType, image.ResampleMode = Enum.ScaleType.Stretch, Enum.ResamplerMode.Default
+		image.Image, image.Visible, image.Parent = "rbxassetid://" .. sheet.Id, false, window
+		local function layout()
+			local transform = Art.layout(sheet, index, window.AbsoluteSize.X, window.AbsoluteSize.Y)
+			if not transform then image.Visible = false; return end
+			image.Size = UDim2.fromScale(transform.Width, transform.Height)
+			image.Position = UDim2.fromScale(transform.X, transform.Y)
+			image.ZIndex, image.Visible = window.ZIndex, true
+		end
+		local resize = window:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
+		local layer = window:GetPropertyChangedSignal("ZIndex"):Connect(function() image.ZIndex = window.ZIndex end)
+		window.Destroying:Connect(function() resize:Disconnect(); layer:Disconnect() end)
+		layout()
+		-- Request the original asset directly; thumbnails and the static Preview
+		-- image are never used for an in-game card illustration.
+		task.spawn(function() pcall(function() game:GetService("ContentProvider"):PreloadAsync({ image }) end) end)
+		return window
 	end
 	-- Original 3D cookie-animal fallback works before the generated atlas is uploaded.
 	local view, scene, camera = Instance.new("ViewportFrame"), Instance.new("WorldModel"), Instance.new("Camera")

@@ -44,6 +44,8 @@ The forty cookie animals now use original **hand-drawn anime TCG illustrations**
 
 The ZIP includes four **CookieTCG_01.png** through **CookieTCG_04.png** sheets, ten illustrations per image in a 5×2 grid, plus a static **Preview.png**. The optional browser gallery remains in the source repository and is not bundled with the Studio download. The game does not need an HTML file.
 
+Card illustrations now render a full uploaded sheet behind a clipped window, with proportional scaling and preloading, rather than a small image-rectangle crop. Existing uploads and IDs are compatible. You can update only the `CardArt` ModuleScript in an already configured game; see the [asset guide](UPLOAD-ASSETS.md#update-the-card-renderer-without-re-entering-your-audioimage-ids). Native Roblox texture streaming and device quality still affect the final sharpness and need checking in Studio/live play.
+
 Upload the four PNGs as Roblox images. In **ReplicatedStorage → CookieTycoon → CardCatalog → ArtSheets**, set each sheet's `Id` to its matching numeric image asset ID. Keep the supplied dimensions, grid and card ranges unchanged. These replace the earlier single CookieAnimals atlas. Native 3D previews work until the new sheet IDs are configured. This cloud environment cannot upload assets into your Roblox account.
 
 The in-game compass has been removed completely. The HUD retains Star Crumbs, active food buffs and the PvP warning, without headings or direction indicators.
