@@ -2,6 +2,7 @@ local Players, Lighting, RunService = game:GetService("Players"), game:GetServic
 local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Life, Recipes, Progression, Polish = require(Shared.BakeryLife), require(Shared.Recipes), require(Shared.Progression), require(Shared.BakeryPolish)
 local CardUI = require(script.Parent.CardPacksClient)
+local CollectionService = game:GetService("CollectionService")
 local Client = {}
 function Client.start(player, remotes, gui, hud, openButton)
 	local action, stateRemote, open = remotes:WaitForChild("LifeAction"), remotes:WaitForChild("LifeState"), remotes:WaitForChild("OpenLife")
@@ -72,10 +73,10 @@ function Client.start(player, remotes, gui, hud, openButton)
 				entry.Size = UDim2.new(1, -8, 0, 76)
 			end
 		elseif tab == "Mine" then
-			row("Dough: " .. data.dough .. " • Rolling pin " .. data.pin .. "/5")
+			row("Dough: " .. data.dough .. " • " .. Life.PinNames[data.pin] .. " rolling pin (" .. data.pin .. "/5)")
 			row("West of the plaza: enter the cave, equip your rolling pin, then left-click near ore to swing. Visit the mine workshop to buy upgrades.")
 			local cost = Life.PinCosts[data.pin + 1]
-			row(cost and ("Better rolling pin • $" .. Progression.format(cost)) or "Best rolling pin owned", function() send("Pin") end)
+			row(cost and (Life.PinNames[data.pin + 1] .. " rolling pin • $" .. Progression.format(cost)) or "Best rolling pin owned", function() send("Pin") end)
 			for _, key in ipairs({ "Mixing", "Flow", "Pockets" }) do
 				local level, definition = data.upgrades[key], Life.DoughUpgrades[key]
 				local bonus = ({ Mixing = "+10% cookie income", Flow = "+5% baking speed", Pockets = "+4 cookie slots" })[key]
@@ -199,6 +200,11 @@ function Client.start(player, remotes, gui, hud, openButton)
 			if prompt then prompt.Enabled = other ~= player and player:GetAttribute("HeldCookieId") ~= nil end
 		end
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		for _, sign in ipairs(CollectionService:GetTagged("BakeryOwnerSign")) do
+			local anchor = sign.Parent
+			local range = sign:GetAttribute("OwnerUserId") == player.UserId and 180 or 55
+			sign.Enabled = root ~= nil and anchor and anchor:IsA("BasePart") and (root.Position - anchor.Position).Magnitude <= range or false
+		end
 		if not root or not camera then return end
 		local buff = player:GetAttribute("CookieBuffName") or ""
 		status.Text = snapshot.life.cards.crumbs .. " Star Crumbs" .. (player:GetAttribute("InCookiePVP") and " • PVP ON" or buff ~= "" and (" • " .. buff) or "")

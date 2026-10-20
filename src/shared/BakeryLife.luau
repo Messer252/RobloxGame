@@ -7,6 +7,7 @@ local Life = { MaxCurrency = 1e15, MaxInventory = 40, OvenSeconds = 20 }
 Life.Machines = { Packager = { Cost = 25000, Bonus = 0.25 }, Boxer = { Cost = 250000, Bonus = 0.5 }, FinishingOven = { Cost = 2500000, Bonus = 0 } }
 Life.PinCosts = { 0, 5000, 50000, 500000, 5000000 }
 Life.PinPower = { 1, 3, 7, 15, 30 }
+Life.PinNames = { "Maple", "Copper", "Steel", "Gilded", "Starforged" }
 Life.DoughUpgrades = { Mixing = { Max = 10, Cost = 25 }, Flow = { Max = 10, Cost = 30 }, Pockets = { Max = 5, Cost = 20 } }
 local function integer(v, default, minimum, maximum)
 	return type(v) == "number" and v == v and math.abs(v) < math.huge and math.clamp(math.floor(v), minimum, maximum) or default
@@ -126,7 +127,7 @@ function Life.upgradePin(profile)
 	if profile.cash < cost then return false, "Collect more cash for a better rolling pin." end
 	profile.cash -= cost
 	profile.life.pin += 1
-	return true, "Rolling pin upgraded!"
+	return true, Life.PinNames[profile.life.pin] .. " rolling pin unlocked!"
 end
 function Life.startOven(profile, id, now)
 	local data = profile.life

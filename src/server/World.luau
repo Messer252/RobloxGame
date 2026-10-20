@@ -114,6 +114,7 @@ function World.refresh(plot, data, perks)
 	plot.lastUnlocked = data and data.unlocked or 0
 	if reset then clearCookies(plot) end
 	plot.sign.Text = plot.owner and ((plot.owner:GetAttribute("FilteredShopName") or "Cookie Bakery") .. "\n@" .. plot.owner.Name) or "Unclaimed Bakery"
+	plot.sign.Parent:SetAttribute("OwnerUserId", plot.owner and plot.owner.UserId or 0)
 	plot.claimPrompt.Enabled = plot.owner == nil
 	plot.claimPrompt.ObjectText = plot.owner and ("@" .. plot.owner.Name .. "'s bakery") or "Unclaimed bakery"
 	plot.claimText.Text = plot.owner and ("@" .. plot.owner.Name .. "'s bakery") or "Claim bakery"
@@ -249,10 +250,15 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 		prop(plot, "WoodenFence", -64, 120)
 		prop(plot, "WoodenFence", 64, 120)
 		local sign = prop(plot, "BakerySign", 0, 120)
-		plot.sign = label(Assets.anchor(sign), "Unclaimed Bakery", 350)
-		plot.sign.Parent.Size = UDim2.fromOffset(420, 90)
-		plot.sign.Parent.StudsOffset = Vector3.new(0, 15, 0)
-		plot.sign.Parent.AlwaysOnTop = true
+		plot.sign = label(Assets.anchor(sign), "Unclaimed Bakery", 180)
+		local signGui = plot.sign.Parent
+		signGui.Name, signGui.Enabled = "BakeryOwnerSign", false
+		signGui.Size, signGui.StudsOffset = UDim2.fromOffset(260, 58), Vector3.new(0, 9, 0)
+		signGui.AlwaysOnTop = false
+		plot.sign.BackgroundTransparency = .25
+		local textLimit = Instance.new("UITextSizeConstraint")
+		textLimit.MinTextSize, textLimit.MaxTextSize, textLimit.Parent = 12, 21, plot.sign
+		game:GetService("CollectionService"):AddTag(signGui, "BakeryOwnerSign")
 		local claim = prop(plot, "ClaimPad", 77, 94)
 		plot.claimSurface = claim:FindFirstChild("Claim Surface")
 		plot.claimPrompt = prompt(Assets.anchor(claim), "Claim free bakery", function(player) onClaim(player, plot) end, "Cookie Bakery")
