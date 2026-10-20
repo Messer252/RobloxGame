@@ -49,19 +49,18 @@ function TownWorld.create(world,action)
 		W.part(folder,"Armor Display Stand",Vector3.new(.3,5,.3),base+Vector3.new(0,3,0),wood,Enum.Material.Wood)
 		Tools.displayPin(tier,folder,CFrame.new(base+Vector3.new(2,9,0)))
 	end
-	local current
-	Avatar.create(function(model)
-		if not folder.Parent then model:Destroy(); return end
-		for _,part in ipairs(model:GetDescendants()) do if part.Name:find("Chef Hat") or part.Name=="Apron Pocket" then part:Destroy() end end
-		local apron=model:FindFirstChild("Chef Apron")
-		if apron then apron.Color=Color3.fromRGB(91,57,40) end
-		model.Torso.Color=Color3.fromRGB(104,90,74)
-		model.Name,model.Parent="Bruno Crustforge",folder
-		model:PivotTo(CFrame.lookAt(smithCenter+Vector3.new(0,3.4,1),smithCenter+Vector3.new(0,3.4,10)))
-		W.prompt(model.HumanoidRootPart,"Armor & rolling pins",0,function(player) action(player,"OpenBlacksmith") end)
-		if current then current:Destroy() end
-		current=model
-	end)
+	local function shopkeeper(role,name,center,actionName,promptText)
+		Avatar.create(function(model)
+			model.Name,model.Parent=name,folder
+			Avatar.place(model,center+Vector3.new(0,0,1),Vector3.zAxis)
+			W.prompt(model.HumanoidRootPart,promptText,0,function(player) action(player,actionName) end).ObjectText=name
+			local label=W.label(model.Head,name,28)
+			label.Parent.StudsOffset,label.Parent.Size=Vector3.new(0,2.2,0),UDim2.fromOffset(180,30)
+			label.BackgroundTransparency=1
+		end,role)
+	end
+	shopkeeper("Smith","Bruno Crustforge",smithCenter,"OpenBlacksmith","Armor & rolling pins")
+	shopkeeper("PackHost","Poppy Crumbkeeper",packCenter,"OpenPackShop","Packs & daily gift")
 	local pickups={}
 	for id,point in ipairs(Town.Pickups) do
 		local crumb=W.part(folder,"Trail Star Crumb",Vector3.new(1.4,1.4,1.4),Vector3.new(point[1],2,point[3]),gold,Enum.Material.Metal)

@@ -81,6 +81,12 @@ The map includes a cookie forest, lake/waterfall, mountains, and day/night.
 Before replacing a customized place, copy across your audio IDs, product IDs,
 and friends added to AdminConfig. Restart outdated servers after publishing.
 
+NPC MOVEMENT AND MODELS
+See NPC-UPDATE.md for the walking changes and Studio playtest checklist.
+Customers use short pathfinding routes and resume after bargaining. All NPCs
+have new fitted outfits, and Poppy now serves the Pack House counter.
+No additional asset uploads are required.
+
 CODE REVIEW AND POLISH
 See POLISH-REVIEW.md for fixes and focused playtests. Starter conveyors now
 keep their complete route through the merge. Menus preserve typed shop names
@@ -173,6 +179,7 @@ def main():
         archive.write(ROOT / "WORKSHOP.md", "WORKSHOP.md")
         archive.write(ROOT / "MARKET-UPDATE.md", "MARKET-UPDATE.md")
         archive.write(ROOT / "POLISH-REVIEW.md", "POLISH-REVIEW.md")
+        archive.write(ROOT / "NPC-UPDATE.md", "NPC-UPDATE.md")
         archive.write(ROOT / "CARDS-AND-EVENTS.md", "CARDS-AND-EVENTS.md")
         for sheet in sorted((ROOT / "assets/cards").glob("CookieTCG_*.png")):
             archive.write(sheet, sheet.name)
@@ -190,6 +197,7 @@ def main():
             assert not entry.flag_bits & 1, "Unexpected encrypted ZIP entry"
         assert "CardGallery.html" not in archive.namelist(), "Browser preview must not be bundled"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read("NPC-UPDATE.md") == (ROOT / "NPC-UPDATE.md").read_bytes(), "Packaged NPC guide is stale"
         assert archive.read("POLISH-REVIEW.md") == (ROOT / "POLISH-REVIEW.md").read_bytes(), "Packaged review guide is stale"
         assert archive.read("MARKET-UPDATE.md") == (ROOT / "MARKET-UPDATE.md").read_bytes(), "Packaged market guide is stale"
         assert archive.read("UPLOAD-ASSETS.md") == (ROOT / "UPLOAD-ASSETS.md").read_bytes(), "Packaged upload guide is stale"

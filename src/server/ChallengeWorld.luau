@@ -68,7 +68,7 @@ local function createNPC(parent, onTalk)
 		end
 		model.Name = Catalog.NPCName
 		local pos = Catalog.NPCPosition
-		model:PivotTo(CFrame.lookAt(Vector3.new(pos[1], pos[2] + 3, pos[3]), Vector3.new(0, pos[2] + 3, 0)))
+		BakerAvatar.place(model, Vector3.new(pos[1], pos[2], pos[3]), Vector3.new(-pos[1], 0, -pos[3]))
 		model.Parent = parent
 		npcRoot = model:FindFirstChild("HumanoidRootPart")
 		interaction(npcRoot, "Talk", Catalog.NPCName, onTalk)
