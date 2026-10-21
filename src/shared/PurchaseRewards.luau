@@ -1,7 +1,8 @@
+local Earnings = if script then require(script.Parent.Earnings) else require("./Earnings")
 -- Pure reward calculation. The server supplies the configured amount and limit.
 local Rewards = {}
 local Boosts = if script then require(script.Parent.Boosts) else require("./Boosts")
-type CashData = { cash: number, bank: number }
+type CashData = { cash: number, bank: number, lifetimeCash: number? }
 
 function Rewards.canFitCash(data: CashData, amount: number, limit: number)
 	return type(amount) == "number" and amount > 0 and amount <= limit and amount == math.floor(amount)
@@ -11,6 +12,7 @@ end
 function Rewards.cash(data: CashData, amount: number, limit: number)
 	if not Rewards.canFitCash(data, amount, limit) then return false, "capacity" end
 	local walletAmount = math.min(amount, limit - data.cash)
+	Earnings.record(data,amount)
 	data.cash += walletAmount
 	data.bank += amount - walletAmount
 	return true

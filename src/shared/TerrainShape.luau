@@ -3,6 +3,7 @@ local Map = if script then require(script.Parent.MapLayout) else require("./MapL
 local Town = if script then require(script.Parent.TownCatalog) else require("./TownCatalog")
 local Mine = if script then require(script.Parent.MiningCatalog) else require("./MiningCatalog")
 local Obbys = if script then require(script.Parent.ObbyCatalog) else require("./ObbyCatalog")
+local Wilderness=if script then require(script.Parent.WildernessRules) else require("./WildernessRules")
 local Shape = {}
 local function smooth(x) x = math.clamp(x, 0, 1); return x * x * (3 - 2 * x) end
 local plots = {}
@@ -12,6 +13,7 @@ for slot = 1, Map.PlayerCount do table.insert(plots, Map.plot(slot)) end
 -- voxels, and native grass blades can otherwise grow through the thin parts.
 local function clearanceDistance(x, z)
 	local distance = math.max(math.abs(x) - 20, math.abs(z) - 586)
+	distance=math.min(distance,math.sqrt((x-Wilderness.BossX)^2+(z-Wilderness.BossZ)^2)-Wilderness.BossRadius-6)
 	-- Keep the cave workshop and its approach free of terrain and grass.
 	distance = math.min(distance, math.max(math.abs(x + 229) - 15, math.abs(z - 108) - 17))
 	distance = math.min(distance, math.sqrt(x * x + z * z) - 33)

@@ -1,6 +1,7 @@
 local Shared=game:GetService("ReplicatedStorage").CookieTycoon
 local Catalog,Town=require(Shared.CardCatalog),require(Shared.TownCatalog)
 local FrameDesign,Tween=require(script.Parent.TradingCardFrame),game:GetService("TweenService")
+local Preview=require(script.Parent.PurchasePreview)
 local Client={odds={}}
 function Client.describe(card)
 	local parts={}
@@ -18,6 +19,7 @@ function Client.renderPacks(data,row,send)
 	for id,pack in ipairs(Catalog.Packs) do
 		row(pack.Name.." • "..pack.Cost.." crumbs")
 		local buy=row("Buy & rip "..pack.Name,function() send("OpenPack",id) end)
+		Preview.attach(buy,"Pack:"..id)
 		buy.Interactable=buy.Interactable and data.crumbs>=pack.Cost
 		local odds={}
 		for index,weight in ipairs(pack.Weights) do table.insert(odds,Catalog.Rarities[index].." "..string.format("%g%%",weight/100)) end
@@ -39,6 +41,7 @@ function Client.renderCollection(player,data,row,send,panel)
 	row(#data.equipped.."/"..(third and 3 or 2).." cards equipped • "..data.crumbs.." crumbs")
 	row("Open packs at the Crumbkin Pack House in the side market (follow the fast-road branch).")
 	local buy=row(third and "Third slot owned" or "Optional third card slot",function() Shared.Remotes.RequestPurchase:FireServer("Pass","ThirdCardSlot") end)
+	Preview.attach(buy,"Pack:5")
 	buy.Interactable=buy.Interactable and not third and player:GetAttribute("CommerceReady")==true and player:GetAttribute("PassesReady")==true and player:GetAttribute("ShopPromptOpen")~=true and require(Shared.ShopCatalog).offer("Pass","ThirdCardSlot")~=nil
 	local count=0
 	for id,card in ipairs(Catalog.Cards) do

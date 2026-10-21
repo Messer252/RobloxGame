@@ -5,15 +5,16 @@ function Progress.start(course, now)
 end
 
 function Progress.advance(run, course, stage, now)
-	if not run or run.course ~= course.Id or stage ~= run.stage + 1 or stage > course.Count then return false end
-	if now - run.last < 0.22 then return false end
-	if stage == course.Count and now - run.started < course.MinSeconds then return false end
+	if not run or run.course ~= course.Id or stage ~= run.stage + 1 or stage > course.Count or now<run.last then return false end
+	-- Contact events can record a short landing between polling frames.
+	-- Sequential stages prevent duplicate advancement; time gates the payout.
 	run.stage, run.last = stage, now
 	return true, stage == course.Count
 end
 
-function Progress.canFinish(run,course,onFinish)
+function Progress.canFinish(run,course,onFinish,now)
 	return run~=nil and run.course==course.Id and run.stage==course.Count and not run.awarded and onFinish==true
+		and (now or run.last)-run.started>=course.MinSeconds
 end
 
 -- Coordinates are relative to the rotated hazard. Ignore hats, armor and held

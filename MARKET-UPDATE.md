@@ -77,7 +77,7 @@ Daytime brightness, exposure, ambient light, bloom and reflections are lower, an
 
 ## Saving, updating, and playtesting
 
-The current **version-11 save envelope** accepts versions **1–10**, retaining receipts, currencies, cards, quest progress, audio choices, paid entitlements and gift recovery. New armor and reward fields receive safe defaults. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; do not switch to fresh stores or run older save code after this update.
+The current **version-12 save envelope** accepts versions **1–11**, retaining receipts, currencies, cards, quest progress, audio choices, paid entitlements and gift recovery. New armor and reward fields receive safe defaults. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; do not switch to fresh stores or run older save code after this update.
 
 Automated checks exercise hill transfer/logout, reward caps/cooldowns across receipts/rejoin/rebirth, armor purchases and migration, machine prerequisites, decoration progression, public pickup placement and responsive row geometry. Complete these checks in a separate published Roblox test experience:
 

@@ -1,3 +1,4 @@
+local Earnings = if script then require(script.Parent.Earnings) else require("./Earnings")
 local Catalog = if script then require(script.Parent.ChallengeCatalog) else require("./ChallengeCatalog")
 local Contracts = {}
 Contracts.Kinds = { "Mine", "Sell", "Eat", "Gift", "Bake", "Obby", "Find" }
@@ -62,9 +63,10 @@ function Contracts.interact(data, now, kindRoll, targetRoll, itemRoll, skip)
 		end
 		return false, "Task progress: " .. state.progress .. "/" .. state.target .. ". Check Quests for details."
 	end
-	local room = math.max(0, 1e15 - data.cash)
-	if room + math.max(0, 1e15 - data.bank) < state.reward then return false, "Make room for the reward first." end
+	local room = math.max(0, Earnings.Limit - data.cash)
+	if room + math.max(0, Earnings.Limit - data.bank) < state.reward then return false, "Make room for the reward first." end
 	local reward = state.reward
+	Earnings.record(data,reward)
 	data.cash += math.min(room, reward)
 	data.bank += math.max(0, reward - room)
 	data.life.contract = Contracts.normalize({ cycle = state.cycle + 1, lastKind = state.kind })

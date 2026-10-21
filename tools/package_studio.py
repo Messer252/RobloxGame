@@ -6,6 +6,7 @@ Requires Rojo 7.7.1; no third-party Python packages are needed.
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -66,11 +67,27 @@ wallet/earnings cash gifts, and self-invisibility. Full guide: ADMINS.md in this
 
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
-servers: save formats 1-10 migrate to version 11 with existing progress and receipts preserved.
+servers: save formats 1-11 migrate to version 12 with existing progress and receipts preserved.
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 The conveyor update widens the tracks, adds taller rounded outer rails, closes
 curve joints, and guides physical cookies through the merge without teleporting.
+
+COMBAT ABILITIES AND OBBY FINISHES
+Read COMBAT-AND-OBBY.md. Buy E/Q moves with dough at the mine workshop,
+equip your pin, and use E/Q or the touch buttons. Six moves have animations,
+cooldowns and server-validated combat. Abilities reset on rebirth.
+Obby landing contacts now complement polling; validated prizes retry through
+busy saves. Finish messages explain any Star Crumb cooldown.
+
+NIGHT AND PROGRESSION UPDATE
+Read NIGHT-AND-PROGRESSION.md. Rebirths now continue past 50 with growing
+requirements and income. Cash rankings track lifetime earnings across rebirths.
+Existing totals start from saved wallet + bank; old spent cash is unrecoverable.
+Bought mine upgrades reset on rebirth; unspent dough stays. Sprint/Leap improve
+movement. Collapse the HUD with minus. Purchase cards now have 3D previews.
+Fight night creatures and a co-op boss every 30 minutes in the east wilderness.
+Audio mute buttons and sliders are together in Bakery > Audio.
 
 COOKIE VALLEY FEATURES
 See VALLEY.md in this ZIP for the full feature and playtest guide. Home returns
@@ -84,8 +101,8 @@ and friends added to AdminConfig. Restart outdated servers after publishing.
 CAVE AND PRESTIGE UPDATE
 Read CAVE-AND-PRESTIGE.md. Explore five ore galleries unlocked by better pins.
 Save extra cash for bonus Golden Chips; the rebirth menu previews your payout.
-Admins can grant Golden Chips and Star Crumbs. Shift/Ctrl, controller R3 or
-the Aim button toggles shoulder camera lock. It pauses for menus and flight.
+Admins can grant Golden Chips and Star Crumbs. Shift, controller R3 or
+the Aim button toggles shoulder camera lock. It cancels for menus and flight; toggle it again when ready.
 PinSwing.wav and OreHit.wav are optional uploads; built-in cues work first.
 
 OBBYS, SIDE MARKET AND ENCHANTED GEAR
@@ -173,6 +190,21 @@ def main():
             name = values["Name"]
             assert name not in embedded, f"Duplicate script name: {name}"
             embedded[name] = values["Source"]
+    parents = {child: item for item in tree.iter("Item") for child in item.findall("Item")}
+    local_require = re.compile(r'require\(script((?:\.Parent)*)(?:\.([A-Za-z_]\w*)|:WaitForChild\("([A-Za-z_]\w*)"\))\)')
+    for item in tree.iter("Item"):
+        source = item.findtext("Properties/ProtectedString[@name='Source']")
+        if not source:
+            continue
+        for ancestry, direct, waited in local_require.findall(source):
+            parent = item
+            for _ in range(ancestry.count(".Parent")):
+                parent = parents.get(parent)
+                assert parent is not None, "Local require climbs above its script tree"
+            name = direct or waited
+            target = next((child for child in parent.findall("Item")
+                           if child.findtext("Properties/string[@name='Name']") == name), None)
+            assert target is not None and target.get("class") == "ModuleScript", f"Missing local module: {name}"
     sources = list((ROOT / "src").rglob("*.luau"))
     assert len(embedded) == len(sources), "Packaged script count differs from source"
     for source in sources:
@@ -188,6 +220,8 @@ def main():
         archive.write(MUSIC, MUSIC.name)
         for effect in EFFECT_AUDIO:
             archive.write(effect, effect.name)
+        archive.write(ROOT / "COMBAT-AND-OBBY.md", "COMBAT-AND-OBBY.md")
+        archive.write(ROOT / "NIGHT-AND-PROGRESSION.md", "NIGHT-AND-PROGRESSION.md")
         archive.write(ROOT / "AUDIO.md", "AUDIO.md")
         archive.write(ROOT / "UPLOAD-ASSETS.md", "UPLOAD-ASSETS.md")
         archive.write(ROOT / "ADMINS.md", "ADMINS.md")
@@ -215,6 +249,8 @@ def main():
             assert not entry.flag_bits & 1, "Unexpected encrypted ZIP entry"
         assert "CardGallery.html" not in archive.namelist(), "Browser preview must not be bundled"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read("COMBAT-AND-OBBY.md") == (ROOT / "COMBAT-AND-OBBY.md").read_bytes(), "Packaged combat guide is stale"
+        assert archive.read("NIGHT-AND-PROGRESSION.md") == (ROOT / "NIGHT-AND-PROGRESSION.md").read_bytes(), "Packaged progression guide is stale"
         assert archive.read("OBBYS-AND-FORGE.md") == (ROOT / "OBBYS-AND-FORGE.md").read_bytes(), "Packaged forge guide is stale"
         assert archive.read("CAVE-AND-PRESTIGE.md") == (ROOT / "CAVE-AND-PRESTIGE.md").read_bytes(), "Packaged cave guide is stale"
         assert archive.read("NPC-UPDATE.md") == (ROOT / "NPC-UPDATE.md").read_bytes(), "Packaged NPC guide is stale"

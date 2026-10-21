@@ -4,7 +4,7 @@ local Rules=require(game:GetService("ReplicatedStorage").CookieTycoon.CameraLock
 local Camera={}
 function Camera.start(player,gui,button)
 	local requested,focused,engaged=false,true,false
-	local controlled,oldRotate,oldOffset,oldMouse,oldIcon
+	local controlled,oldRotate,oldOffset,oldIcon
 	local connections={}
 	local dot=Instance.new("Frame")
 	dot.Name,dot.AnchorPoint,dot.Position,dot.Size="AimReticle",Vector2.new(.5,.5),UDim2.fromScale(.5,.5),UDim2.fromOffset(5,5)
@@ -17,7 +17,7 @@ function Camera.start(player,gui,button)
 			controlled.CameraOffset=oldOffset
 		end
 		if engaged then
-			if Input.MouseBehavior==Enum.MouseBehavior.LockCenter then Input.MouseBehavior=oldMouse end
+			if Input.MouseBehavior==Enum.MouseBehavior.LockCenter then Input.MouseBehavior=Enum.MouseBehavior.Default end
 			Input.MouseIconEnabled=oldIcon
 		end
 		controlled,engaged=nil,false
@@ -36,11 +36,13 @@ function Camera.start(player,gui,button)
 	end
 	table.insert(connections,button.Activated:Connect(toggle))
 	Actions:BindActionAtPriority("CookieCombatLock",function(_,state)
+		-- Always allow Shift to release a requested lock, even if a menu opened.
+		if state==Enum.UserInputState.Begin and requested then requested=false; release(); return Enum.ContextActionResult.Sink end
 		if Input:GetFocusedTextBox() or menuOpen() or player:GetAttribute("AdminFlying")==true then return Enum.ContextActionResult.Pass end
 		if state==Enum.UserInputState.Begin then toggle() end
 		return Enum.ContextActionResult.Sink
-	end,false,Enum.ContextActionPriority.High.Value+100,Enum.KeyCode.LeftShift,Enum.KeyCode.RightShift,Enum.KeyCode.LeftControl,Enum.KeyCode.RightControl,Enum.KeyCode.ButtonR3)
-	table.insert(connections,Input.WindowFocusReleased:Connect(function() focused=false; release() end))
+	end,false,Enum.ContextActionPriority.High.Value+100,Enum.KeyCode.LeftShift,Enum.KeyCode.RightShift,Enum.KeyCode.ButtonR3)
+	table.insert(connections,Input.WindowFocusReleased:Connect(function() focused=false; requested=false; release() end))
 	table.insert(connections,Input.WindowFocused:Connect(function() focused=true end))
 	table.insert(connections,player.CharacterRemoving:Connect(function() requested=false; release() end))
 	Run:BindToRenderStep("CookieAimOffset",Enum.RenderPriority.Camera.Value-1,function()
@@ -50,20 +52,21 @@ function Camera.start(player,gui,button)
 			typing=Input:GetFocusedTextBox()~=nil,menu=menuOpen(),flying=player:GetAttribute("AdminFlying")==true,
 			seated=hum and hum.Sit,platform=hum and hum.PlatformStand,scripted=not camera or camera.CameraType~=Enum.CameraType.Custom})
 		if not active then
+			requested=false
 			release()
-			button.Text=requested and "Aim PAUSED" or "Aim • Shift/Ctrl"
+			button.Text="Aim • Shift"
 			return
 		end
 		if controlled~=hum then
 			release()
 			controlled,oldRotate,oldOffset=hum,hum.AutoRotate,hum.CameraOffset
-			oldMouse,oldIcon=Input.MouseBehavior,Input.MouseIconEnabled
+			oldIcon=Input.MouseIconEnabled
 			engaged=true
 		end
 		hum.AutoRotate=false
 		local firstPerson=(camera.CFrame.Position-camera.Focus.Position).Magnitude<1
 		hum.CameraOffset=firstPerson and Vector3.zero or Vector3.new(1.65,.3,0)
-		button.Text="Aim ON • Shift/Ctrl"
+		button.Text="Aim ON • Shift"
 	end)
 	Run:BindToRenderStep("CookieAimFacing",Enum.RenderPriority.Camera.Value+1,function(dt)
 		if not engaged then return end

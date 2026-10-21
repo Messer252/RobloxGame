@@ -1,5 +1,7 @@
 # Obbys, the side market, and enchanted equipment
 
+Current reset rules, saving version and earnings are documented in [Night & progression](NIGHT-AND-PROGRESSION.md).
+
 [Download the updated Studio ZIP](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Extract it, then open **CookieCorner.rbxlx** in Roblox Studio. No new image or audio uploads are required for this update.
 
 ## Harder obbys
@@ -59,7 +61,7 @@ The server chooses the result once and saves it with the charge. A save retry us
 
 Back up your customized Studio place. Carry over your configured **AudioConfig** IDs (including Bubby), **CardCatalog.ArtSheets**, **ShopCatalog**, **AssetTextures**, and **AdminConfig** values into the updated scripts. Keep new configuration fields. Publish into the same experience and restart outdated servers.
 
-The save envelope advances to **version 11**, accepting versions **1–10**. Existing gear is retained when updating or rejoining; it resets only after a successful rebirth. Currencies, cards, receipts, quests, audio preferences, and existing enchantments are retained. Older saves without enchantments start empty. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; older server code rejects version-11 records to prevent it from discarding higher gear tiers or enchantments.
+The save envelope advances to **version 12**, accepting versions **1–11**. Existing gear is retained when updating or rejoining; it resets only after a successful rebirth. Currencies, cards, receipts, quests, audio preferences, and existing enchantments are retained. Older saves without enchantments start empty. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; older server code rejects version-12 records to prevent it from discarding higher gear tiers or enchantments.
 
 ## Studio playtest checklist
 
@@ -79,3 +81,5 @@ These are recommendations, not additional features silently included in this upd
 2. **An activity board in the market.** Offer a rotating choice of mining, baking, obby, and customer jobs with similar Star Crumb rewards per minute. Players can fund their next pack or enchantment through the activities they enjoy, without feeling forced to camp the hill.
 3. **Protect the pack/enchant choice.** Display each activity's expected crumb reward. Track actual time to a pack and to an enchantment during playtests; tune rewards before adding more currencies. Consider an enchantment pity meter later so a long unlucky streak has a visible endpoint.
 4. **Keep cash collection meaningful.** Introduce a machine, decoration, and gear recommendation after a big collection, but show only the next affordable upgrade. Each trip home should end with a clear decision rather than a wall of buttons.
+
+The latest [combat and obby update](COMBAT-AND-OBBY.md) replaces polling-only landing detection with contact plus standing checks. Validated finish claims now survive moving away or respawning during a busy save and retry without awarding twice.

@@ -8,7 +8,7 @@
 
 Rebirth now **empties the cookie bag**, clears held-cookie tools, resets the conveyor build tier to zero, removes built conveyor geometry and the delivery box, resets machines/mastery/toppings/food effects, and removes purchased decorations. The starter oven remains; build its first conveyor again for free.
 
-**Cards, equipped cards, Star Crumbs, dough, enchantments, dough upgrades, Golden Chip upgrades, paid passes, audio choices, shop name, and quest progress remain.** Wallet/collection cash resets as before. Rebirth also removes armor and resets the rolling pin to Maple; saved armor enchantments activate after repurchasing armor. A pending gift or pack save must settle before rebirth can proceed.
+**Cards, equipped cards, Star Crumbs, dough, enchantments, Golden Chip upgrades, paid passes, audio choices, shop name, and quest progress remain.** Wallet/collection cash resets as before. Rebirth also removes armor and resets the rolling pin to Maple; saved armor enchantments activate after repurchasing armor. A pending gift or pack save must settle before rebirth can proceed.
 
 All plots now put their entrance, claim pad, personal spawn and register beside the road. The first recipe lane is on that side too. The collector's gold pad is next to this starting area. A compact floating sign shows the account username and bakery name. Your own sign appears within **180 studs**; other bakery signs appear only within **55 studs** of your character. Signs no longer draw through scenery, and their ownership updates when a bakery is claimed or released. In Cookie Bag → Machines, enter a name and buy **Rename cookie shop** for **$20 million**. Roblox filters the name before charging; a filtering failure charges nothing. Stored names are filtered again when loaded for display.
 
@@ -71,9 +71,9 @@ Meteor falls now trigger a prominent incoming banner for everyone in that server
 
 ## Global cash and rebirth boards
 
-The two plaza signs show the top eight **saved wallet cash** and **rebirth** rankings across all servers of this experience, including offline players. Account usernames are resolved even when the player is absent. The regular Roblox player list still shows the current server's players.
+The two plaza signs show the top eight **saved all-time cash** and **rebirth** rankings across all servers of this experience, including offline players. Account usernames are resolved even when the player is absent. The regular Roblox player list still shows the current server's players.
 
-Boards refresh about once a minute. Profile saves queue ranking updates; each index write reads the latest committed profile rather than unsaved gameplay data. Cash means current saved wallet cash, so spending or rebirth can lower it; collection-bank cash and lifetime earnings are excluded. Expect roughly one to two minutes for ordinary gameplay changes to appear, with longer delays during Roblox service outages. The last successful board stays visible if a refresh fails, labeled as cached.
+Boards refresh about once a minute. Profile saves queue ranking updates; each index write reads the latest committed profile rather than unsaved gameplay data. Cash means cumulative earnings, including production entering the register; spending, collecting and rebirth cannot lower it. Legacy profiles start with wallet plus register cash because previously spent history was never recorded. See [all-time cash migration](NIGHT-AND-PROGRESSION.md). Expect roughly one to two minutes for ordinary gameplay changes to appear, with longer delays during Roblox service outages. The last successful board stays visible if a refresh fails, labeled as cached.
 
 On the first update, a single server gradually imports existing offline profiles from the game's current DataStore. A saved cursor and renewable lease resume interrupted imports. Larger histories take longer to appear, and players do not need to rejoin for this import. Live joins and successful saves also update their entries. Preview-only Studio profiles never supply ranking scores. No profile or currency is modified by ranking import.
 
@@ -97,7 +97,7 @@ The two prices remain tied to unlock cost: `$100 + 25%` and `$350 + 50%`. Older 
 
 ## Save upgrade and Studio checks
 
-Save envelope **9** accepts **1–8**, retaining `CookieCorner_PlayerData_v1` and the existing trade journal. New card/currency fields default safely on older saves. Restart outdated servers after publishing.
+Save envelope **12** accepts **1–11**, retaining `CookieCorner_PlayerData_v1` and the existing trade journal. New card/currency fields default safely on older saves. Restart outdated servers after publishing.
 
 Automated tests cover exact pack probabilities, unique buffs, equip entitlement/caps, atomic charges and lost-response recovery, rebirth cleanup, daily milestones, meteor bounds, hill damage/bounds, terrain continuity, topping limits, decoration prerequisites, global offline ranking imports, cross-server save races, and ranking service outages. Complete these Roblox engine checks before public rollout:
 

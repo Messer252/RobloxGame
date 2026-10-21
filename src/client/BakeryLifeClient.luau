@@ -7,7 +7,9 @@ local Enchant = require(Shared.Enchantments)
 local Town,Blueprint=require(Shared.TownCatalog),require(Shared.BakeryBlueprint)
 local Flow=require(script.Parent.UIFlow)
 local Mine=require(Shared.MiningCatalog)
+local Abilities=require(Shared.CombatAbilities)
 local MenuRows=require(script.Parent.MenuRows)
+local Preview=require(script.Parent.PurchasePreview)
 local Client = {}
 function Client.start(player, remotes, gui, hud, openButton, audio)
 	local action, stateRemote, open = remotes:WaitForChild("LifeAction"), remotes:WaitForChild("LifeState"), remotes:WaitForChild("OpenLife")
@@ -37,17 +39,17 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 	end
 	local announcementVersion = 0
 	table.insert(connections, remotes:WaitForChild("WorldAnnouncement").OnClientEvent:Connect(function(kind)
-		if kind ~= "Incoming" and kind ~= "Impact" then return end
+		if kind ~= "Incoming" and kind ~= "Impact" and kind ~= "Boss" then return end
 		announcementVersion += 1
 		local version = announcementVersion
 		local camera = workspace.CurrentCamera
 		local compact = not camera or camera.ViewportSize.X < 1100
 		announcement.AnchorPoint = Vector2.new(compact and .5 or 1, 0)
 		announcement.Position = compact and UDim2.new(.5,0,0,hud.Position.Y.Offset+hud.AbsoluteSize.Y+10) or UDim2.new(1, -20, 0, 22)
-		headline.Text = kind == "Incoming" and "COOKIE METEOR INCOMING!" or "COOKIE METEOR LANDED!"
-		detail.Text = kind == "Incoming" and "Watch the sky! A Star Crumb meteor is falling." or "Follow the fire. Land 3 rolling-pin hits to earn Star Crumbs."
+		headline.Text = kind == "Boss" and "CRUMB COLOSSUS AWAKENS!" or kind == "Incoming" and "COOKIE METEOR INCOMING!" or "COOKIE METEOR LANDED!"
+		detail.Text = kind == "Boss" and "East wilderness arena • Fight together • Jump over red stomps" or kind == "Incoming" and "Watch the sky! A Star Crumb meteor is falling." or "Follow the fire. Land 3 rolling-pin hits to earn Star Crumbs."
 		announcement.Visible = true
-		audio:PlayCue(kind == "Incoming" and "MeteorIncoming" or "MeteorCrash")
+		audio:PlayCue(kind == "Boss" and "Rebirth" or kind == "Incoming" and "MeteorIncoming" or "MeteorCrash")
 		task.delay(kind == "Incoming" and 6 or 9, function()
 			if announcement.Parent and version == announcementVersion then announcement.Visible = false end
 		end)
@@ -140,6 +142,13 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			local hint = balance < cost and (" • Need " .. Progression.format(cost - balance) .. " more") or not near and " • Visit pad" or ""
 			local control = row(text .. hint, callback, key)
 			control.Interactable = control.Interactable and near == true and balance >= cost
+            local previewKey=key=="pin-upgrade" and "Pin:"..(data.pin+1) or key=="armor-upgrade" and "Armor:"..(data.armor+1)
+                or key=="enchant-Pin" and "Pin:"..data.pin or key=="enchant-Armor" and "Armor:"..data.armor
+                or key:match("^ability:") and "Pin:"..data.pin
+                or key=="build" and "Prop:Conveyor" or key=="rename" and "Prop:BakerySign"
+                or key:match("^decoration:") and "Decoration:"..key:sub(12)
+                or key:match("^machine:") and "Machine:"..key:sub(9) or "Prop:DoughMixer"
+            Preview.attach(control,previewKey)
 			return control
 		end
 		row(snapshot.busy and "Finishing a save. Please wait…" or "").Visible = snapshot.busy == true
@@ -189,13 +198,23 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 				entry.Interactable = entry.Interactable and data.oven.id ~= item.id
 			end
 		elseif tab == "Mine" then
+            row("COMBAT TRAINING • E / Q")
+            row("Learn and equip at this mine workshop. Abilities cost dough and reset on rebirth. Equip your pin to use them; obbys disable combat moves.")
+            for _,id in ipairs(Abilities.Order) do
+                local move=Abilities.Moves[id]
+                local owned,equipped=data.abilities.owned[id],data.abilities[move.Slot]==id
+                local title=move.Slot.." • "..move.Name.." • "..move.Cooldown.."s cooldown\n"..move.Description.."\n"..(equipped and "Equipped" or owned and "Equip" or move.Cost.." dough")
+                local control=purchase(title,owned and 0 or move.Cost,data.dough,nearby.mine,function() send("Ability",id) end,"ability:"..id)
+                control.Interactable=control.Interactable and not equipped
+            end
+            row("MINE UPGRADES")
 			row("Dough: " .. data.dough .. " • " .. Life.PinNames[data.pin] .. " rolling pin (" .. data.pin .. "/" .. #Life.PinNames .. ")")
 			for tier,zone in ipairs(Mine.Zones) do row((tier<=data.pin and "✓ " or "Locked • ")..zone.Name.." • "..Life.PinNames[tier].." pin") end
-			row("Deeper galleries have better ore pools. Ore rarity changes when a node respawns.")
+			row("Mine upgrades reset on rebirth. Unspent dough stays saved.")
 			row("Left-click with your pin near cave ore. Buy better pins and armor from Bruno in the side market.")
-			for _, key in ipairs({ "Mixing", "Flow", "Pockets" }) do
+			for _, key in ipairs(Life.DoughOrder) do
 				local level, definition = data.upgrades[key], Life.DoughUpgrades[key]
-				local bonus = ({ Mixing = "+10% cookie income", Flow = "+5% baking speed", Pockets = "+4 cookie slots" })[key]
+				local bonus = definition.Description
 				if level == definition.Max then row(key .. " • MAX", nil, "dough:"..key)
 				else
 					local cost = definition.Cost * 2^level
@@ -254,6 +273,9 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 	table.insert(connections, player:GetAttributeChangedSignal("DataReady"):Connect(function() if player:GetAttribute("DataReady") then send("Snapshot") end end))
 	send("Snapshot")
 	local status = label(hud, "Star Crumbs")
+	local function showStatus() status.Visible=hud:GetAttribute("Minimized")~=true end
+	hud:GetAttributeChangedSignal("Minimized"):Connect(showStatus)
+	showStatus()
 	status.Position, status.Size, status.AutomaticSize, status.TextSize, status.ZIndex = UDim2.new(0,14,1,-26), UDim2.new(1, -28, 0, 22), Enum.AutomaticSize.None, 11, 2
 	status.TextScaled = true
 	local statusSize = Instance.new("UITextSizeConstraint")

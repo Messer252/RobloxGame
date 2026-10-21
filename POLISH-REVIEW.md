@@ -1,5 +1,7 @@
 # Code review and polish
 
+Current reset rules, saving version and earnings are documented in [Night & progression](NIGHT-AND-PROGRESSION.md).
+
 [Download the updated Studio game](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Extract it and open `CookieCorner.rbxlx` in Roblox Studio.
 
 ## Fixes

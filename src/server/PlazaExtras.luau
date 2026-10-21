@@ -32,7 +32,7 @@ local function ranking(board, key)
 		return t
 	end
 	text(key == "cash" and "BAKERY FORTUNES" or "GOLDEN LEGENDS", 34, 20, 640, 58, 39, Color3.fromRGB(242, 203, 128))
-	text(key == "cash" and "MOST SAVED WALLET CASH • ALL SERVERS" or "MOST REBIRTHS • ALL SERVERS", 36, 83, 630, 30, 20)
+	text(key == "cash" and "ALL-TIME CASH EARNED • ALL SERVERS" or "MOST REBIRTHS • ALL SERVERS", 36, 83, 630, 30, 20)
 	local rows = {}
 	for i = 1, 8 do
 		local y = 133 + (i - 1) * 55

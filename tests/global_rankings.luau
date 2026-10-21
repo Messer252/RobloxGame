@@ -115,6 +115,18 @@ return function(test, equal)
 		assert(index:Backfill(source,cursor,lease,wait,function() return false end))
 		equal(stores.cash.values["2"],200); equal(stores.cash.values["3"],300); assert(finished)
 	end)
+	test("global cash ranks lifetime earnings even after spending and across large offline profiles",function()
+        local index,saved,stores,advance=harness()
+        saved[1]=profile(0,75); saved[1].Data.lifetimeCash=1e100
+        saved[2]=profile(999999,5); saved[2].Data.lifetimeCash=2e100
+        index:Queue(1); index:Queue(2); assert(index:FlushOne()); assert(index:FlushOne())
+        assert(stores.cash.values["2"]>stores.cash.values["1"])
+        assert(index:Refresh("cash")); local rows=index:Get("cash")
+        equal(rows[1].userId,2); equal(rows[1].cash,2e100); equal(rows[2].cash,1e100)
+        saved[2].Data.cash=0; saved[2].Data.rebirths=6
+        advance(31); index:Queue(2); assert(index:FlushOne()); assert(index:Refresh("cash"))
+        rows=index:Get("cash"); equal(rows[1].cash,2e100)
+    end)
 	test("lost migration lease stops backfill before importing the following page", function()
 		local index=harness()
 		local source={ListKeysAsync=function() return {IsFinished=false,Cursor="next",GetCurrentPage=function() return {} end,AdvanceToNextPageAsync=function() error("must not advance") end} end}

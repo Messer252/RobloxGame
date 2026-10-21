@@ -1,5 +1,6 @@
 local Progression = if script then require(game:GetService("ReplicatedStorage").CookieTycoon.Progression) else require("../shared/Progression")
 local Cards = if script then require(game:GetService("ReplicatedStorage").CookieTycoon.CardEconomy) else require("../shared/CardEconomy")
+local Earnings=if script then require(game:GetService("ReplicatedStorage").CookieTycoon.Earnings) else require("../shared/Earnings")
 local Rewards = {}
 
 function Rewards.grant(data, action, amount, maximum)
@@ -15,6 +16,7 @@ function Rewards.grant(data, action, amount, maximum)
 		return false, "Enter a whole amount from 1 to " .. Progression.format(maximum) .. "."
 	end
 	if amount > cap - target[field] then return false, "That balance does not have room for the whole grant." end
+	if field=="cash" or field=="bank" then Earnings.record(data,amount) end
 	target[field] += amount -- Exact gifts; food, cards and passes never multiply them.
 	local names = { cash = "wallet cash", bank = "uncollected earnings", chips = "Golden Chips", crumbs = "Star Crumbs" }
 	return true, "Added " .. Progression.format(amount) .. " " .. names[field] .. "."

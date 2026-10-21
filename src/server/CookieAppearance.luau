@@ -46,7 +46,8 @@ function Appearance.step(player, state)
 	if state.buffHumanoid ~= hum then
 		state.buffHumanoid, state.originalJumpHeight, state.originalJumpPower = hum, hum.JumpHeight, hum.JumpPower
 	end
-	hum.JumpHeight, hum.JumpPower = state.originalJumpHeight + effect.Jump, state.originalJumpPower + effect.Jump * 3
+	local jump=Life.jump(state.data.life,os.time())
+	hum.JumpHeight, hum.JumpPower = state.originalJumpHeight + jump, state.originalJumpPower + jump * 3
 	if active and hum.Health > 0 then hum.Health = math.min(hum.MaxHealth, hum.Health + effect.Regen * math.min(0.5, os.clock() - (state.regenAt or os.clock()))) end
 	state.regenAt = os.clock()
 	player:SetAttribute("CookieBuffName", active and effect.Name or "")

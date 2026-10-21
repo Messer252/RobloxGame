@@ -41,7 +41,7 @@ Visit each purchase pad beside your own line:
 
 Wrappers and boxes attach without adding collision obstacles to the belt. Picking a cookie before an arch means it does not receive that arch's bonus. The finishing oven locks the item in your bag while baking; it cannot be eaten, sold, or traded during that time. The queue survives a normal departure and completes when its timestamp is reached. The oven must be purchased before use, and starting a finish requires being at its pad.
 
-Cash-bought machines, cookie mastery, and toppings reset on rebirth. Stored cookies and armor reset; rolling pins return to Maple. Cards, Star Crumbs, dough, enchantments, and dough upgrades survive. An unfinished oven job is canceled on rebirth and returns the original cookie to normal bag use.
+Cash-bought machines, cookie mastery, and toppings reset on rebirth. Stored cookies and armor reset; rolling pins return to Maple. Cards, Star Crumbs, unspent dough, and enchantments survive; purchased mine upgrades reset. An unfinished oven job is canceled on rebirth and its cookie is cleared with the rest of the bag.
 
 ## Roaming customers and bargaining
 
@@ -78,7 +78,7 @@ Visit Bruno’s blacksmith in the side market to buy rolling pins. The mine work
 | 4 | $500,000 | 15 |
 | 5 | $5,000,000 | 30 |
 
-Dough buys permanent **Mixing** (+10% production per level, 10 levels), **Flow** (+5% baking speed per level, 10 levels), and **Pockets** (+4 inventory slots per level, five levels). Their starting dough costs are 25, 30, and 20, doubling per level. Pins and dough upgrades survive rebirth. The ore's last successful miner receives that ore's reward.
+Dough buys per-rebirth **Mixing** (+10% production per level, 10 levels), **Flow** (+5% baking speed per level, 10 levels), and **Pockets** (+4 inventory slots per level, five levels). Their starting dough costs are 25, 30, and 20, doubling per level. Pins and all bought mine upgrades reset on rebirth; unspent dough stays. Sprint (+1 walking speed) and Leap (+0.5 jump height) add five levels each, starting at 35/40 dough and doubling per level. The ore's last successful miner receives that ore's reward.
 
 ## Obbys and quest navigation
 

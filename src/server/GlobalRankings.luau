@@ -1,9 +1,15 @@
 -- Durable ranking index and read cache. Engine-free so outages and offline
 -- saves can be tested without contacting Roblox services.
 local ProfileStore = if script then require(script.Parent.ProfileStore) else require("./ProfileStore")
+local Earnings=if script then require(game:GetService("ReplicatedStorage").CookieTycoon.Earnings) else require("../shared/Earnings")
 local Rankings = {}
 Rankings.__index = Rankings
 local keys = { "cash", "rebirths" }
+local function savedTotal(data)
+ if data.lifetimeCash~=nil then return Earnings.valid(data.lifetimeCash) and Earnings.total(data) or nil end
+ if not Earnings.valid(data.cash) or data.bank~=nil and not Earnings.valid(data.bank) then return nil end
+ return Earnings.total(data)
+end
 local function userId(value)
 	local id = tonumber(value)
 	return id and id > 0 and id < 2^53 and id % 1 == 0 and id or nil
@@ -43,7 +49,7 @@ function Rankings:FlushOne()
 			self:_complete(id, version, now)
 			return true, "unsupported_profile"
 		end
-		local values = { cash = score(saved.Data.cash), rebirths = score(saved.Data.rebirths) }
+		local values = { cash = Earnings.score(savedTotal(saved.Data)), rebirths = score(saved.Data.rebirths) }
 		if values.cash == nil or values.rebirths == nil then self:_complete(id, version, now); return true, "invalid_scores" end
 		for _, key in ipairs(keys) do
 			local written = pcall(function() self.stores[key]:SetAsync(tostring(id), values[key]) end)
@@ -54,7 +60,7 @@ function Rankings:FlushOne()
 		-- including decreases, instead of leaving an offline player stale forever.
 		local checked, latest = pcall(self.readProfile, id)
 		if not checked then return false, "read_failed" end
-		if type(latest) ~= "table" or type(latest.Data) ~= "table" or latest.Data.cash ~= saved.Data.cash or latest.Data.rebirths ~= saved.Data.rebirths then
+		if type(latest) ~= "table" or type(latest.Data) ~= "table" or Earnings.total(latest.Data) ~= Earnings.total(saved.Data) or latest.Data.rebirths ~= saved.Data.rebirths then
 			self:Queue(id)
 			return false, "changed_during_write"
 		end
@@ -83,7 +89,13 @@ function Rankings:Refresh(key)
 	local rows = {}
 	for _, entry in ipairs(entries) do
 		local id, value = userId(entry.key), score(entry.value)
-		if id and value then table.insert(rows, { userId = id, name = self:_name(id), [key] = value }) end
+		if id and value then
+			if key=="cash" then
+				local read,saved=pcall(self.readProfile,id)
+				value=read and type(saved)=="table" and type(saved.Version)=="number" and saved.Version<=ProfileStore.CURRENT_VERSION and type(saved.Data)=="table" and savedTotal(saved.Data) or Earnings.decode(value)
+			end
+			table.insert(rows,{userId=id,name=self:_name(id),[key]=value})
+		end
 	end
 	table.sort(rows, function(a, b) return a[key] == b[key] and a.userId < b.userId or a[key] > b[key] end)
 	self.rows[key], self.status[key] = rows, "Saved rankings • refresh every 60s"

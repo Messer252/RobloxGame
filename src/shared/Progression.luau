@@ -6,12 +6,13 @@ local AudioPreferences = if script then require(script.Parent.AudioPreferences) 
 local Life = if script then require(script.Parent.BakeryLife) else require("./BakeryLife")
 
 local Cards = if script then require(script.Parent.CardEconomy) else require("./CardEconomy")
+local Earnings = if script then require(script.Parent.Earnings) else require("./Earnings")
 local Progression = {}
-Progression.MAX_CASH = 1e15 -- Keep all currency integers below double precision limits.
-Progression.MAX_CHIPS = 1000000000
-Progression.MAX_REBIRTH_CASH = 100000000000 -- Cap prestige requirements at $100B for the late game.
+Progression.MAX_CASH = Earnings.Limit -- Scientific notation for late-game balances; finite storage values only.
+Progression.MAX_CHIPS = 1e15
+Progression.MAX_REBIRTH_CASH = 1e298 -- Numerical overflow guard, not a designed endgame tier.
 Progression.MAX_OVEN_LEVEL = 15
-Progression.MAX_REBIRTHS = 50
+Progression.MAX_REBIRTHS = 1000000000 -- Integer safety guard; no 50-rebirth finish.
 Progression.PermanentOrder = { "Yield", "Speed", "Starter" }
 Progression.Permanent = {
 	Yield = { Name = "Golden Batter", Max = 20, BaseCost = 3, StepCost = 2, Description = "+25% cookie income per level" },
@@ -28,7 +29,7 @@ end
 
 function Progression.newData()
 	return {
-		cash = 0, bank = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0,
+		cash = 0, bank = 0, lifetimeCash = 0, unlocked = 1, level = 1, rebirths = 0, chips = 0,
 		permanent = { Yield = 0, Speed = 0, Starter = 0 }, modifiers = {},
 		audio = AudioPreferences.normalize(nil), challenges = Challenges.normalize(nil), boosts = Boosts.normalize(nil),
 		life = Life.normalize(nil),
@@ -41,6 +42,7 @@ function Progression.normalize(raw)
 	if type(raw) ~= "table" then return data end
 	data.cash = integer(raw.cash, 0, 0, Progression.MAX_CASH)
 	data.bank = integer(raw.bank, 0, 0, Progression.MAX_CASH)
+	data.lifetimeCash = Earnings.total(raw)
 	data.unlocked = integer(raw.unlocked, 1, 1, #Recipes)
 	data.level = integer(raw.level, 1, 1, Progression.MAX_OVEN_LEVEL)
 	data.rebirths = integer(raw.rebirths, 0, 0, Progression.MAX_REBIRTHS)
@@ -72,6 +74,7 @@ function Progression.normalize(raw)
 end
 
 function Progression.format(value)
+	if value>=1e15 then return string.format("%.2e",value) end
 	for _, unit in ipairs({ { 1e12, "T" }, { 1e9, "B" }, { 1e6, "M" }, { 1e3, "K" } }) do
 		if value >= unit[1] then return string.format("%.2f%s", value / unit[1], unit[2]) end
 	end
@@ -79,7 +82,7 @@ function Progression.format(value)
 end
 
 function Progression.multiplier(data, perks)
-	return (1 + data.permanent.Yield * 0.25) * (1 + data.rebirths * 0.15)
+	return (1 + data.permanent.Yield * 0.25) * (1 + data.rebirths * 0.15) * 10^math.min(260,math.max(0,data.rebirths-11)*math.log10(1.12))
 		* (perks and perks.DoubleIncome and 2 or 1)
 		* Boosts.multiplier(data.boosts, perks and perks.Now or os.time())
 		* Life.production(data.life, perks and perks.Now or os.time()) * Cards.bonuses(data.life.cards, perks and perks.ThirdCardSlot).Cash
@@ -141,7 +144,7 @@ local function rebirthThreshold(cash, base, reward)
 end
 
 function Progression.rebirthRequirement(data)
-	local cash = math.min(Progression.MAX_REBIRTH_CASH, math.floor(5000000 * 2.5 ^ data.rebirths))
+	local cash = math.min(Progression.MAX_REBIRTH_CASH, math.floor(math.min(1e11,5000000*2.5^math.min(data.rebirths,11))*10^math.min(287,math.max(0,data.rebirths-11)*math.log10(1.16))))
 	local base = 5 + data.rebirths * 2
 	local total = data.cash + data.bank
 	local reward = math.min(base * 5, math.floor(base * math.sqrt(math.max(1, total / cash))))
@@ -196,6 +199,7 @@ function Progression.rebirth(data)
 	if data.chips + requirement.Reward > Progression.MAX_CHIPS then return false, "Spend some Golden Chips before rebirthing." end
 	data.rebirths += 1
 	data.chips += requirement.Reward
+	Earnings.record(data,500 * data.permanent.Starter ^ 2)
 	data.cash = 500 * data.permanent.Starter ^ 2
 	data.bank = 0
 	data.unlocked = 1
@@ -206,6 +210,8 @@ function Progression.rebirth(data)
 	data.life.oven = {}
 	data.life.inventory = {}
 	data.life.belt = 0
+	data.life.upgrades = Life.normalize(nil).upgrades
+	data.life.abilities = Life.normalize(nil).abilities
 	data.life.pin = 1
 	data.life.armor = 0
 	data.life.decorations = Life.normalize(nil).decorations

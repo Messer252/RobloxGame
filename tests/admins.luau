@@ -97,12 +97,13 @@ return function(test, equal, harness, fakeStore)
 		end
 		assert(not AdminRewards.grant(data, "GiveChips", 5, 1e9))
 		assert(not AdminRewards.grant(data, "GiveWalletCash", 1, math.huge))
-		data.cash, data.bank = Progression.MAX_CASH - 5, Progression.MAX_CASH
+		data.cash, data.bank = Progression.MAX_CASH, Progression.MAX_CASH
 		assert(not AdminRewards.grant(data, "GiveWalletCash", 6, 1e9))
 		assert(not AdminRewards.grant(data, "GiveBankCash", 1, 1e9))
-		equal(data.cash, Progression.MAX_CASH - 5)
-		assert(AdminRewards.grant(data, "GiveWalletCash", 5, 1e9))
 		equal(data.cash, Progression.MAX_CASH)
+		data.cash=100
+		assert(AdminRewards.grant(data, "GiveWalletCash", 5, 1e9))
+		equal(data.cash, 105)
 	end)
 
 	test("admin gifts persist through receipt saves and rejoin while retaining existing progress", function()

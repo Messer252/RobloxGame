@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 11 preserves dormant armor enchantments after a gear-reset rebirth.
--- Older servers would erase them when normalizing an unarmored profile.
-ProfileStore.CURRENT_VERSION = 11
+-- Version 12 adds lifetime earnings, mine/combat upgrades, and extended progression.
+-- Older servers must not clamp late-game balances or discard these fields.
+ProfileStore.CURRENT_VERSION = 12
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0

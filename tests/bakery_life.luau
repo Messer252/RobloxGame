@@ -95,7 +95,7 @@ return function(test, equal, near, harness, fakeStore)
 		for i = 2, #Recipes do assert(Life.recipeCost(i, 0) > Life.recipeCost(i-1, 0)) end
 		for level = 1, 9 do assert(Life.recipeCost(1, level) > Life.recipeCost(1, level-1)) end
 	end)
-	test("rebirth clears cookies and machines while retaining permanent mining upgrades", function()
+	test("rebirth clears cookies, machines and mine upgrades while retaining unspent dough", function()
 		local p = Progression.newData()
 		Life.add(p.life, cookie("kept", 30))
 		p.life.dough, p.life.pin, p.life.upgrades.Flow, p.life.machines.Boxer = 100, 3, 4, true
@@ -104,7 +104,7 @@ return function(test, equal, near, harness, fakeStore)
 		equal(#p.life.inventory, 0)
 		equal(p.life.dough, 100)
 		equal(p.life.pin, 1)
-		equal(p.life.upgrades.Flow, 4)
+		equal(p.life.upgrades.Flow, 0)
 		equal(p.life.machines.Boxer, false)
 		equal(p.life.recipeLevels["1"], 0)
 	end)

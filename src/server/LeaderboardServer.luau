@@ -10,7 +10,7 @@ local function unavailable()
 end
 function Server.start(profileStore, settings)
 	local stores = {}
-	for key, suffix in pairs({cash = "Cash", rebirths = "Rebirths"}) do
+	for key, suffix in pairs({cash = "AllTimeCash", rebirths = "Rebirths"}) do
 		local ok, store = pcall(function() return DataStoreService:GetOrderedDataStore(settings.DataStoreName .. "_Global" .. suffix .. "_v1") end)
 		stores[key] = ok and store or {SetAsync = unavailable, GetSortedAsync = unavailable}
 	end
@@ -67,7 +67,7 @@ end
 -- resume interrupted work without scanning every profile on every server join.
 function Server:Backfill(profileStore, settings)
 	local token = Http:GenerateGUID(false)
-	local ok, migration = pcall(function() return DataStoreService:GetDataStore(settings.DataStoreName .. "_GlobalBackfill_v1") end)
+	local ok, migration = pcall(function() return DataStoreService:GetDataStore(settings.DataStoreName .. "_GlobalBackfill_v2") end)
 	if not ok then return end
 	local function lease(cursor, done, claim)
 		local succeeded, result = pcall(function()

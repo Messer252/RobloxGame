@@ -4,6 +4,7 @@ local Rules, Cards, Polish, Life = require(Shared.ValleyEvents), require(Shared.
 local Enchant = require(Shared.Enchantments)
 local Town = require(Shared.TownCatalog)
 local W, Assets = require(script.Parent.WorldWidgets), require(script.Parent.AssetLibrary)
+local Abilities=require(Shared.CombatAbilities)
 local Events = {}
 Events.__index = Events
 local gold, cocoa = Color3.fromRGB(255, 205, 97), Color3.fromRGB(77, 47, 37)
@@ -176,7 +177,9 @@ function Events:Swing(player, pinTool)
 			if delta.Magnitude <= 9 and delta:Dot(root.CFrame.LookVector) > 0 then
 				local otherState = self.context.GetState(other)
 				local attack, defense = Polish.active(state.data.life, os.time()), Polish.active(otherState.data.life, os.time())
-				targetHum:TakeDamage(Rules.damage(state.data.life.pin, attack.Damage + Enchant.effect(state.data.life,"Pin").Damage, defense.Defense + Town.defense(otherState.data.life) + Enchant.effect(otherState.data.life,"Armor").Defense))
+				local protection=Abilities.protection(workspace:GetServerTimeNow(),other:GetAttribute("DodgeUntil"),other:GetAttribute("GuardUntil"))
+				if protection==0 then return true end
+				targetHum:TakeDamage(protection*Rules.damage(state.data.life.pin, attack.Damage + Enchant.effect(state.data.life,"Pin").Damage, defense.Defense + Town.defense(otherState.data.life) + Enchant.effect(otherState.data.life,"Armor").Defense))
 				local flat = Vector3.new(delta.X, 0, delta.Z)
 				if flat.Magnitude > .1 then target:ApplyImpulse((flat.Unit * 18 + Vector3.yAxis * 4) * target.AssemblyMass) end
 				return true

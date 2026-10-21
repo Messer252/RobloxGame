@@ -133,13 +133,15 @@ end)
 
 test("collection keeps overflow in the bank without deleting earnings", function()
 	local data = Progression.newData()
-	data.cash = Progression.MAX_CASH - 10
-	data.bank = 50
-	equal(Progression.collect(data), 10)
+	data.cash = Progression.MAX_CASH * .75
+	data.bank = Progression.MAX_CASH * .5
+	local room=Progression.MAX_CASH-data.cash
+	local remainder=data.bank-room
+	equal(Progression.collect(data), room)
 	equal(data.cash, Progression.MAX_CASH)
-	equal(data.bank, 40)
+	equal(data.bank, remainder)
 	equal(Progression.collect(data), 0)
-	equal(data.bank, 40)
+	equal(data.bank, remainder)
 end)
 
 test("failed rebirth changes no currency, recipes, or upgrades", function()
@@ -454,13 +456,13 @@ end)
 
 test("cash bundles award the full amount with bank overflow and no partial grants", function()
 	local data = Progression.newData()
-	data.cash = Progression.MAX_CASH - 5
-	assert(Rewards.cash(data, 10000, Progression.MAX_CASH))
-	equal(data.cash, Progression.MAX_CASH)
+	data.cash = 1e15 - 5
+	assert(Rewards.cash(data, 10000, 1e15))
+	equal(data.cash, 1e15)
 	equal(data.bank, 9995)
-	data.bank = Progression.MAX_CASH
+	data.bank = 1e15
 	local before = copy(data)
-	assert(not Rewards.cash(data, 10000, Progression.MAX_CASH))
+	assert(not Rewards.cash(data, 10000, 1e15))
 	same(data, before)
 end)
 
@@ -665,15 +667,15 @@ test("receipt capacity failure leaves no acknowledgement and can retry after spe
 	local store = fakeStore()
 	local manager = harness(store)
 	local profile = assert(manager:Load(31, "server-A"))
-	profile.data.cash, profile.data.bank = Progression.MAX_CASH, Progression.MAX_CASH
-	local ok, reason = manager:GrantReceipt(profile, "purchase-A", 123, grantCash)
+	profile.data.cash, profile.data.bank = 1e15, 1e15
+	local ok, reason = manager:GrantReceipt(profile, "purchase-A", 123, function(data) return Rewards.cash(data,10000,1e15) end)
 	equal(ok, false)
 	equal(reason, "capacity")
 	equal(profile.transacting, false)
 	equal(store.records.Player_31.Receipts["purchase-A"], nil)
 	profile.data.cash -= 10000
-	assert(manager:GrantReceipt(profile, "purchase-A", 123, grantCash))
-	equal(profile.data.cash, Progression.MAX_CASH)
+	assert(manager:GrantReceipt(profile, "purchase-A", 123, function(data) return Rewards.cash(data,10000,1e15) end))
+	equal(profile.data.cash, 1e15)
 end)
 
 test("receipt arriving during an autosave waits without recording an ungranted reward", function()
@@ -1233,6 +1235,8 @@ require("./npc_motion")(test, equal, near)
 require("./cave_prestige")(test, equal, near, harness, fakeStore)
 require("./forge_obbys")(test, equal, near, harness, fakeStore)
 require("./global_rankings")(test, equal)
+require("./night_progression")(test,equal,near,harness,fakeStore)
+require("./combat_abilities")(test,equal,near,harness,fakeStore)
 
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then error("Cookie Corner tests failed") end

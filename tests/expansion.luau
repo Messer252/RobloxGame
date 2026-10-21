@@ -67,12 +67,13 @@ return function(test, equal, near, harness, fakeStore)
 		local run = Obby.start(course, 100)
 		assert(not Obby.advance(run, course, 2, 101))
 		assert(not Obby.advance(run, Courses[2], 1, 101))
-		assert(not Obby.advance(run, course, 1, 100.1))
-		for stage = 1, course.Count - 1 do
+		assert(Obby.advance(run, course, 1, 100.1))
+		assert(not Obby.advance(run, course, 1, 100.15))
+		for stage = 2, course.Count - 1 do
 			local accepted, complete = Obby.advance(run, course, stage, 100 + stage * 0.3)
 			assert(accepted and not complete)
 		end
-		assert(not Obby.advance(run, course, course.Count, 103))
+		assert(not Obby.canFinish(run, course, true, 103))
 		local accepted, complete = Obby.advance(run, course, course.Count, 100+course.MinSeconds)
 		assert(accepted and complete)
 		assert(not Obby.advance(run, course, course.Count, 101+course.MinSeconds))

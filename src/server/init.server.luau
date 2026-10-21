@@ -1,3 +1,4 @@
+local Earnings=require(game:GetService("ReplicatedStorage").CookieTycoon.Earnings)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataStoreService = game:GetService("DataStoreService")
@@ -46,6 +47,8 @@ local feedback = Instance.new("RemoteEvent")
 feedback.Name = "Feedback"
 feedback.Parent = remotes
 
+require(script.PurchasePreviews).start(remotes)
+
 local storeOk, store = pcall(function() return DataStoreService:GetDataStore(Settings.DataStoreName) end)
 if not storeOk then
 	local initializationError = store
@@ -70,7 +73,8 @@ end
 
 local function sync(player, state)
 	local data = state.data
-	player.leaderstats.Cash.Value = data.cash
+	player.leaderstats["All-Time Cash"].Value = data.lifetimeCash
+	player:SetAttribute("WalletCash",data.cash)
 	player.leaderstats.Rebirths.Value = data.rebirths
 	player.leaderstats.GoldenChips.Value = data.chips
 	player:SetAttribute("Bank", data.bank)
@@ -342,8 +346,8 @@ local function addPlayer(player)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
 	stats.Parent = player
-	for _, name in ipairs({ "Cash", "Rebirths", "GoldenChips" }) do
-		local value = Instance.new(name == "Cash" and "NumberValue" or "IntValue")
+	for _, name in ipairs({ "All-Time Cash", "Rebirths", "GoldenChips" }) do
+		local value = Instance.new("NumberValue")
 		value.Name = name
 		value.Parent = stats
 	end
@@ -426,7 +430,9 @@ task.spawn(function()
 				local interval = Progression.interval(state.data, state.perks)
 				local batches = math.min(5, math.floor((now - state.nextBake) / interval) + 1)
 				state.nextBake = now + interval
-				state.data.bank = math.min(Progression.MAX_CASH, state.data.bank + Progression.batchValue(state.data, state.perks) * batches)
+				local earned=math.min(Progression.MAX_CASH-state.data.bank,Progression.batchValue(state.data,state.perks)*batches)
+				Earnings.record(state.data,earned)
+				state.data.bank += earned
 				Contracts.record(state.data, "Bake", batches)
 				for _ = 1, batches do Cards.production(state.data.life.cards, os.time(), state.perks.ThirdCardSlot) end
 				World.updateBank(state.plot, state.data)

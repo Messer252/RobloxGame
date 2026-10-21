@@ -132,7 +132,7 @@ function Tools.pin(player, level, onSwing, enchantRank)
 	tool.Grip = CFrame.Angles(0, 0, math.pi / 2)
 	local idle, swinging = tool.Grip, false
 	tool.Activated:Connect(function()
-		if swinging or tool.Parent ~= player.Character then return end
+		if swinging or tool.Parent ~= player.Character or workspace:GetServerTimeNow()<(player:GetAttribute("CombatBusyUntil") or 0) then return end
 		swinging = true
 		local tween = game:GetService("TweenService")
 		tween:Create(tool, TweenInfo.new(0.1), { Grip = idle * CFrame.Angles(-1.1, 0, 0) }):Play()

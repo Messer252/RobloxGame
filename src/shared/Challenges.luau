@@ -1,3 +1,4 @@
+local Earnings = if script then require(script.Parent.Earnings) else require("./Earnings")
 local Catalog = if script then require(script.Parent.ChallengeCatalog) else require("./ChallengeCatalog")
 local Challenges = {}
 
@@ -85,7 +86,7 @@ function Challenges.interact(data, maxCash)
 	if not Challenges.ready(state) then
 		return false, "Found " .. Challenges.count(state) .. "/" .. #quest.Items .. ". Follow the clues to find the rest!"
 	end
-	local limit = maxCash or 1e15
+	local limit = maxCash or Earnings.Limit
 	-- Preserve the entire reward. Overflow goes to the register; if both balances
 	-- are full, leave the completed hunt untouched so the player can claim later.
 	local walletRoom = math.max(0, limit - data.cash)
@@ -94,6 +95,7 @@ function Challenges.interact(data, maxCash)
 		return false, "Spend some cash to make room for your reward. Your hunt is complete!"
 	end
 	local walletReward = math.min(quest.Reward, walletRoom)
+	Earnings.record(data,quest.Reward)
 	data.cash += walletReward
 	data.bank += quest.Reward - walletReward
 	data.challenges = { index = state.index + 1, active = false, found = {} }

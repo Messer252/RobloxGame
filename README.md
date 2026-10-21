@@ -1,12 +1,16 @@
 # Cookie Corner Tycoon
 
+**Combat follow-up:** [E/Q mine abilities, procedural animations, cooldowns and obby finish fixes](COMBAT-AND-OBBY.md).
+
+**Latest update:** [Open-ended rebirths, all-time cash rankings, mine movement upgrades, compact HUD, 3D purchase previews, night monsters and a co-op boss](NIGHT-AND-PROGRESSION.md).
+
 **[Download the complete game for Roblox Studio](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip)**
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
 **Obbys and forge update:** [Harder courses with restart pits and red hazards, a separate fast-road market, 13 gear tiers, and permanent Star Crumb enchantments](OBBYS-AND-FORGE.md). Includes suggestions for improving the game’s progression flow.
 
-**Cave and prestige update:** [Five mining galleries, rerolling ores, pin swing sounds, savings-based Golden Chips, admin currency gifts, and Shift/Ctrl aim lock](CAVE-AND-PRESTIGE.md).
+**Cave and prestige update:** [Five mining galleries, rerolling ores, pin swing sounds, savings-based Golden Chips, admin currency gifts, and Shift aim lock](CAVE-AND-PRESTIGE.md).
 
 **NPC update:** [Reliable customer walking, corrected gait, rebuilt character outfits, and a Pack House attendant](NPC-UPDATE.md).
 
@@ -169,7 +173,7 @@ The server generates the map and remotes. Set the experience's maximum player co
 
 Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after important upgrades and quest changes, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
 
-The current **version-11 save envelope** accepts existing versions 1–10 and preserves progression, receipts, quests, and audio including 13 gear tiers, enchantments, armor and daily/trail/obby reward state. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-11 records.
+The current **version-12 save envelope** accepts existing versions 1–11 and preserves progression, receipts, quests, and audio including 13 gear tiers, enchantments, armor and daily/trail/obby reward state. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-12 records.
 
 For offline Studio development only, explicitly set `AllowStudioSessionOnly = true` in Settings. If DataStore access is unavailable, Studio then starts a clearly labeled temporary session that **does not save**. This fallback never writes temporary data into a saved profile and is ignored on live servers. Locked or incompatible saves do not fall back.
 
@@ -180,11 +184,11 @@ No income accrues while logged off or before claiming a plot. The last saved unc
 The first rebirth requires **18 unlocked recipes** and **$5 million in cash + uncollected earnings**, and awards **at least 5 Golden Chips**. Subsequent requirements scale with your completed rebirth count `r`:
 
 - Required recipes: `min(30, 18 + 2r)`.
-- Required cash + bank: `min(100 billion, 5 million x 2.5^r)`. The cap keeps later rebirths reachable.
+- Required cash + bank: the original curve reaches $100B at eleven rebirths, then compounds by 16% per rebirth. See the [late-game examples and numeric safeguards](NIGHT-AND-PROGRESSION.md).
 - Base Golden Chip reward: `5 + 2r`. Saving beyond the cash requirement increases the payout with the square root of the cash ratio, up to 5× base. The menu shows the current bonus and next-chip threshold; see [examples](CAVE-AND-PRESTIGE.md#save-cash-for-more-golden-chips).
-- Each rebirth adds another 15% to the rebirth income bonus. There are 50 rebirths available.
+- Income uses `(1 + 0.15r) × 1.12^max(0, r−11)`. The former 50-rebirth finish is removed; later rebirths keep increasing income and requirements.
 
-Open **Bakery → Golden Chips & rebirth** to review rebirth or buy permanent upgrades. Rebirth requires confirmation and resets wallet cash, banked earnings, recipe unlocks, baking-speed levels, topping modifiers, cash-bought machines, and cookie mastery. Stored cookies and armor reset; rolling pins return to Maple. Cards, Star Crumbs, dough, enchantments, and dough upgrades survive. It preserves rebirths, Golden Chips, owned passes, audio preferences, quest progress, and these permanent upgrades:
+Open **Bakery → Golden Chips & rebirth** to review rebirth or buy permanent upgrades. Rebirth requires confirmation and resets wallet cash, banked earnings, recipe unlocks, baking-speed levels, topping modifiers, cash-bought machines, and cookie mastery. Stored cookies and armor reset; rolling pins return to Maple. Cards, Star Crumbs, unspent dough, and enchantments survive; purchased mine upgrades reset. It preserves rebirths, Golden Chips, owned passes, audio preferences, quest progress, and these permanent upgrades:
 
 | Upgrade | Effect | Levels | Next level cost at current level `l` |
 | --- | --- | --- | --- |

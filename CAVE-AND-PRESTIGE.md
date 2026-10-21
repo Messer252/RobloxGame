@@ -44,15 +44,15 @@ Open **Bakery → Admin tools**, select an online account, enter a positive whol
 
 `AdminConfig` now includes `MaxGoldenChipGrant = 10000` and `MaxStarCrumbGrant = 100000`, per action. Cash grants retain their existing limit. Grants require the target's profile to be loaded and available, reject amounts exceeding a balance cap, and queue an early save. Golden Chips and Star Crumbs survive rebirth and rejoining after a successful save. Preview sessions do not save. [Admin setup](ADMINS.md) explains username access.
 
-## Shift / Ctrl camera lock
+## Shift camera lock
 
-Press **Shift** or **Ctrl** to toggle shoulder camera lock. Both left/right keys work. **R3** works on a controller; the HUD's **Aim** button also works with mouse or touch. While enabled, your character faces the camera's horizontal direction and a small reticle marks the center. First-person view keeps its centered camera.
+Press **Shift** to toggle shoulder camera lock. Both left/right Shift keys work; Ctrl does not toggle it. **R3** works on a controller; the HUD's **Aim** button also works with mouse or touch. While enabled, your character faces the camera's horizontal direction and a small reticle marks the center. First-person view keeps its centered camera.
 
-Lock pauses while a game menu, card reveal, Roblox menu, chat/text entry, purchase prompt or admin flight is active. It also releases when unfocused, seated or using a scripted camera. Your cursor returns for menus, and lock resumes when the blocking interaction closes. Death/respawn clears the toggle. During admin flight, Ctrl keeps its descend function.
+Lock cancels while a game menu, card reveal, Roblox menu, chat/text entry, purchase prompt or admin flight is active. It also releases when unfocused, seated or using a scripted camera. Your cursor returns for menus; press Shift again to enable aiming after closing them. Death/respawn clears the toggle. During admin flight, Ctrl keeps its descend function.
 
 ## Updating and checks
 
-Back up your customized place first. Copy your configured values into the new scripts: `AudioConfig` IDs including Bubby's clips, `CardCatalog.ArtSheets`, `ShopCatalog`, `AssetTextures`, and `AdminConfig` usernames. Keep the new configuration fields when copying values. Publish into the same experience and restart outdated servers. Keep the existing DataStore names; the save envelope is now version 11 (see OBBYS-AND-FORGE.md).
+Back up your customized place first. Copy your configured values into the new scripts: `AudioConfig` IDs including Bubby's clips, `CardCatalog.ArtSheets`, `ShopCatalog`, `AssetTextures`, and `AdminConfig` usernames. Keep the new configuration fields when copying values. Publish into the same experience and restart outdated servers. Keep the existing DataStore names; the save envelope is now version 12 (see OBBYS-AND-FORGE.md).
 
 The suite contains **209 Luau tests and 16 Python tests**. New checks cover exact ore probabilities, pin requirements, cave/road geometry, every next-chip threshold, grant permissions/caps, save/rejoin behavior and camera suspension rules. All **87 source scripts** are compiled and packaged. Automated checks do not run Roblox's physics, terrain renderer, input or live audio.
 

@@ -1,5 +1,7 @@
 # Workshop polish update
 
+Current reset rules, saving version and earnings are documented in [Night & progression](NIGHT-AND-PROGRESSION.md).
+
 **Current controls and prices:** [Spawn market and bakery update](MARKET-UPDATE.md) covers armor, pin shopping at spawn, pack opening, daily rewards, fitted decorations and hill ownership.
 **Latest behavior:** [Cookie animals and events update](CARDS-AND-EVENTS.md) supersedes older rebirth retention, terrain, entrance placement, decorations, and topping details below.
 [Download the Studio game](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Extract it and open `CookieCorner.rbxlx`. Copy your customized product IDs, audio IDs (if you want an optional uploaded mix), and AdminConfig usernames before replacing your old place. Publish into the same experience and restart outdated servers.

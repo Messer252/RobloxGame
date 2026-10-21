@@ -9,9 +9,11 @@ local Polish = require(Shared.BakeryPolish)
 local Contracts = require(Shared.BakeryContracts)
 local Cards, CardCatalog = require(Shared.CardEconomy), require(Shared.CardCatalog)
 local Enchant = require(Shared.Enchantments)
+local Earnings=require(Shared.Earnings)
 local Town = require(Shared.TownCatalog)
 local TownWorld,Armor = require(script.Parent.TownWorld),require(script.Parent.CookieArmor)
 local Mine, Cave, MineAccess = require(Shared.MiningCatalog), require(script.Parent.DoughCave), require(script.Parent.MineAccess)
+local Abilities=require(Shared.CombatAbilities)
 local TextService = game:GetService("TextService")
 local Server = {}
 Server.__index = Server
@@ -27,6 +29,8 @@ function Server.start(context)
 	self.announcement = remote("WorldAnnouncement")
 	context.Announce = function(kind) self.announcement:FireAllClients(kind) end
 	self.events = require(script.Parent.ValleyEventsServer).start(context)
+	self.wilderness = require(script.Parent.WildernessServer).start(context)
+	self.combat=require(script.Parent.CombatServer).start(context,self)
 	self.features = Features.create(context.World, context.Plots, function(...) self:Action(...) end)
 	self.town = TownWorld.create(context.World,function(...) self:Action(...) end)
 	self.customers = Customers.create(context.World, function(player, customer) self:OfferCustomer(player, customer) end)
@@ -172,6 +176,7 @@ function Server:NearTown(player,point)
 	return root and W.near(player,root.Position,1) and Town.near(point,root.Position.X,root.Position.Y,root.Position.Z) or false
 end
 function Server:Swing(player)
+	if workspace:GetServerTimeNow()<(player:GetAttribute("CombatBusyUntil") or 0) then return end
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if not root or not self.context.Usable(player) then return end
 	local runtime = self:Runtime(player)
@@ -179,6 +184,7 @@ function Server:Swing(player)
 	if os.clock()-(runtime.lastSwing or -math.huge)<.45 then return end
 	runtime.lastSwing=os.clock()
 	self.context.Remotes.Feedback:FireClient(player,"PinSwing")
+	if self.wilderness:Swing(player) then return end
 	if runtime.pinTool and self.events:Swing(player, runtime.pinTool) then return end
 	local nearest, distance = nil, 12
 	for _, node in ipairs(self.features.ores) do
@@ -227,6 +233,8 @@ function Server:Refresh(player)
 	local signature = Http:JSONEncode(snapshot)
 	if signature ~= runtime.lastSnapshot then runtime.lastSnapshot = signature ; self.stateRemote:FireClient(player, snapshot) end
 	player:SetAttribute("HeldCookieId", self:Held(player))
+	player:SetAttribute("AbilityE",state.data.life.abilities.E)
+	player:SetAttribute("AbilityQ",state.data.life.abilities.Q)
 	player:SetAttribute("CookieTradeBusy", snapshot.busy)
 end
 function Server:Changed(player, state)
@@ -394,7 +402,10 @@ function Server:Action(player, action, argument, plot)
 		local reward
 		ok,reward=Cards.pickup(data.life.cards,argument,os.time(),state.perks.ThirdCardSlot)
 		message=ok and ("+"..reward.." Star Crumbs! Explore for more.") or reward
-	elseif action == "EquipCard" then ok, message = Cards.equip(data.life.cards, argument, state.perks.ThirdCardSlot)
+	elseif action=="Ability" then
+        if not W.near(player,self.features.mine,22) then self.context.Notify(player,"Visit the mine workshop to learn or equip abilities."); return end
+        ok,message=Abilities.purchase(data.life,argument)
+    elseif action == "EquipCard" then ok, message = Cards.equip(data.life.cards, argument, state.perks.ThirdCardSlot)
 	elseif action == "RenameShop" then
 		if type(argument) ~= "string" or #argument > 80 or not state.plot then return end
 		argument = argument:match("^%s*(.-)%s*$")
@@ -487,6 +498,7 @@ function Server:Action(player, action, argument, plot)
 			if accepted then b.attempts += 1 ; b.price = price ; message = "They like your pitch!" else b.customer.label.Text = b.customer.name .. "\nToo pushy! I'm leaving." ; self:CloseBargain(runtime) ; message = "The customer got annoyed and walked away." end
 		elseif b.price <= Life.MaxCurrency - data.bank then
 			Life.remove(data.life, b.item)
+			Earnings.record(data,b.price)
 			data.bank += b.price
 			Contracts.record(data, "Sell", 1)
 			ok, message = true, "Sold! $" .. self.context.Format(b.price) .. " added to your collection register."

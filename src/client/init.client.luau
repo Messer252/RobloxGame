@@ -1,3 +1,4 @@
+local Preview=require(script:WaitForChild("PurchasePreview"))
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -101,7 +102,8 @@ for _, point in ipairs({ Vector2.new(7, 6), Vector2.new(20, 9), Vector2.new(11, 
 end
 local brand = fixedLabel(hud, 8, 30, 21, gold)
 brand.Position = UDim2.fromOffset(58, 8)
-brand.Size = UDim2.new(1, -72, 0, 30)
+brand.Size = UDim2.new(1, -120, 0, 30)
+brand.TextSize = 17
 brand.Text = "COOKIE CORNER"
 local wallet = fixedLabel(hud, 38, 22, 17)
 wallet.TextScaled = true
@@ -211,13 +213,27 @@ effectsToggle.Name = "EffectsToggle"
 effectsToggle.Position = UDim2.new(0.72, 0, 0, 106)
 effectsToggle.Size = UDim2.new(0.28, -14, 0, 30)
 effectsToggle.TextSize = 12
-local aimToggle=button(hud,"Aim • Shift/Ctrl",Color3.fromRGB(66,114,100))
+local aimToggle=button(hud,"Aim • Shift",Color3.fromRGB(66,114,100))
 require(script:WaitForChild("CombatCamera")).start(player,gui,aimToggle)
 local controls=Instance.new("Frame")
 controls.Position,controls.Size,controls.BackgroundTransparency,controls.Parent=UDim2.fromOffset(14,106),UDim2.new(1,-28,0,76),1,hud
 local boostStatus
-Flow.grid(controls,{toggle,homeButton,musicToggle,effectsToggle,aimToggle},110,2,8,34,function(height)
-	hud.Size=UDim2.new(.94,0,0,106+height+64)
+local compactHud=false
+local expandedHeight=270
+local minimize=button(hud,"−",Color3.fromRGB(92,66,48))
+minimize.Name,minimize.Position,minimize.Size,minimize.TextSize="MinimizeHUD",UDim2.new(1,-48,0,8),UDim2.fromOffset(36,32),22
+local function layoutHud()
+	hud:SetAttribute("Minimized",compactHud)
+	hud.Size=UDim2.new(.94,0,0,compactHud and 76 or expandedHeight)
+	controls.Visible,progress.Visible,saveStatus.Visible=not compactHud,not compactHud,not compactHud
+	if boostStatus then boostStatus.Visible=not compactHud end
+	minimize.Text=compactHud and "+" or "−"
+end
+minimize.Activated:Connect(function() compactHud=not compactHud; layoutHud() end)
+musicToggle.Visible,effectsToggle.Visible=false,false
+Flow.grid(controls,{toggle,homeButton,aimToggle},90,3,8,34,function(height)
+	expandedHeight=106+height+56
+	layoutHud()
 	if boostStatus then boostStatus.Position=UDim2.fromOffset(14,106+height+8) end
 end)
 local drawMusicVolume,drawEffectsVolume=function() end,function() end
@@ -299,7 +315,11 @@ end)
 local musicRow,effectsRow
 drawMusicVolume,musicRow=VolumeSlider.create(audioScroll,"Music",0,function() return audio.musicVolume end,function(value) audio:SetVolume("music",value) end)
 drawEffectsVolume,effectsRow=VolumeSlider.create(audioScroll,"SFX",0,function() return audio.effectsVolume end,function(value) audio:SetVolume("effects",value) end)
-musicRow.LayoutOrder,effectsRow.LayoutOrder=1,2
+musicRow.LayoutOrder,effectsRow.LayoutOrder=2,4
+musicToggle.Parent,effectsToggle.Parent=audioScroll,audioScroll
+musicToggle.Visible,effectsToggle.Visible=true,true
+musicToggle.Size,effectsToggle.Size=UDim2.new(1,0,0,38),UDim2.new(1,0,0,38)
+musicToggle.LayoutOrder,effectsToggle.LayoutOrder=1,3
 renderAudio()
 local function showTab(tabName)
 	scroll.Visible = tabName == "Bakery"
@@ -346,6 +366,7 @@ AdminPanel.start(player, remotes, gui, adminButton)
 local bagButton = ordered(button(scroll, "Cookie bag • mine • machines", Color3.fromRGB(66, 114, 100)))
 bagButton.Size = UDim2.new(1, 0, 0, 42)
 LifeClient.start(player, remotes, gui, hud, bagButton, audio)
+require(script:WaitForChild("CombatClient")).start(player,gui,remotes,audio)
 local collectButton = ordered(button(scroll, "Collect earnings", Color3.fromRGB(134, 100, 35)))
 local recipeButton = ordered(button(scroll, "Unlock next cookie"))
 local ovenButton = ordered(button(scroll, "Faster conveyor", Color3.fromRGB(103, 82, 147)))
@@ -387,6 +408,7 @@ local permanentButtons = {}
 for _, key in ipairs(Progression.PermanentOrder) do
 	local upgradeButton = ordered(button(goldenSection, "", Color3.fromRGB(113, 87, 39)))
 	upgradeButton.Size = UDim2.new(1, 0, 0, 72)
+	Preview.attach(upgradeButton,"Prop:RebirthPedestal")
 	permanentButtons[key] = upgradeButton
 	upgradeButton.Activated:Connect(function() requestAction:FireServer("UpgradePermanent", key) end)
 end
@@ -452,6 +474,7 @@ local pricesLoading = false
 local function shopRow(kind, key, entry)
 	local purchaseButton = ordered(button(shopScroll, entry.Name, Color3.fromRGB(101, 113, 65)))
 	purchaseButton.Size = UDim2.new(1, 0, 0, 70)
+	Preview.attach(purchaseButton,"Prop:"..(entry.Cash and "CollectionRegister" or "UpgradeConsole"))
 	table.insert(shopRows, { Kind = kind, Key = key, Entry = entry, Button = purchaseButton })
 	purchaseButton.Activated:Connect(function() requestPurchase:FireServer(kind, key) end)
 end
@@ -520,10 +543,10 @@ gui.Destroying:Connect(function()
 	audio:Destroy()
 end)
 
-local cash = player:WaitForChild("leaderstats"):WaitForChild("Cash")
+local cash = player:WaitForChild("leaderstats"):WaitForChild("All-Time Cash")
 local function currentData()
 	local data = {
-		cash = cash.Value, bank = player:GetAttribute("Bank") or 0,
+		cash = player:GetAttribute("WalletCash") or 0, bank = player:GetAttribute("Bank") or 0,
 		unlocked = player:GetAttribute("RecipeCount") or 1, level = player:GetAttribute("OvenLevel") or 1,
 		rebirths = player:GetAttribute("Rebirths") or 0, chips = player:GetAttribute("GoldenChips") or 0,
 		permanent = {
@@ -662,18 +685,18 @@ local function render()
 	local canManage = ownsBakery and not purchasePending and player:GetAttribute("CookieTradeBusy") ~= true
 	local format = Progression.format
 	local remaining = math.max(0, data.boosts.obbyExpires - data.perks.Now)
-	boostStatus.Text = "Permanent income x" .. Boosts.paidMultiplier(data.boosts)
+	boostStatus.Text = "Income ×" .. Boosts.paidMultiplier(data.boosts)
 		.. (remaining > 0 and string.format(" • Obby +%d%% %d:%02d", math.floor(data.boosts.obbyBonus * 100), math.floor(remaining / 60), remaining % 60)
-			or " • Obbys in the east meadow")
+			or "")
 	if lastWorkshopRebirth ~= data.rebirths then
 		selectedRecipe = math.min(selectedRecipe, data.unlocked)
 		lastWorkshopRebirth = data.rebirths
 	end
-	wallet.Text = "Cash $" .. format(data.cash) .. "  |  Ready $" .. format(data.bank)
+	wallet.Text = "$" .. format(data.cash) .. " wallet   •   $" .. format(data.bank) .. " to collect"
 	progress.Text = data.unlocked .. "/" .. #Recipes .. " cookies  •  " .. data.chips .. " Golden Chips"
 	menuWallet.Text = "$" .. format(data.cash) .. "  •  " .. data.chips .. " Golden Chips"
 	local status = player:GetAttribute("DataStatus") or "Loading"
-	saveStatus.Text = saveMessages[status] or status
+	saveStatus.Text = status=="Saved" and "Saved" or (saveMessages[status] or status)
 	saveStatus.TextColor3 = (status == "SaveFailed" or status == "SessionOnly") and gold or cream
 	if not ready then
 		bakeryInfo.Text = "Loading your bakery..."
@@ -688,6 +711,8 @@ local function render()
 	collectButton.Text = "Collect $" .. format(data.bank) .. " at your register"
 	enable(collectButton, false)
 	local nextRecipe = Recipes[data.unlocked + 1]
+	Preview.attach(recipeButton,"Oven:"..math.min(30,data.unlocked+1))
+	Preview.attach(ovenButton,"Prop:Conveyor")
 	recipeButton.Text = nextRecipe and (nextRecipe.Name .. "  •  $" .. format(nextRecipe.Cost) .. "\nUnlock next cookie") or "All 30 cookies unlocked!"
 	local lineReady = nextRecipe ~= nil and math.ceil((data.unlocked+1)/10)<=data.life.belt
 	if nextRecipe and not lineReady then recipeButton.Text=nextRecipe.Name.." • Build conveyor line "..math.ceil((data.unlocked+1)/10).." first" end
@@ -698,7 +723,7 @@ local function render()
 	local requirement = Progression.rebirthRequirement(data)
 	local rebirthMax = data.rebirths >= Progression.MAX_REBIRTHS
 	local canRebirth = canManage and not rebirthMax and data.unlocked >= requirement.Recipes and data.cash + data.bank >= requirement.Cash
-	rebirthInfo.Text = rebirthMax and "All 50 rebirths completed!"
+	rebirthInfo.Text = rebirthMax and "Numerical rebirth limit reached."
 		or string.format("Rebirth #%d  •  +%d Golden Chips\n%d/%d cookies  •  $%s/$%s cash + ready",
 			data.rebirths + 1, requirement.Reward, data.unlocked, requirement.Recipes, format(data.cash + data.bank), format(requirement.Cash))
 	if not rebirthMax then
@@ -709,7 +734,7 @@ local function render()
 	enable(rebirthButton, canRebirth)
 	if confirmation.Visible then
 		if data.rebirths ~= confirmCount or not ownsBakery then confirmation.Visible = false end
-		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, bag cookies, conveyors, machines, decorations, toppings, armor and pin upgrades.\nKeep: cards, Star Crumbs, enchantments, permanent upgrades and quests."
+		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and a permanent income increase?\nReset: cash, bag cookies, conveyors, machines, decorations, toppings, armor, pin, mine upgrades and combat abilities.\nKeep: cards, Star Crumbs, enchantments, permanent upgrades and quests."
 		enable(confirmButton, canRebirth)
 	end
 	for key, upgradeButton in pairs(permanentButtons) do
@@ -719,6 +744,7 @@ local function render()
 			or "$" .. format(500 * math.min(upgrade.Max, data.permanent[key] + 1) ^ 2) .. " after rebirth"
 		upgradeButton.Text = upgrade.Name .. "  " .. data.permanent[key] .. "/" .. upgrade.Max .. "\n"
 			.. (cost and cost .. " chips • " .. effect or "MAXED")
+		Preview.attach(upgradeButton,"Prop:RebirthPedestal")
 		enable(upgradeButton, canManage and cost ~= nil and data.chips >= (cost or math.huge))
 	end
 	local selected = Recipes[selectedRecipe]
@@ -732,6 +758,7 @@ local function render()
 	toppingSummary.Text = "Toppings: " .. Crafting.summary(flags, selectedRecipe)
 	local mastery = data.life.recipeLevels[tostring(selectedRecipe)] or 0
 	local masteryCost = Life.recipeCost(selectedRecipe, mastery)
+	Preview.attach(masteryButton,"Cookie:"..selectedRecipe)
 	masteryButton.Text = mastery == 10 and "Cookie mastery MAX" or ("Cookie mastery " .. mastery .. "/10 • $" .. format(masteryCost) .. "\n+20% value for this recipe")
 	enable(masteryButton, canManage and unlocked and mastery < 10 and data.cash >= masteryCost)
 	enable(previousCookie, selectedRecipe > 1)
@@ -742,6 +769,7 @@ local function render()
 		if not definition then continue end
 		local cost = Crafting.cost(selected, key)
 		local applied = flags and flags[key] == true
+		Preview.attach(addButton,key..":"..selectedRecipe)
 		addButton.Text = definition.Name .. "  +" .. math.floor(definition.Bonus * 100 + 0.5) .. "%\n"
 			.. (applied and "✓ Added" or "$" .. format(cost) .. (unlocked and "" or " • Recipe locked"))
 		enable(addButton, canManage and unlocked and not applied and data.cash >= cost)
@@ -868,6 +896,7 @@ local function scheduleRender()
 	end)
 end
 cash.Changed:Connect(scheduleRender)
+player:GetAttributeChangedSignal("WalletCash"):Connect(scheduleRender)
 player.AttributeChanged:Connect(scheduleRender)
 player:GetAttributeChangedSignal("NoticeId"):Connect(showNotice)
 task.spawn(function()
