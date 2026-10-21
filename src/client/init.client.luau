@@ -709,7 +709,7 @@ local function render()
 	enable(rebirthButton, canRebirth)
 	if confirmation.Visible then
 		if data.rebirths ~= confirmCount or not ownsBakery then confirmation.Visible = false end
-		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, bag cookies, conveyors, machines, decorations and toppings.\nKeep: cards, Star Crumbs, armor, pins, permanent upgrades and quests."
+		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, bag cookies, conveyors, machines, decorations, toppings, armor and pin upgrades.\nKeep: cards, Star Crumbs, enchantments, permanent upgrades and quests."
 		enable(confirmButton, canRebirth)
 	end
 	for key, upgradeButton in pairs(permanentButtons) do

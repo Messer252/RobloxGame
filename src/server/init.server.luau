@@ -247,6 +247,8 @@ local function onAction(player, action, argument, sourcePlot)
 		state.nextBake = math.min(state.nextBake, now + Progression.interval(data, state.perks))
 		sync(player, state)
 		if action == "Collect" then World.updateBank(state.plot, data) else World.refresh(state.plot, data, state.perks) end
+		-- Losing a high-tier pin must not strand the player behind a mine seal.
+		if action == "Rebirth" then task.spawn(World.spawnPlayer, player, state.plot) end
 		if action == "Rebirth" or action == "UpgradePermanent" or action == "BuyModifier" then
 			-- Save the entire reset/reward transaction together, without one write per click.
 			state.nextSave = math.min(state.nextSave, now + 2)

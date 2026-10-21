@@ -55,7 +55,7 @@ The original five rolling-pin tiers retain their distinct models, costs and mini
 | Golden Crust | $750,000 | 24% |
 | Star Cookie | $5,000,000 | 32% |
 
-Buy tiers in order; each purchase equips the new armor. Fitted breastplates, chocolate rivets, shoulder pieces, greaves and a helm band follow standard R6/R15 character parts. Higher tiers change materials and trim. Armor has no collision or weight and reappears after respawning. **Armor and rolling pins survive rebirth and rejoining.** Armor adds to food defense, with a combined 60% damage-reduction cap in the current forge update. Player combat remains restricted to Cookie Hill.
+Buy tiers in order; each purchase equips the new armor. Fitted breastplates, chocolate rivets, shoulder pieces, greaves and a helm band follow standard R6/R15 character parts. Higher tiers change materials and trim. Armor has no collision or weight and reappears after respawning. **Rejoining keeps gear. Rebirth removes armor and resets your pin to Maple. Enchantments stay saved; armor enchantments reactivate when armor is repurchased.** Armor adds to food defense, with a combined 60% damage-reduction cap in the current forge update. Player combat remains restricted to Cookie Hill.
 
 ## Clearer controls and fitted decorations
 
@@ -77,7 +77,7 @@ Daytime brightness, exposure, ambient light, bloom and reflections are lower, an
 
 ## Saving, updating, and playtesting
 
-The current **version-10 save envelope** accepts versions **1–9**, retaining receipts, currencies, cards, quest progress, audio choices, paid entitlements and gift recovery. New armor and reward fields receive safe defaults. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; do not switch to fresh stores or run older save code after this update.
+The current **version-11 save envelope** accepts versions **1–10**, retaining receipts, currencies, cards, quest progress, audio choices, paid entitlements and gift recovery. New armor and reward fields receive safe defaults. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; do not switch to fresh stores or run older save code after this update.
 
 Automated checks exercise hill transfer/logout, reward caps/cooldowns across receipts/rejoin/rebirth, armor purchases and migration, machine prerequisites, decoration progression, public pickup placement and responsive row geometry. Complete these checks in a separate published Roblox test experience:
 

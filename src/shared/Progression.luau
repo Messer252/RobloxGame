@@ -206,6 +206,8 @@ function Progression.rebirth(data)
 	data.life.oven = {}
 	data.life.inventory = {}
 	data.life.belt = 0
+	data.life.pin = 1
+	data.life.armor = 0
 	data.life.decorations = Life.normalize(nil).decorations
 	data.life.buff = Life.normalize(nil).buff
 	return true, "Reborn! +" .. requirement.Reward .. " Golden Chips. Permanent upgrades are kept; recipe modifiers reset."

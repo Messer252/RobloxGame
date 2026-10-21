@@ -22,7 +22,7 @@ The two stall centers are `(275, 1, -315)` and `(345, 1, -315)`. The branch cros
 
 ## Thirteen equipment tiers
 
-The original five tiers remain at their original prices. Eight new tiers follow Starforged / Star Cookie. Gear is bought sequentially with collected wallet cash and survives rebirth and rejoining.
+The original five tiers remain at their original prices. Eight new tiers follow Starforged / Star Cookie. Gear is bought sequentially with collected wallet cash and survives rejoining. **Rebirth resets the rolling pin to Maple (tier 1) and removes armor (tier 0).** Players return home on rebirth so the newly locked mine galleries cannot trap them. Enchantments remain saved; armor enchantment defense and effects activate again after armor is repurchased.
 
 | Tier | Rolling pin | Armor | Price for each | Mining power | Armor defense |
 | --- | --- | --- | ---: | ---: | ---: |
@@ -59,7 +59,7 @@ The server chooses the result once and saves it with the charge. A save retry us
 
 Back up your customized Studio place. Carry over your configured **AudioConfig** IDs (including Bubby), **CardCatalog.ArtSheets**, **ShopCatalog**, **AssetTextures**, and **AdminConfig** values into the updated scripts. Keep new configuration fields. Publish into the same experience and restart outdated servers.
 
-The save envelope advances to **version 10**, accepting versions **1–9**. Existing gear, currencies, cards, receipts, quests, and audio preferences are retained. Enchantments start empty. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; older server code rejects version-10 records to prevent it from discarding higher gear tiers or enchantments.
+The save envelope advances to **version 11**, accepting versions **1–10**. Existing gear is retained when updating or rejoining; it resets only after a successful rebirth. Currencies, cards, receipts, quests, audio preferences, and existing enchantments are retained. Older saves without enchantments start empty. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; older server code rejects version-11 records to prevent it from discarding higher gear tiers or enchantments.
 
 ## Studio playtest checklist
 

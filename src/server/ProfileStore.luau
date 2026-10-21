@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 10 preserves 13 gear tiers and permanent enchantments. Older servers
--- reject this envelope instead of clamping tiers or stripping saved enchants.
-ProfileStore.CURRENT_VERSION = 10
+-- Version 11 preserves dormant armor enchantments after a gear-reset rebirth.
+-- Older servers would erase them when normalizing an unarmored profile.
+ProfileStore.CURRENT_VERSION = 11
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0

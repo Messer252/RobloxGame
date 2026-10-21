@@ -31,7 +31,6 @@ function Life.normalize(raw)
 		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "", belt = integer(raw.belt, 0, 0, 3), decorations = {}, contract = Contracts.normalize(raw.contract), cards = Cards.normalize(raw.cards), shopName = type(raw.shopName) == "string" and string.sub(raw.shopName, 1, 60) or "" }
 	data.armor=integer(raw.armor,0,0,#Gear.Armor)
 	data.enchants=Enchant.normalize(raw.enchants)
-	if data.armor==0 then data.enchants.Armor=0 end
 	for key in pairs(Polish.Decorations) do data.decorations[key] = type(raw.decorations) == "table" and raw.decorations[key] == true or false end
 	local seen = {}
 	if type(raw.inventory) == "table" then

@@ -41,7 +41,7 @@ Visit each purchase pad beside your own line:
 
 Wrappers and boxes attach without adding collision obstacles to the belt. Picking a cookie before an arch means it does not receive that arch's bonus. The finishing oven locks the item in your bag while baking; it cannot be eaten, sold, or traded during that time. The queue survives a normal departure and completes when its timestamp is reached. The oven must be purchased before use, and starting a finish requires being at its pad.
 
-Cash-bought machines, cookie mastery, and toppings reset on rebirth. Stored cookies reset; cards, Star Crumbs, dough, rolling pins, and dough upgrades survive. An unfinished oven job is canceled on rebirth and returns the original cookie to normal bag use.
+Cash-bought machines, cookie mastery, and toppings reset on rebirth. Stored cookies and armor reset; rolling pins return to Maple. Cards, Star Crumbs, dough, enchantments, and dough upgrades survive. An unfinished oven job is canceled on rebirth and returns the original cookie to normal bag use.
 
 ## Roaming customers and bargaining
 

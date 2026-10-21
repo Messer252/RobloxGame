@@ -24,6 +24,8 @@ function Enchant.roll(value)
 	return #Enchant.Rarities
 end
 function Enchant.effect(life,slot)
+	-- Armor enchantments stay saved after rebirth but need armor to provide defense.
+	if slot=="Armor" and (life.armor or 0)<1 then return {Mine=0,Damage=0,Defense=0} end
 	return Enchant.Rarities[life.enchants and life.enchants[slot]] or {Mine=0,Damage=0,Defense=0}
 end
 function Enchant.apply(profile,slot,rolled)

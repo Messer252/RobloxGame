@@ -66,7 +66,7 @@ wallet/earnings cash gifts, and self-invisibility. Full guide: ADMINS.md in this
 
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
-servers: save formats 1-9 migrate to version 10 with existing progress and receipts preserved.
+servers: save formats 1-10 migrate to version 11 with existing progress and receipts preserved.
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 The conveyor update widens the tracks, adds taller rounded outer rails, closes
@@ -93,6 +93,8 @@ Read OBBYS-AND-FORGE.md. Harder obbys have cleared pits and red restart hazards.
 The side-market branch extends the fast road to the Pack House and blacksmith.
 There are 13 rolling-pin and armor tiers. Open Enchant equipment at Bruno to
 roll for 100 Star Crumbs; your best enchantment stays through rebirth/upgrades.
+Rebirth resets your pin to Maple and removes armor. Enchantments stay saved;
+armor enchantments activate again when you repurchase armor.
 New gear models and rarity effects require no additional uploads.
 
 NPC MOVEMENT AND MODELS

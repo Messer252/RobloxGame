@@ -206,7 +206,6 @@ function Life.normalize(raw)
 		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "", belt = integer(raw.belt, 0, 0, 3), decorations = {}, contract = Contracts.normalize(raw.contract), cards = Cards.normalize(raw.cards), shopName = type(raw.shopName) == "string" and string.sub(raw.shopName, 1, 60) or "" }
 	data.armor=integer(raw.armor,0,0,#Gear.Armor)
 	data.enchants=Enchant.normalize(raw.enchants)
-	if data.armor==0 then data.enchants.Armor=0 end
 	for key in pairs(Polish.Decorations) do data.decorations[key] = type(raw.decorations) == "table" and raw.decorations[key] == true or false end
 	local seen = {}
 	if type(raw.inventory) == "table" then
@@ -1219,6 +1218,8 @@ function Enchant.roll(value)
 	return #Enchant.Rarities
 end
 function Enchant.effect(life,slot)
+	-- Armor enchantments stay saved after rebirth but need armor to provide defense.
+	if slot=="Armor" and (life.armor or 0)<1 then return {Mine=0,Damage=0,Defense=0} end
 	return Enchant.Rarities[life.enchants and life.enchants[slot]] or {Mine=0,Damage=0,Defense=0}
 end
 function Enchant.apply(profile,slot,rolled)
@@ -1831,6 +1832,8 @@ function Progression.rebirth(data)
 	data.life.oven = {}
 	data.life.inventory = {}
 	data.life.belt = 0
+	data.life.pin = 1
+	data.life.armor = 0
 	data.life.decorations = Life.normalize(nil).decorations
 	data.life.buff = Life.normalize(nil).buff
 	return true, "Reborn! +" .. requirement.Reward .. " Golden Chips. Permanent upgrades are kept; recipe modifiers reset."
@@ -2451,6 +2454,8 @@ local function onAction(player, action, argument, sourcePlot)
 		state.nextBake = math.min(state.nextBake, now + Progression.interval(data, state.perks))
 		sync(player, state)
 		if action == "Collect" then World.updateBank(state.plot, data) else World.refresh(state.plot, data, state.perks) end
+		-- Losing a high-tier pin must not strand the player behind a mine seal.
+		if action == "Rebirth" then task.spawn(World.spawnPlayer, player, state.plot) end
 		if action == "Rebirth" or action == "UpgradePermanent" or action == "BuyModifier" then
 			-- Save the entire reset/reward transaction together, without one write per click.
 			state.nextSave = math.min(state.nextSave, now + 2)
@@ -6503,9 +6508,9 @@ return Presentation
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 10 preserves 13 gear tiers and permanent enchantments. Older servers
--- reject this envelope instead of clamping tiers or stripping saved enchants.
-ProfileStore.CURRENT_VERSION = 10
+-- Version 11 preserves dormant armor enchantments after a gear-reset rebirth.
+-- Older servers would erase them when normalizing an unarmored profile.
+ProfileStore.CURRENT_VERSION = 11
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0
@@ -31070,7 +31075,7 @@ local function render()
 	enable(rebirthButton, canRebirth)
 	if confirmation.Visible then
 		if data.rebirths ~= confirmCount or not ownsBakery then confirmation.Visible = false end
-		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, bag cookies, conveyors, machines, decorations and toppings.\nKeep: cards, Star Crumbs, armor, pins, permanent upgrades and quests."
+		confirmationText.Text = "Start over for " .. requirement.Reward .. " Golden Chips and +15% income?\nReset: cash, bag cookies, conveyors, machines, decorations, toppings, armor and pin upgrades.\nKeep: cards, Star Crumbs, enchantments, permanent upgrades and quests."
 		enable(confirmButton, canRebirth)
 	end
 	for key, upgradeButton in pairs(permanentButtons) do
@@ -31966,7 +31971,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			row(armor and ("Wearing "..armor.Name.." • "..math.floor(armor.Defense*100).."% pin defense") or "No cookie armor equipped")
 			local nextArmor=Town.Armor[data.armor+1]
 			if nextArmor then purchase("Buy "..nextArmor.Name.." • $"..Progression.format(nextArmor.Cost).."\n"..math.floor(nextArmor.Defense*100).."% defense",nextArmor.Cost,wallet,snapshot.nearBlacksmith,function() send("Armor") end,"armor-upgrade") else row("Best cookie armor owned") end
-			row("Gear & enchantments stay through upgrades and rebirth.")
+			row("Rebirth resets gear to Maple / no armor. Enchantments stay saved.")
 			row((showEnchant and "Hide enchantments" or "Enchant equipment").." • "..data.cards.crumbs.." Star Crumbs",function() showEnchant=not showEnchant; render() end,"enchant-section")
 			if showEnchant then
 				row("100 crumbs per roll. Equal or weaker rolls still cost crumbs; your best result stays.")
@@ -31977,6 +31982,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 					local effect=Enchant.effect(data,slot)
 					local bonus=slot=="Pin" and (" • +"..math.floor(effect.Mine*100).."% mining, +"..effect.Damage.." damage") or (" • +"..math.floor(effect.Defense*100).."% defense")
 					row(slot..": "..(rarity and rarity.Name or "Unenchanted")..bonus)
+					if slot=="Armor" and data.armor==0 and rank>0 then row("Saved armor enchantment activates when you buy armor.") end
 					if rank<#Enchant.Rarities and (slot=="Pin" or data.armor>0) then
 						local target=slot
 						purchase("Enchant "..target.." • 100 Star Crumbs",Enchant.Cost,data.cards.crumbs,snapshot.nearBlacksmith,function() send("Enchant",target) end,"enchant-"..target)

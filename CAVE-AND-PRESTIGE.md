@@ -16,7 +16,7 @@ The cave sits inside a continuous terrain mound with the valley's rock material 
 
 Each gallery has four ore nodes. When a mined node respawns, its type and rarity reroll from that gallery's pool. Nodes have distinct colors and crystalline seams; the overhead display shows the ore, rarity, health and dough reward. Respawn times range from 12 to 40 seconds. Better galleries give more dough per node but require stronger pins.
 
-Owning the required pin opens that gallery's seal for you without opening it for lower-tier players. Equip the pin and left-click/tap to mine. The server also checks the owned pin tier, proximity and line of sight before allowing damage. Food or card damage bonuses cannot replace a required pin. Pin ownership survives rebirth. The forge update adds tiers 6–13; all retain access to every gallery and increase mining power.
+Owning the required pin opens that gallery's seal for you without opening it for lower-tier players. Equip the pin and left-click/tap to mine. The server also checks the owned pin tier, proximity and line of sight before allowing damage. Food or card damage bonuses cannot replace a required pin. Rebirth resets your pin to Maple and relocks higher galleries until you buy better pins again. The forge update adds tiers 6–13; all retain access to every gallery and increase mining power.
 
 Rolling pins now play a whoosh on accepted swings, including misses, and a separate impact cue when damaging ore. Both respect your saved SFX mute/volume. A built-in whoosh works without uploading audio. The ZIP also includes original **PinSwing.wav** and **OreHit.wav**; upload them if you want those recordings, grant your experience permission, then set `AudioConfig.Effects.PinSwing` and `AudioConfig.Effects.OreHit`. If a recording is unavailable, a built-in cue remains. See [the upload guide](UPLOAD-ASSETS.md).
 
@@ -36,7 +36,7 @@ For the first rebirth, with 18 recipes unlocked:
 | $45 million | 15 |
 | $125 million or more | 25, maximum |
 
-All current run cash is still reset when you rebirth. Existing retained currencies, cards, armor, rolling pins, permanent upgrades and other reset rules are unchanged. Spending cash before confirming can reduce the displayed payout. The server computes the final reward from the actual balances when you confirm.
+All current run cash is still reset when you rebirth. Currencies, cards, enchantments and permanent upgrades are retained. Armor is removed and rolling pins reset to Maple. Spending cash before confirming can reduce the displayed payout. The server computes the final reward from the actual balances when you confirm.
 
 ## Admin currency gifts
 
@@ -52,7 +52,7 @@ Lock pauses while a game menu, card reveal, Roblox menu, chat/text entry, purcha
 
 ## Updating and checks
 
-Back up your customized place first. Copy your configured values into the new scripts: `AudioConfig` IDs including Bubby's clips, `CardCatalog.ArtSheets`, `ShopCatalog`, `AssetTextures`, and `AdminConfig` usernames. Keep the new configuration fields when copying values. Publish into the same experience and restart outdated servers. Keep the existing DataStore names; the save envelope is now version 10 (see OBBYS-AND-FORGE.md).
+Back up your customized place first. Copy your configured values into the new scripts: `AudioConfig` IDs including Bubby's clips, `CardCatalog.ArtSheets`, `ShopCatalog`, `AssetTextures`, and `AdminConfig` usernames. Keep the new configuration fields when copying values. Publish into the same experience and restart outdated servers. Keep the existing DataStore names; the save envelope is now version 11 (see OBBYS-AND-FORGE.md).
 
 The suite contains **209 Luau tests and 16 Python tests**. New checks cover exact ore probabilities, pin requirements, cave/road geometry, every next-chip threshold, grant permissions/caps, save/rejoin behavior and camera suspension rules. All **87 source scripts** are compiled and packaged. Automated checks do not run Roblox's physics, terrain renderer, input or live audio.
 

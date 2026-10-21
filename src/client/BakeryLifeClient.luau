@@ -158,7 +158,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 			row(armor and ("Wearing "..armor.Name.." • "..math.floor(armor.Defense*100).."% pin defense") or "No cookie armor equipped")
 			local nextArmor=Town.Armor[data.armor+1]
 			if nextArmor then purchase("Buy "..nextArmor.Name.." • $"..Progression.format(nextArmor.Cost).."\n"..math.floor(nextArmor.Defense*100).."% defense",nextArmor.Cost,wallet,snapshot.nearBlacksmith,function() send("Armor") end,"armor-upgrade") else row("Best cookie armor owned") end
-			row("Gear & enchantments stay through upgrades and rebirth.")
+			row("Rebirth resets gear to Maple / no armor. Enchantments stay saved.")
 			row((showEnchant and "Hide enchantments" or "Enchant equipment").." • "..data.cards.crumbs.." Star Crumbs",function() showEnchant=not showEnchant; render() end,"enchant-section")
 			if showEnchant then
 				row("100 crumbs per roll. Equal or weaker rolls still cost crumbs; your best result stays.")
@@ -169,6 +169,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 					local effect=Enchant.effect(data,slot)
 					local bonus=slot=="Pin" and (" • +"..math.floor(effect.Mine*100).."% mining, +"..effect.Damage.." damage") or (" • +"..math.floor(effect.Defense*100).."% defense")
 					row(slot..": "..(rarity and rarity.Name or "Unenchanted")..bonus)
+					if slot=="Armor" and data.armor==0 and rank>0 then row("Saved armor enchantment activates when you buy armor.") end
 					if rank<#Enchant.Rarities and (slot=="Pin" or data.armor>0) then
 						local target=slot
 						purchase("Enchant "..target.." • 100 Star Crumbs",Enchant.Cost,data.cards.crumbs,snapshot.nearBlacksmith,function() send("Enchant",target) end,"enchant-"..target)

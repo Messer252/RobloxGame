@@ -8,7 +8,7 @@
 
 Rebirth now **empties the cookie bag**, clears held-cookie tools, resets the conveyor build tier to zero, removes built conveyor geometry and the delivery box, resets machines/mastery/toppings/food effects, and removes purchased decorations. The starter oven remains; build its first conveyor again for free.
 
-**Cards, equipped cards, Star Crumbs, dough, rolling pins, cookie armor, dough upgrades, Golden Chip upgrades, paid passes, audio choices, shop name, and quest progress remain.** Wallet/collection cash resets as before. A pending gift or pack save must settle before rebirth can proceed.
+**Cards, equipped cards, Star Crumbs, dough, enchantments, dough upgrades, Golden Chip upgrades, paid passes, audio choices, shop name, and quest progress remain.** Wallet/collection cash resets as before. Rebirth also removes armor and resets the rolling pin to Maple; saved armor enchantments activate after repurchasing armor. A pending gift or pack save must settle before rebirth can proceed.
 
 All plots now put their entrance, claim pad, personal spawn and register beside the road. The first recipe lane is on that side too. The collector's gold pad is next to this starting area. A compact floating sign shows the account username and bakery name. Your own sign appears within **180 studs**; other bakery signs appear only within **55 studs** of your character. Signs no longer draw through scenery, and their ownership updates when a bakery is claimed or released. In Cookie Bag → Machines, enter a name and buy **Rename cookie shop** for **$20 million**. Roblox filters the name before charging; a filtering failure charges nothing. Stored names are filtered again when loaded for display.
 
