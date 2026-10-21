@@ -7,8 +7,27 @@ function TownWorld.create(world,action)
 	local folder=Instance.new("Folder")
 	folder.Name,folder.Parent="Cookie Corner Market",world
 	local cocoa,wood,gold=Color3.fromRGB(74,48,36),Color3.fromRGB(133,97,67),Color3.fromRGB(213,170,87)
-	for _,side in ipairs({-1,1}) do
-		W.part(folder,"Spawn Market Walkway",Vector3.new(64,.3,Town.PathHalfWidth*2),Vector3.new(side*48,.35,Town.PathZ),Color3.fromRGB(141,132,111),Enum.Material.Cobblestone)
+	for _,path in ipairs(Town.Paths) do
+		local dx,dz=path.x2-path.x1,path.z2-path.z1
+		local length=math.sqrt(dx*dx+dz*dz)
+		local a,b=Vector3.new(path.x1,.5,path.z1),Vector3.new(path.x2,.5,path.z2)
+		local road=W.part(folder,"Fast Market Road",Vector3.new(Town.PathHalfWidth*2,.3,length+Town.PathHalfWidth*2),(a+b)/2,Color3.fromRGB(72,76,77),Enum.Material.Asphalt)
+		road.CFrame=CFrame.lookAt((a+b)/2,b)
+		for distance=12,length-8,20 do
+			local stripe=W.part(folder,"Market Road Stripe",Vector3.new(.4,.04,6),a:Lerp(b,distance/length)+Vector3.new(0,.17,0),gold)
+			stripe.CFrame=CFrame.lookAt(stripe.Position,stripe.Position+(b-a).Unit)
+			stripe.CanCollide,stripe.CanTouch,stripe.CanQuery=false,false,false
+		end
+	end
+	local spawnGuide=W.part(folder,"Spawn Market Guide",Vector3.new(.7,5,.7),Vector3.new(16,2.5,-30),wood,Enum.Material.Wood)
+	W.label(spawnGuide,"PACKS & FORGE\nFollow this road to the market turn",55)
+	local guide=W.part(folder,"Market Direction Sign",Vector3.new(1,6,1),Vector3.new(18,3,Town.PathZ-9),wood,Enum.Material.Wood)
+	W.label(guide,"MARKET →\nPacks • Gear • Enchant",75)
+	-- Low lighting marks the branch without crowding the plot entrances.
+	for x=40,365,65 do
+		local post=W.part(folder,"Market Path Lantern",Vector3.new(.6,3,.6),Vector3.new(x,1.5,Town.PathZ+9),wood,Enum.Material.Wood)
+		local lamp=Instance.new("PointLight")
+		lamp.Color,lamp.Range,lamp.Brightness,lamp.Parent=Color3.fromRGB(255,214,156),16,.4,post
 	end
 	local function pavilion(point,title,color)
 		local center=Vector3.new(point.x,0,point.z)
@@ -34,7 +53,7 @@ function TownWorld.create(world,action)
 		stripe.CanCollide=false
 	end
 	local smithCenter,smithCounter=pavilion(Town.Blacksmith,"CRUSTFORGE • ARMOR & PINS",Color3.fromRGB(106,82,71))
-	W.prompt(smithCounter,"Browse cookie armor & rolling pins",0,function(player) action(player,"OpenBlacksmith") end)
+	W.prompt(smithCounter,"Gear & enchantments",0,function(player) action(player,"OpenBlacksmith") end)
 	W.part(folder,"Forge Hearth",Vector3.new(8,4,7),smithCenter+Vector3.new(11,2.5,-7),Color3.fromRGB(83,82,80),Enum.Material.Brick)
 	local coals=W.part(folder,"Warm Forge Coals",Vector3.new(5,.2,4),smithCenter+Vector3.new(11,4.6,-7),Color3.fromRGB(218,103,48),Enum.Material.Neon)
 	local light=Instance.new("PointLight")
@@ -42,8 +61,9 @@ function TownWorld.create(world,action)
 	W.part(folder,"Anvil Pedestal",Vector3.new(3,2.5,3),smithCenter+Vector3.new(-10,2,-5),wood,Enum.Material.Wood)
 	W.part(folder,"Cookie Anvil",Vector3.new(5,1,2.5),smithCenter+Vector3.new(-10,3.7,-5),Color3.fromRGB(83,99,108),Enum.Material.Metal)
 	W.part(folder,"Anvil Horn",Vector3.new(2.5,.55,1.5),smithCenter+Vector3.new(-13,4,-5),Color3.fromRGB(109,126,135),Enum.Material.Metal)
-	for tier,armor in ipairs(Town.Armor) do
-		local base=smithCenter+Vector3.new(-21+tier*7,0,-11)
+	for display,tier in ipairs({1,7,13}) do
+		local armor=Town.Armor[tier]
+		local base=smithCenter+Vector3.new(-20+display*10,0,-11)
 		local plate=W.part(folder,armor.Name.." Display",Vector3.new(2.8,3,.4),base+Vector3.new(0,6,0),Color3.fromRGB(table.unpack(armor.Color)),Enum.Material.Metal)
 		plate.CanCollide=false
 		W.part(folder,"Armor Display Stand",Vector3.new(.3,5,.3),base+Vector3.new(0,3,0),wood,Enum.Material.Wood)
@@ -59,7 +79,7 @@ function TownWorld.create(world,action)
 			label.BackgroundTransparency=1
 		end,role)
 	end
-	shopkeeper("Smith","Bruno Crustforge",smithCenter,"OpenBlacksmith","Armor & rolling pins")
+	shopkeeper("Smith","Bruno Crustforge",smithCenter,"OpenBlacksmith","Gear & enchantments")
 	shopkeeper("PackHost","Poppy Crumbkeeper",packCenter,"OpenPackShop","Packs & daily gift")
 	local pickups={}
 	for id,point in ipairs(Town.Pickups) do

@@ -26,7 +26,7 @@ return function(test, equal, near, harness, fakeStore)
 		local normalized = Life.normalize(raw)
 		equal(#normalized.inventory, 2)
 		equal(normalized.dough, 0)
-		equal(normalized.pin, 5)
+		equal(normalized.pin, 13)
 		raw.inventory[1].recipe = 9
 		equal(normalized.inventory[1].recipe, 1)
 		for i = 1, 60 do table.insert(raw.inventory, cookie("item" .. i)) end

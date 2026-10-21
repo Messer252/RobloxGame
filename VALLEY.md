@@ -68,7 +68,7 @@ Trading requires persistent profiles; the explicit session-only Studio preview d
 
 The **Cookie Dough Mine** is west of the plaza, around `(-250, 100)`. Everyone receives a rolling-pin Tool. Equip it and left-click/tap the equipped rolling pin near dough ore to strike. Ore shows remaining HP, rewards dough when broken, and regenerates after ten seconds.
 
-Visit Bruno’s blacksmith beside spawn to buy rolling pins. The mine workshop still sells dough upgrades:
+Visit Bruno’s blacksmith in the side market to buy rolling pins. The mine workshop still sells dough upgrades:
 
 | Rolling pin level | Wallet cost to unlock | Damage per hit |
 | --- | --- | --- |

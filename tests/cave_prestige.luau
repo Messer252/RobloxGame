@@ -26,13 +26,13 @@ return function(test,equal,near,harness,fakeStore)
 	end)
 	test("cave access and mining enforce the owned pin tier regardless of damage bonuses",function()
 		for tier,zone in ipairs(Mine.Zones) do
-			for pin=1,5 do
+			for pin=1,13 do
 				equal(Mine.allowed(pin,tier),pin>=tier)
 				for _,entry in ipairs(zone.Pool) do equal(Mine.canMine(pin,tier,entry[1]),pin>=tier) end
 			end
 		end
 		assert(not Mine.canMine(5,1,"Starlight"))
-		for _,pin in ipairs({0,6,1.5,"5",math.huge,0/0}) do assert(not Mine.allowed(pin,2)) end
+		for _,pin in ipairs({0,14,1.5,"5",math.huge,0/0}) do assert(not Mine.allowed(pin,2)) end
 	end)
 	test("all twenty ore placements fit inside carved rooms away from the central passage",function()
 		local points=Mine.positions(); equal(#points,20)

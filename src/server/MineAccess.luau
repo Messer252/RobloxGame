@@ -19,7 +19,7 @@ function Access.update(player,runtime,tier)
 	runtime.mineCharacter,runtime.mineTier=character,tier
 	local function assign(part)
 		if part:IsA("BasePart") and (part.CollisionGroup=="Default" or part.CollisionGroup=="CookiePlayers" or part.CollisionGroup:match("^MineTier%d$")) then
-			part.CollisionGroup="MineTier"..tier
+			part.CollisionGroup="MineTier"..math.min(tier,#Mine.Zones)
 		end
 	end
 	for _,part in ipairs(character:GetDescendants()) do assign(part) end

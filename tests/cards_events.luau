@@ -149,7 +149,7 @@ return function(test, equal, near, harness, fakeStore)
 		assert(not Events.onHill(-285,30,400)); assert(not Events.onHill(0,11,400))
 		assert(not Events.onHill(-250,11,400)); assert(not Events.onHill(-285,0,400))
 		assert(Events.damage(5,14,.3)<Events.damage(5,14,0))
-		equal(Events.damage(5,14,1),Events.damage(5,14,.45))
+		equal(Events.damage(5,14,1),Events.damage(5,14,.60))
 	end)
 	test("hill payouts award ten base crumbs and still apply equipped bonuses and the wallet cap", function()
 		local data=Cards.normalize(nil)
@@ -192,8 +192,8 @@ return function(test, equal, near, harness, fakeStore)
 	test("natural terrain forms a continuous height field and snow never needs floating geometry", function()
 		for x=-1000,1000,25 do for z=-1200,1200,25 do
 			local h=Shape.height(x,z)
-			assert(h==h and h>-10 and h<400)
-			assert(math.abs(h-Shape.height(x+1,z))<5)
+			assert(h==h and h>=-20 and h<400)
+			if not require("../src/shared/ObbyCatalog").inPit(x,z,2) then assert(math.abs(h-Shape.height(x+1,z))<5) end
 			if Shape.snow(x,z,h) then assert(h>130) end
 		end end
 		assert(Shape.lake(-285,-370)); assert(not Shape.lake(0,0))

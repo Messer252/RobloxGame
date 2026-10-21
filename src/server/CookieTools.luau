@@ -1,6 +1,8 @@
 local Assets = require(script.Parent.AssetLibrary)
 local Packaging = require(script.Parent.CookiePackaging)
 local Life = require(game:GetService("ReplicatedStorage").CookieTycoon.BakeryLife)
+local Gear = require(game:GetService("ReplicatedStorage").CookieTycoon.GearCatalog)
+local Effects = require(script.Parent.GearEffects)
 local Tools = {}
 local pinStyles = {
 	{ Length = 3.2, Diameter = .72, Body = Color3.fromRGB(204, 158, 99), Material = Enum.Material.Wood, Grip = Color3.fromRGB(111, 69, 40), Trim = Color3.fromRGB(154, 99, 54) },
@@ -9,6 +11,13 @@ local pinStyles = {
 	{ Length = 3.6, Diameter = 1.02, Body = Color3.fromRGB(241, 227, 198), Material = Enum.Material.Marble, Grip = Color3.fromRGB(75, 107, 89), Trim = Color3.fromRGB(242, 189, 74) },
 	{ Length = 3.8, Diameter = 1.12, Body = Color3.fromRGB(79, 58, 148), Material = Enum.Material.Glass, Grip = Color3.fromRGB(39, 41, 83), Trim = Color3.fromRGB(115, 235, 250) },
 }
+
+for tier=6,#Gear.Pins do
+	local armor=Gear.Armor[tier]
+	pinStyles[tier]={Length=3.6+(tier%3)*.12,Diameter=1.02+(tier%2)*.10,
+		Body=Color3.fromRGB(table.unpack(armor.Color)),Trim=Color3.fromRGB(table.unpack(armor.Trim)),
+		Grip=Color3.fromRGB(66,48,42),Material=Enum.Material[armor.Material]}
+end
 
 local function pinModel(tool, level)
 	local style = pinStyles[level]
@@ -67,13 +76,37 @@ local function pinModel(tool, level)
 			local crest = piece("Golden Cookie Crest", Vector3.new(.4, .08, .4), CFrame.new(centerX, math.cos(angle) * .53, math.sin(angle) * .53) * CFrame.Angles(angle, 0, 0), style.Trim, Enum.Material.Metal, Enum.PartType.Block)
 			crest.CFrame *= CFrame.Angles(0, math.pi / 4, 0)
 		end
-	else
+	elseif level == 5 then
 		for index = 1, 8 do
 			local angle = index / 8 * math.pi * 2
 			piece("Starforged Crystal Facet", Vector3.new(3.45, .14, .4), CFrame.new(centerX, math.cos(angle) * .52, math.sin(angle) * .52) * CFrame.Angles(angle, 0, 0), index % 2 == 0 and Color3.fromRGB(148, 116, 224) or style.Body, Enum.Material.Glass, Enum.PartType.Block)
 		end
 		for _, offset in ipairs({ -1.65, 0, 1.65 }) do
 			piece("Starforged Luminous Seal", Vector3.new(.07, 1.18, 1.18), CFrame.new(centerX + offset, 0, 0), style.Trim, Enum.Material.Neon)
+		end
+	end
+	if level>=6 then
+		-- Distinct silhouettes: candy stripes, honey cells, crystal ribs, lava
+		-- seams, moon bands, prism facets, dragon scales and a celestial cage.
+		local radius=style.Diameter/2
+		if level==6 or level==10 then
+			for band=-3,3 do
+				piece(level==6 and "Peppermint Stripe" or "Moon Sugar Orbit",Vector3.new(level==6 and .18 or .08,style.Diameter+.05,style.Diameter+.05),CFrame.new(centerX+band*.46,0,0),style.Trim,level==6 and Enum.Material.SmoothPlastic or Enum.Material.Metal)
+			end
+		elseif level==7 or level==12 then
+			for band=-1,1 do for face=1,6 do
+				local angle=face*math.pi/3+band*.22
+				piece(level==7 and "Honeycomb Stud" or "Dragon Scale",Vector3.new(.55,.12,.46),CFrame.new(centerX+band*.95,math.cos(angle)*radius,math.sin(angle)*radius)*CFrame.Angles(angle-math.pi/2,level==12 and .5 or 0,0),style.Trim,Enum.Material.Metal,Enum.PartType.Block)
+			end end
+		else
+			for face=1,(level==13 and 6 or 8) do
+				local angle=face*math.pi*2/(level==13 and 6 or 8)
+				local rib=piece(level==8 and "Ice Crystal Rib" or level==9 and "Molten Seam" or level==11 and "Prismatic Facet" or "Celestial Cage",Vector3.new(style.Length-.3,level==9 and .045 or .13,level==11 and .36 or .16),CFrame.new(centerX,math.cos(angle)*radius,math.sin(angle)*radius)*CFrame.Angles(angle,0,0),style.Trim,level==9 and Enum.Material.Neon or style.Material,Enum.PartType.Block)
+				if level==11 then rib.Color=Color3.fromHSV(face/8,.38,.85) end
+			end
+			if level==13 then for _,offset in ipairs({-1.5,0,1.5}) do
+				piece("Celestial Orbit",Vector3.new(.09,1.35,1.35),CFrame.new(centerX+offset,0,0),style.Trim,Enum.Material.Metal)
+			end end
 		end
 	end
 	return handle
@@ -89,12 +122,13 @@ function Tools.displayPin(level,parent,pivot)
 	model.Parent=parent
 	return model
 end
-function Tools.pin(player, level, onSwing)
+function Tools.pin(player, level, onSwing, enchantRank)
 	local tool = Instance.new("Tool")
 	tool.Name, tool.CanBeDropped = Life.PinNames[level] .. " Rolling Pin", false
-	tool.ToolTip = "Tier " .. level .. "/5 • Left-click to mine or swing in Cookie Hill"
+	tool.ToolTip = "Tier " .. level .. "/" .. #Gear.Pins .. " • Left-click to mine or swing in Cookie Hill"
 	tool:SetAttribute("RollingPinTier", level)
 	pinModel(tool, level)
+	Effects.attach(tool:FindFirstChild(Life.PinNames[level].." Barrel"),enchantRank)
 	tool.Grip = CFrame.Angles(0, 0, math.pi / 2)
 	local idle, swinging = tool.Grip, false
 	tool.Activated:Connect(function()

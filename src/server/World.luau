@@ -3,6 +3,7 @@ local Recipes = require(ReplicatedStorage.CookieTycoon.Recipes)
 local Progression = require(ReplicatedStorage.CookieTycoon.Progression)
 local Crafting = require(ReplicatedStorage.CookieTycoon.CookieCrafting)
 local Layout = require(ReplicatedStorage.CookieTycoon.ConveyorLayout)
+local Obbys = require(ReplicatedStorage.CookieTycoon.ObbyCatalog)
 local Map = require(ReplicatedStorage.CookieTycoon.MapLayout)
 local Conveyor = require(script.Parent.ConveyorWorld)
 local Assets = require(script.Parent.AssetLibrary)
@@ -180,8 +181,8 @@ function World.create(onClaim, onAction, onShop, onWorkshop)
 	world.Parent = workspace
 	local stepPads = StepPads.new(world)
 	local plots = {}
-	-- Four ground slabs leave an actual opening for the swimmable terrain lake.
-	for _, region in ipairs({ { -450, -355, -610, 610 }, { -215, 450, -610, 610 }, { -355, -215, -610, -425 }, { -355, -215, -315, 610 } }) do
+	-- Ground slabs leave actual openings for the lake and all three obby pits.
+	for _, region in ipairs(Obbys.groundRegions()) do
 		local meadow = part("Meadow", Vector3.new(region[2] - region[1], 1, region[4] - region[3]), Vector3.new((region[1] + region[2]) / 2, -1, (region[3] + region[4]) / 2), Color3.fromRGB(111, 166, 111), world)
 		meadow.Material = Enum.Material.Grass
 		Assets.texture(meadow, "MeadowGrass")

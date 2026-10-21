@@ -13,7 +13,7 @@ function Features.create(world, plots, action)
 	mineModel.Name, mineModel.Parent = "Cookie Dough Mine", world
 	local entrance = W.part(mineModel, "Dough Mine Workshop", Vector3.new(28, 1, 20), self.mine, Color3.fromRGB(136, 102, 69), Enum.Material.WoodPlanks)
 	W.label(entrance, "COOKIE DOUGH CAVE\nLeft-click to swing • mine dough", 90)
-	W.prompt(entrance, "Dough upgrades • pins at spawn blacksmith", 0, function(player) action(player, "OpenMine") end)
+	W.prompt(entrance, "Dough upgrades • pins at side-market blacksmith", 0, function(player) action(player, "OpenMine") end)
 	Cave.create(mineModel)
 	self.ores = Cave.ores(mineModel)
 	for _, plot in ipairs(plots) do

@@ -66,7 +66,7 @@ wallet/earnings cash gifts, and self-invisibility. Full guide: ADMINS.md in this
 
 UPDATING AN EXISTING GAME
 Keep the existing DataStore name. After publishing this version, restart outdated
-servers: save formats 1-8 migrate to version 9 with existing progress and receipts preserved.
+servers: save formats 1-9 migrate to version 10 with existing progress and receipts preserved.
 Permanent Robux income tiers survive rebirth. Sales need your own product IDs.
 Three obbys grant five-minute income bonuses. See EXPANSION.md on GitHub.
 The conveyor update widens the tracks, adds taller rounded outer rails, closes
@@ -88,6 +88,13 @@ Admins can grant Golden Chips and Star Crumbs. Shift/Ctrl, controller R3 or
 the Aim button toggles shoulder camera lock. It pauses for menus and flight.
 PinSwing.wav and OreHit.wav are optional uploads; built-in cues work first.
 
+OBBYS, SIDE MARKET AND ENCHANTED GEAR
+Read OBBYS-AND-FORGE.md. Harder obbys have cleared pits and red restart hazards.
+The side-market branch extends the fast road to the Pack House and blacksmith.
+There are 13 rolling-pin and armor tiers. Open Enchant equipment at Bruno to
+roll for 100 Star Crumbs; your best enchantment stays through rebirth/upgrades.
+New gear models and rarity effects require no additional uploads.
+
 NPC MOVEMENT AND MODELS
 See NPC-UPDATE.md for the walking changes and Studio playtest checklist.
 Customers use short pathfinding routes and resume after bargaining. All NPCs
@@ -102,7 +109,7 @@ Obby finishes show their actual rewards and consistently advance quests.
 
 SPAWN MARKET UPDATE
 See MARKET-UPDATE.md in this ZIP for controls, prices and playtests.
-Visit Bruno at the spawn blacksmith for cookie armor and better rolling pins.
+Visit Bruno at the side-market blacksmith for cookie armor and better rolling pins.
 Claim 100 daily crumbs at the Pack House; earn more from public trail pickups,
 jobs, mining, production and obbys. Captured hills keep paying while you remain
 online in that server until contested or recaptured. Logging out releases them.
@@ -119,7 +126,7 @@ Biscuit gives varied randomized jobs; item waypoints have been removed.
 See CARDS-AND-EVENTS.md for the latest features, prices, and playtests.
 Rebirth clears bag cookies, conveyors, machines and decorations; cards and Star
 Crumbs survive. Entrances/registers now face the road and terrain is continuous.
-Visit the Crumbkin Pack House beside spawn to buy and rip five earned-currency
+Visit the Crumbkin Pack House in the side market to buy and rip five earned-currency
 packs. Cookie Bag > Collection views/equips your 40 animal cards (two free slots).
 Upload CookieTCG_01.png through CookieTCG_04.png as Roblox images and set
 each matching Id in CardCatalog.ArtSheets. The compass is removed.
@@ -188,6 +195,7 @@ def main():
         archive.write(ROOT / "POLISH-REVIEW.md", "POLISH-REVIEW.md")
         archive.write(ROOT / "NPC-UPDATE.md", "NPC-UPDATE.md")
         archive.write(ROOT / "CAVE-AND-PRESTIGE.md", "CAVE-AND-PRESTIGE.md")
+        archive.write(ROOT / "OBBYS-AND-FORGE.md", "OBBYS-AND-FORGE.md")
         archive.write(ROOT / "CARDS-AND-EVENTS.md", "CARDS-AND-EVENTS.md")
         for sheet in sorted((ROOT / "assets/cards").glob("CookieTCG_*.png")):
             archive.write(sheet, sheet.name)
@@ -205,6 +213,7 @@ def main():
             assert not entry.flag_bits & 1, "Unexpected encrypted ZIP entry"
         assert "CardGallery.html" not in archive.namelist(), "Browser preview must not be bundled"
         assert archive.read(PLACE.name) == PLACE.read_bytes()
+        assert archive.read("OBBYS-AND-FORGE.md") == (ROOT / "OBBYS-AND-FORGE.md").read_bytes(), "Packaged forge guide is stale"
         assert archive.read("CAVE-AND-PRESTIGE.md") == (ROOT / "CAVE-AND-PRESTIGE.md").read_bytes(), "Packaged cave guide is stale"
         assert archive.read("NPC-UPDATE.md") == (ROOT / "NPC-UPDATE.md").read_bytes(), "Packaged NPC guide is stale"
         assert archive.read("POLISH-REVIEW.md") == (ROOT / "POLISH-REVIEW.md").read_bytes(), "Packaged review guide is stale"

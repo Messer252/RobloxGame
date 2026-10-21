@@ -3,11 +3,12 @@ local Crafting = if script then require(script.Parent.CookieCrafting) else requi
 local Polish = if script then require(script.Parent.BakeryPolish) else require("./BakeryPolish")
 local Contracts = if script then require(script.Parent.BakeryContracts) else require("./BakeryContracts")
 local Cards = if script then require(script.Parent.CardEconomy) else require("./CardEconomy")
+local Gear = if script then require(script.Parent.GearCatalog) else require("./GearCatalog")
+local Enchant = if script then require(script.Parent.Enchantments) else require("./Enchantments")
 local Life = { MaxCurrency = 1e15, MaxInventory = 40, OvenSeconds = 20 }
 Life.Machines = { Packager = { Cost = 25000, Bonus = 0.25 }, Boxer = { Cost = 250000, Bonus = 0.5 }, FinishingOven = { Cost = 2500000, Bonus = 0 } }
-Life.PinCosts = { 0, 5000, 50000, 500000, 5000000 }
-Life.PinPower = { 1, 3, 7, 15, 30 }
-Life.PinNames = { "Maple", "Copper", "Steel", "Gilded", "Starforged" }
+Life.PinCosts, Life.PinPower, Life.PinNames = {}, {}, {}
+for i,pin in ipairs(Gear.Pins) do Life.PinCosts[i],Life.PinPower[i],Life.PinNames[i]=pin.Cost,pin.Power,pin.Name end
 Life.DoughUpgrades = { Mixing = { Max = 10, Cost = 25 }, Flow = { Max = 10, Cost = 30 }, Pockets = { Max = 5, Cost = 20 } }
 local function integer(v, default, minimum, maximum)
 	return type(v) == "number" and v == v and math.abs(v) < math.huge and math.clamp(math.floor(v), minimum, maximum) or default
@@ -26,9 +27,11 @@ function Life.sameCookie(a, b)
 end
 function Life.normalize(raw)
 	raw = type(raw) == "table" and raw or {}
-	local data = { inventory = {}, dough = integer(raw.dough, 0, 0, 1e9), pin = integer(raw.pin, 1, 1, 5),
+	local data = { inventory = {}, dough = integer(raw.dough, 0, 0, 1e9), pin = integer(raw.pin, 1, 1, #Gear.Pins),
 		upgrades = {}, machines = {}, recipeLevels = {}, oven = {}, buff = { recipe = 1, expires = 0, seed = 1 }, pendingTrade = "", belt = integer(raw.belt, 0, 0, 3), decorations = {}, contract = Contracts.normalize(raw.contract), cards = Cards.normalize(raw.cards), shopName = type(raw.shopName) == "string" and string.sub(raw.shopName, 1, 60) or "" }
-	data.armor=integer(raw.armor,0,0,5)
+	data.armor=integer(raw.armor,0,0,#Gear.Armor)
+	data.enchants=Enchant.normalize(raw.enchants)
+	if data.armor==0 then data.enchants.Armor=0 end
 	for key in pairs(Polish.Decorations) do data.decorations[key] = type(raw.decorations) == "table" and raw.decorations[key] == true or false end
 	local seen = {}
 	if type(raw.inventory) == "table" then
@@ -81,6 +84,9 @@ function Life.eat(data, id, now, seed)
 end
 function Life.speed(data, now)
 	return Polish.active(data, now).Speed
+end
+function Life.miningPower(data)
+	return Life.PinPower[data.pin]*(1+Enchant.effect(data,"Pin").Mine)
 end
 function Life.production(data, now)
 	return (1 + Polish.active(data, now or os.time()).Income / 100) * (1 + data.upgrades.Mixing * 0.1) * (data.machines.Packager and 1.25 or 1) * (data.machines.Boxer and 1.5 or 1)

@@ -2,6 +2,7 @@
 local Map = if script then require(script.Parent.MapLayout) else require("./MapLayout")
 local Town = if script then require(script.Parent.TownCatalog) else require("./TownCatalog")
 local Mine = if script then require(script.Parent.MiningCatalog) else require("./MiningCatalog")
+local Obbys = if script then require(script.Parent.ObbyCatalog) else require("./ObbyCatalog")
 local Shape = {}
 local function smooth(x) x = math.clamp(x, 0, 1); return x * x * (3 - 2 * x) end
 local plots = {}
@@ -18,7 +19,7 @@ local function clearanceDistance(x, z)
 		distance=math.min(distance,math.max(math.abs(x-point.x)-Town.MarketWidth/2-6,math.abs(z-point.z)-Town.MarketDepth/2-6))
 	end
 	-- Padded public walkways connect the plaza to both market foundations.
-	distance=math.min(distance,math.max(math.abs(x)-80,math.abs(z-Town.PathZ)-Town.PathHalfWidth-6))
+	distance=math.min(distance,Town.pathDistance(x,z)-Town.PathHalfWidth-6)
 	for _, plot in ipairs(plots) do
 		-- BakeryFloor is 164 x 244; mirroring does not change its footprint.
 		distance = math.min(distance, math.max(math.abs(x - plot.x) - 88, math.abs(z - plot.z) - 128))
@@ -27,10 +28,11 @@ local function clearanceDistance(x, z)
 end
 
 function Shape.grassAllowed(x, z)
-	return clearanceDistance(x, z) >= 12 and (x + 285)^2 + (z - 400)^2 > 34^2
+	return not Obbys.inPit(x,z,8) and clearanceDistance(x, z) >= 12 and (x + 285)^2 + (z - 400)^2 > 34^2
 end
 function Shape.lake(x, z) return x > -355 and x < -215 and z > -425 and z < -315 end
 function Shape.height(x, z)
+	if Obbys.inPit(x,z) then return -20 end
 	local distance = clearanceDistance(x, z)
 	if distance <= 0 then return -6 end
 	local edge = math.max(math.abs(x) - 410, math.abs(z) - 570)

@@ -4,6 +4,8 @@
 
 Extract the ZIP, then open **CookieCorner.rbxlx** using Studio's **File → Open from File**. The scripts and models are included; no terminal, plugins, or manual assembly are needed. Follow [the full setup guide](STUDIO_SETUP.md) to preview, enable saving, and publish. You can also open [CookieCorner.rbxlx](CookieCorner.rbxlx) on GitHub and use **Download raw file**.
 
+**Obbys and forge update:** [Harder courses with restart pits and red hazards, a separate fast-road market, 13 gear tiers, and permanent Star Crumb enchantments](OBBYS-AND-FORGE.md). Includes suggestions for improving the game’s progression flow.
+
 **Cave and prestige update:** [Five mining galleries, rerolling ores, pin swing sounds, savings-based Golden Chips, admin currency gifts, and Shift/Ctrl aim lock](CAVE-AND-PRESTIGE.md).
 
 **NPC update:** [Reliable customer walking, corrected gait, rebuilt character outfits, and a Pack House attendant](NPC-UPDATE.md).
@@ -167,7 +169,7 @@ The server generates the map and remotes. Set the experience's maximum player co
 
 Saves use `UpdateAsync`, a renewable three-minute session lease, three attempts per operation, autosaves about every 45 seconds, early checkpoints after important upgrades and quest changes, and final saves on departure and server shutdown. A newer session's token prevents an old server from overwriting it. Save problems appear in the HUD and server output. An unrecoverable load failure stops the join instead of creating a replacement profile. A failed departure or crashed server can leave its lease active for up to three minutes before a reconnect succeeds.
 
-The current **version-9 save envelope** accepts existing versions 1–8 and preserves progression, receipts, quests, and audio including armor and daily/trail/obby reward state. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-9 records.
+The current **version-10 save envelope** accepts existing versions 1–9 and preserves progression, receipts, quests, and audio including 13 gear tiers, enchantments, armor and daily/trail/obby reward state. Keep `CookieCorner_PlayerData_v1` and restart outdated servers when publishing this update. Earlier game versions cannot open version-10 records.
 
 For offline Studio development only, explicitly set `AllowStudioSessionOnly = true` in Settings. If DataStore access is unavailable, Studio then starts a clearly labeled temporary session that **does not save**. This fallback never writes temporary data into a saved profile and is ignored on live servers. Locked or incompatible saves do not fall back.
 

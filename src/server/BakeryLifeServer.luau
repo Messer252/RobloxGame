@@ -8,6 +8,7 @@ local Packaging = require(script.Parent.CookiePackaging)
 local Polish = require(Shared.BakeryPolish)
 local Contracts = require(Shared.BakeryContracts)
 local Cards, CardCatalog = require(Shared.CardEconomy), require(Shared.CardCatalog)
+local Enchant = require(Shared.Enchantments)
 local Town = require(Shared.TownCatalog)
 local TownWorld,Armor = require(script.Parent.TownWorld),require(script.Parent.CookieArmor)
 local Mine, Cave, MineAccess = require(Shared.MiningCatalog), require(script.Parent.DoughCave), require(script.Parent.MineAccess)
@@ -70,9 +71,10 @@ function Server.start(context)
 						if runtime.bagTool then runtime.bagTool:Destroy() end
 						runtime.bagTool = Tools.bag(player, function() self.open:FireClient(player, "Bag") end)
 					end
-					if not runtime.pinTool or not runtime.pinTool.Parent or runtime.pinLevel ~= state.data.life.pin then
+					if not runtime.pinTool or not runtime.pinTool.Parent or runtime.pinLevel ~= state.data.life.pin or runtime.pinEnchant ~= state.data.life.enchants.Pin then
 						if runtime.pinTool then runtime.pinTool:Destroy() end
-						runtime.pinLevel, runtime.pinTool = state.data.life.pin, Tools.pin(player, state.data.life.pin, function() self:Swing(player) end)
+						runtime.pinLevel, runtime.pinTool = state.data.life.pin, Tools.pin(player, state.data.life.pin, function() self:Swing(player) end, state.data.life.enchants.Pin)
+						runtime.pinEnchant = state.data.life.enchants.Pin
 					end
 					if runtime.cookieTool and (not runtime.cookieTool.Parent or not Life.find(state.data.life, runtime.cookieTool:GetAttribute("InventoryCookieId"))) then self:ClearTool(player) end
 					if context.Usable(player) and Life.finishOven(state.data.life, os.time()) then
@@ -94,7 +96,7 @@ end
 function Server:OpenPack(player, packId)
 	local state = self.context.Usable(player)
 	if not state or not CardCatalog.Packs[packId] then return end
-	if not self:NearTown(player,Town.PackStand) then self.context.Notify(player,"Visit the Crumbkin Pack House beside spawn to open packs."); return end
+	if not self:NearTown(player,Town.PackStand) then self.context.Notify(player,"Visit the Crumbkin Pack House in the side market to open packs."); return end
 	local runtime, pack = self:Runtime(player), CardCatalog.Packs[packId]
 	if runtime.opening or os.clock() - (runtime.lastPack or -math.huge) < 3 then return end
 	if state.data.life.cards.crumbs < pack.Cost then self.context.Notify(player, "Earn more Star Crumbs first."); return end
@@ -122,6 +124,47 @@ function Server:OpenPack(player, packId)
 			if ok then self:Changed(player, state); self.packResult:FireClient(player, cardId, packId, state.data.life.cards.owned[tostring(cardId)])
 			else self.context.Notify(player, "Pack saving could not finish. Rejoin to recover; any committed card and charge stay together.") end
 		elseif ok then self.context.Profiles:Save(state.profile, true) end
+	end)
+end
+function Server:Enchant(player,slot)
+	local state=self.context.Usable(player)
+	if not state or (slot~="Pin" and slot~="Armor") then return end
+	if not self:NearTown(player,Town.Blacksmith) then self.context.Notify(player,"Enchant at Bruno's Crustforge in the side market."); return end
+	local runtime=self:Runtime(player)
+	if runtime.enchanting or os.clock()-(runtime.lastEnchant or -math.huge)<2 then return end
+	local life=state.data.life
+	if slot=="Armor" and life.armor==0 then self.context.Notify(player,"Buy armor first."); return end
+	if life.enchants[slot]==#Enchant.Rarities then self.context.Notify(player,"Mythical enchantment already owned!"); return end
+	if life.cards.crumbs<Enchant.Cost then self.context.Notify(player,"You need 100 Star Crumbs."); return end
+	runtime.enchanting,runtime.lastEnchant=true,os.clock()
+	local rolled=Enchant.roll(math.random()) -- Frozen across every DataStore retry.
+	if state.profile.sessionOnly then
+		local ok,message=Enchant.apply(state.data,slot,rolled)
+		runtime.enchanting=false
+		if ok then self:Changed(player,state) end
+		self.context.Notify(player,message)
+		return
+	end
+	local receipt="ce:"..Http:GenerateGUID(false)
+	state.receiptWorkers+=1
+	self:Refresh(player)
+	task.spawn(function()
+		local ok,reason,message
+		for _=1,6 do
+			ok,reason=self.context.Profiles:GrantReceipt(state.profile,receipt,1,function(data)
+				local granted,result=Enchant.apply(data,slot,rolled)
+				message=result
+				return granted,result
+			end)
+			if ok or (reason~="unavailable" and reason~="busy") then break end
+			task.wait(1)
+		end
+		state.receiptWorkers-=1
+		runtime.enchanting=false
+		if player.Parent then
+			if ok then self:Changed(player,state); self.context.Notify(player,message or "Enchantment saved.")
+			else self.context.Notify(player,"Enchantment saving could not finish. Rejoin to recover; the result and charge stay together.") end
+		elseif ok then self.context.Profiles:Save(state.profile,true) end
 	end)
 end
 function Server:NearTown(player,point)
@@ -335,6 +378,7 @@ function Server:Action(player, action, argument, plot)
 	if not state then return end
 	local data, ok, message = state.data, false, nil
 	if action == "OpenPack" then self:OpenPack(player, argument); return
+	elseif action=="Enchant" then self:Enchant(player,argument); return
 	elseif action=="OpenPackShop" or action=="OpenBlacksmith" then
 		local point=action=="OpenPackShop" and Town.PackStand or Town.Blacksmith
 		if self:NearTown(player,point) then self.open:FireClient(player,action=="OpenPackShop" and "PackShop" or "Blacksmith") end
@@ -402,7 +446,7 @@ function Server:Action(player, action, argument, plot)
 		crumbs.Speed, crumbs.SpreadAngle, crumbs.Size, crumbs.Parent = NumberRange.new(3, 6), Vector2.new(160, 160), NumberSequence.new(0.2, 0), node.part
 		crumbs:Emit(6)
 		game:GetService("Debris"):AddItem(crumbs, 0.5)
-		node.hp = math.max(0, node.hp - Life.PinPower[data.life.pin] - Polish.active(data.life, os.time()).Mine - Cards.bonuses(data.life.cards, state.perks.ThirdCardSlot).Mine)
+		node.hp = math.max(0, node.hp - Life.miningPower(data.life) - Polish.active(data.life, os.time()).Mine - Cards.bonuses(data.life.cards, state.perks.ThirdCardSlot).Mine)
 		Cave.refreshLabel(node)
 		if node.hp == 0 then
 			Contracts.record(data, "Mine", 1)
@@ -414,7 +458,7 @@ function Server:Action(player, action, argument, plot)
 			ok, message = true, "+" .. node.reward .. " cookie dough!"
 		end
 	elseif action=="Pin" or action=="Armor" then
-		if not self:NearTown(player,Town.Blacksmith) then self.context.Notify(player,"Visit Bruno at the spawn blacksmith."); return end
+		if not self:NearTown(player,Town.Blacksmith) then self.context.Notify(player,"Visit Bruno at the side-market blacksmith."); return end
 		if action=="Pin" then ok,message=Life.upgradePin(data) else ok,message=Town.buyArmor(data) end
 	elseif action=="Dough" then
 		if not W.near(player,self.features.mine,22) then self.context.Notify(player,"Visit the dough mine workshop to upgrade."); return end

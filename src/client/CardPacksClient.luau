@@ -37,7 +37,7 @@ end
 function Client.renderCollection(player,data,row,send,panel)
 	local third=player:GetAttribute("ThirdCardSlotOwned")==true
 	row(#data.equipped.."/"..(third and 3 or 2).." cards equipped • "..data.crumbs.." crumbs")
-	row("Open packs at the Crumbkin Pack House beside spawn.")
+	row("Open packs at the Crumbkin Pack House in the side market (follow the fast-road branch).")
 	local buy=row(third and "Third slot owned" or "Optional third card slot",function() Shared.Remotes.RequestPurchase:FireServer("Pass","ThirdCardSlot") end)
 	buy.Interactable=buy.Interactable and not third and player:GetAttribute("CommerceReady")==true and player:GetAttribute("PassesReady")==true and player:GetAttribute("ShopPromptOpen")~=true and require(Shared.ShopCatalog).offer("Pass","ThirdCardSlot")~=nil
 	local count=0

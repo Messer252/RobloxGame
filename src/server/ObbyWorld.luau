@@ -48,75 +48,122 @@ function ObbyWorld.create(parent, onComplete, notify)
 		model.Name, model.Parent = definition.Id .. " Obby", folder
 		local tint = Color3.fromRGB(table.unpack(definition.Color))
 		local start = platform(model, "Start", Vector3.new(230, 0.4, definition.Z), 10, tint)
-		sign(start, definition.Id .. " Obby\n+" .. math.floor(definition.Bonus * 100) .. "% income • 5 minutes")
-		local floor = platform(model, "Soft Reset Floor", Vector3.new(325, 0.05, definition.Z), 1, Color3.fromRGB(209, 172, 150))
-		floor.Size = Vector3.new(185, 0.2, 55)
-		local path = {}
+		sign(start, definition.Id .. " • +" .. math.floor(definition.Bonus * 100) .. "% income\nAvoid red • falls restart")
+		local bounds=Catalog.pit(definition)
+		local floor=platform(model,"Restart Pit",Vector3.new((bounds[1]+bounds[2])/2,-9,definition.Z),1,Color3.fromRGB(60,48,45))
+		floor.Size=Vector3.new(bounds[2]-bounds[1],1,bounds[4]-bounds[3])
+		floor.Material=Enum.Material.Slate
+		-- Tall stone walls make the excavated pit readable from the approach.
+		for _,z in ipairs({bounds[3],bounds[4]}) do
+			local wall=platform(model,"Pit Retaining Wall",Vector3.new((bounds[1]+bounds[2])/2,-4.5,z),1,Color3.fromRGB(110,107,101))
+			wall.Size,wall.Material=Vector3.new(bounds[2]-bounds[1],8,1),Enum.Material.Slate
+		end
+		for _,x in ipairs({bounds[1],bounds[2]}) do
+			local wall=platform(model,"Pit End Wall",Vector3.new(x,-4.5,definition.Z),1,Color3.fromRGB(110,107,101))
+			wall.Size,wall.Material=Vector3.new(1,8,bounds[4]-bounds[3]),Enum.Material.Slate
+		end
+		local course={definition=definition,start=start,path={},hazards={}}
 		for index = 1, definition.Count do
 			local p = Catalog.platform(definition, index)
-			local step = platform(model, "Checkpoint " .. index, Vector3.new(p.x, p.y, p.z), definition.Width, tint)
+			local step = platform(model, "Landing Platform", Vector3.new(p.x, p.y, p.z), p.width, tint)
 			step.Material = Enum.Material.Slate
-			local trim = platform(model, "Checkpoint Trim", step.Position - Vector3.new(0, 0.35, 0), definition.Width + 0.25, Color3.fromRGB(87, 67, 53))
-			trim.Size, trim.CanCollide, trim.CanQuery = Vector3.new(definition.Width + 0.25, 0.2, definition.Width + 0.25), false, false
-			table.insert(path, step)
+			local trim = platform(model, "Platform Trim", step.Position - Vector3.new(0, 0.35, 0), p.width + 0.25, Color3.fromRGB(87, 67, 53))
+			trim.Size, trim.CanCollide, trim.CanQuery = Vector3.new(p.width + 0.25, 0.2, p.width + 0.25), false, false
+			table.insert(course.path, step)
+			if p.hazard then
+				local offset=p.hazard=="Edge" and Vector3.new(0,.85,(index%8==0 and -1 or 1)*2.6) or Vector3.new(0,.95,0)
+				local hazard=platform(model,"Red Restart Zone",step.Position+offset,1,Color3.fromRGB(214,68,62))
+				hazard.Size=p.hazard=="Edge" and Vector3.new(6.8,.7,1) or Vector3.new(.55,.9,6.4)
+				hazard.Material, hazard.CanCollide, hazard.CanQuery=Enum.Material.SmoothPlastic,false,false
+				local base=hazard.CFrame
+				table.insert(course.hazards,{part=hazard,base=base,spin=p.hazard=="Sweeper",phase=index*.7})
+			end
 			if index == definition.Count then
-				sign(step, "FINISH\n" .. definition.Id .. " • Cash boost")
+				sign(step, "FINISH\nLand here to claim your boost")
 				local back = Instance.new("ProximityPrompt")
 				back.ActionText, back.ObjectText, back.HoldDuration = "Return to plaza", definition.Id .. " finish", 0
 				back.MaxActivationDistance, back.RequiresLineOfSight, back.Parent = 8, false, step
-				back.ActionText = "Claim boost / return"
 				back.Triggered:Connect(function(player)
 					local surface, root = standing(player)
 					if surface ~= step or completed[player] ~= definition.Id then
-						notify(player, "Land on every checkpoint, then wait for your finish reward.")
+						notify(player, "Land on every platform, then wait for your finish reward.")
 						return
 					end
-					completed[player] = nil
+					completed[player],runs[player]=nil,nil
 					player.Character:PivotTo(CFrame.new(0, 5, -9))
-					root.AssemblyLinearVelocity = Vector3.zero
+					root.AssemblyLinearVelocity,root.AssemblyAngularVelocity=Vector3.zero,Vector3.zero
 				end)
 			end
 		end
-		table.insert(courses, { definition = definition, start = start, floor = floor, path = path })
+		table.insert(courses,course)
 	end
+	local function restart(player,course,root,now)
+		if now<(resets[player] or 0) then return end
+		resets[player],runs[player],completed[player]=now+.5,nil,nil
+		player.Character:PivotTo(CFrame.new(course.start.Position+Vector3.new(0,4,0))*CFrame.Angles(0,-math.pi/2,0))
+		root.AssemblyLinearVelocity,root.AssemblyAngularVelocity=Vector3.zero,Vector3.zero
+		notify(player,"Try again! Avoid red zones. Your active boost stays.")
+	end
+	local function watch(player)
+		player.CharacterAdded:Connect(function() runs[player],resets[player],completed[player]=nil,nil,nil end)
+	end
+	Players.PlayerAdded:Connect(watch)
+	for _,player in ipairs(Players:GetPlayers()) do watch(player) end
 	Players.PlayerRemoving:Connect(function(player) runs[player], resets[player], completed[player] = nil, nil, nil end)
 	task.spawn(function()
 		while folder.Parent do
-			local now = os.clock()
-			for _, player in ipairs(Players:GetPlayers()) do
-				local surface, root = standing(player)
-				local run = runs[player]
-				if run and run.character ~= player.Character then runs[player], run = nil, nil end
-				if surface then
-					for _, course in ipairs(courses) do
-						local definition = course.definition
-						if surface == course.start and (not run or run.course ~= definition.Id or run.stage > 0) then
-							run = Progress.start(definition, now)
-							run.character = player.Character
-							runs[player], completed[player] = run, nil
-							notify(player, definition.Id .. " started. Land on each platform in order.")
-						elseif run and run.course == definition.Id then
-							if run.stage < definition.Count and surface == course.path[run.stage + 1] then
-								Progress.advance(run, definition, run.stage + 1, now)
-							end
-							if run.stage == definition.Count and not run.awarded then
-								local awarded, message = onComplete(player, definition.Id)
-								if awarded == true then
-									run.awarded = true
-									completed[player], runs[player], run = definition.Id, nil, nil
-									notify(player, message or (definition.Id .. " complete! Check the HUD boost timer."))
-								end
-							elseif surface == course.floor and now >= (resets[player] or 0) then
-								resets[player], runs[player], run = now + 1, nil, nil
-								player.Character:PivotTo(CFrame.new(course.start.Position + Vector3.new(0, 4, 0)))
-								root.AssemblyLinearVelocity = Vector3.zero
-								notify(player, "Try again! Your current boost stays active.")
-							end
+			local now=os.clock()
+			for _,course in ipairs(courses) do for _,hazard in ipairs(course.hazards) do
+				if hazard.spin then hazard.part.CFrame=hazard.base*CFrame.Angles(0,now*.85+hazard.phase,0) end
+			end end
+			for _,player in ipairs(Players:GetPlayers()) do
+				local char=player.Character
+				local root=char and char:FindFirstChild("HumanoidRootPart")
+				local hum=char and char:FindFirstChildOfClass("Humanoid")
+				if not root or not hum or hum.Health<=0 or player:GetAttribute("AdminFlying") then runs[player],completed[player]=nil,nil; continue end
+				local run=runs[player]
+				if run and run.character~=char then runs[player],completed[player],run=nil,nil,nil end
+				local surface=standing(player)
+				for _,course in ipairs(courses) do
+					local definition=course.definition
+					local nearby=root.Position.X>=235 and root.Position.X<=450 and math.abs(root.Position.Z-definition.Z)<40
+					local hit=nearby and root.Position.Y<1
+					if nearby and not hit then
+						local height=hum.HipHeight+root.Size.Y/2+(hum.RigType==Enum.HumanoidRigType.R6 and 2 or 0)
+						local center=root.Position+Vector3.new(0,(2-height)/2,0)
+						for _,hazard in ipairs(course.hazards) do
+							local p=hazard.part.CFrame:PointToObjectSpace(center)
+							local size=hazard.part.Size
+							if Progress.hazardContact(p.X,p.Y,p.Z,size.X,size.Y,size.Z,height) then hit=true; break end
 						end
+					end
+					if hit then restart(player,course,root,now); run=nil; break end
+					if surface==course.start and (not run or run.course~=definition.Id or run.stage>0) then
+						run=Progress.start(definition,now)
+						run.character=char
+						runs[player],completed[player]=run,nil
+						notify(player,definition.Id.." started. Land on each platform in order.")
+					elseif run and run.course==definition.Id then
+						if run.stage<definition.Count and surface==course.path[run.stage+1] then Progress.advance(run,definition,run.stage+1,now) end
+						-- A temporarily busy save retries only while standing at the finish.
+						if Progress.canFinish(run,definition,surface==course.path[definition.Count]) then
+							local awarded,message=onComplete(player,definition.Id)
+							if awarded==true then
+								run.awarded=true
+								completed[player],runs[player],run=definition.Id,nil,nil
+								notify(player,message or "Course complete! Your boost is active.")
+							end
+						elseif nearby and surface and surface~=course.start and not table.find(course.path,surface) then restart(player,course,root,now); run=nil; break end
+					end
+				end
+				-- Returning home or leaving the course cannot resume an old partial run.
+				if run then
+					for _,course in ipairs(courses) do
+						if course.definition.Id==run.course and (root.Position.X<220 or root.Position.X>455 or math.abs(root.Position.Z-course.definition.Z)>50) then runs[player]=nil end
 					end
 				end
 			end
-			task.wait(0.04)
+			task.wait(.04)
 		end
 	end)
 	return folder

@@ -3,6 +3,7 @@ local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Life, Recipes, Progression, Polish = require(Shared.BakeryLife), require(Shared.Recipes), require(Shared.Progression), require(Shared.BakeryPolish)
 local CardUI = require(script.Parent.CardPacksClient)
 local CollectionService = game:GetService("CollectionService")
+local Enchant = require(Shared.Enchantments)
 local Town,Blueprint=require(Shared.TownCatalog),require(Shared.BakeryBlueprint)
 local Flow=require(script.Parent.UIFlow)
 local Mine=require(Shared.MiningCatalog)
@@ -12,6 +13,7 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 	local action, stateRemote, open = remotes:WaitForChild("LifeAction"), remotes:WaitForChild("LifeState"), remotes:WaitForChild("OpenLife")
 	local snapshot, tab, renameDraft = { life = Life.normalize(nil) }, "Bag", ""
 	local connections = {}
+	local showEnchant = false
 	local announcement = Instance.new("Frame")
 	announcement.Name, announcement.AnchorPoint = "MeteorAnnouncement", Vector2.new(.5, 0)
 	announcement.Size, announcement.Position = UDim2.new(.9, 0, 0, 84), UDim2.new(.5, 0, 0, 22)
@@ -144,19 +146,35 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 		if tab == "Collection" then
 			CardUI.renderCollection(player, data.cards, row, send, panel)
 		elseif tab=="PackShop" then
-			row(snapshot.nearPackShop and "Packs & daily gifts" or "Return to the Pack House beside spawn to shop.")
+			row(snapshot.nearPackShop and "Packs & daily gifts" or "Return to the Pack House in the side market to shop.")
 			CardUI.renderPacks(data.cards,row,send)
 		elseif tab=="Blacksmith" then
-			row(snapshot.nearBlacksmith and ("Wallet $"..Progression.format(wallet)) or "Visit Bruno’s stall beside spawn to purchase gear.")
-			row("Rolling pin: "..Life.PinNames[data.pin].." • power "..Life.PinPower[data.pin])
-			row("Cave access: "..Mine.Zones[data.pin].Name)
+			row(snapshot.nearBlacksmith and ("Wallet $"..Progression.format(wallet)) or "Visit Bruno’s stall in the side market to purchase gear.")
+			row("Rolling pin: "..Life.PinNames[data.pin].." • power "..string.format("%.1f",Life.miningPower(data)))
+			row("Cave access: "..Mine.Zones[math.min(data.pin,#Mine.Zones)].Name)
 			local pinCost=Life.PinCosts[data.pin+1]
 			if pinCost then purchase("Buy "..Life.PinNames[data.pin+1].." rolling pin • $"..Progression.format(pinCost),pinCost,wallet,snapshot.nearBlacksmith,function() send("Pin") end,"pin-upgrade") else row("Best rolling pin owned") end
 			local armor=Town.Armor[data.armor]
 			row(armor and ("Wearing "..armor.Name.." • "..math.floor(armor.Defense*100).."% pin defense") or "No cookie armor equipped")
 			local nextArmor=Town.Armor[data.armor+1]
 			if nextArmor then purchase("Buy "..nextArmor.Name.." • $"..Progression.format(nextArmor.Cost).."\n"..math.floor(nextArmor.Defense*100).."% defense",nextArmor.Cost,wallet,snapshot.nearBlacksmith,function() send("Armor") end,"armor-upgrade") else row("Best cookie armor owned") end
-			row("Gear stays through rebirth. Armor protects you in Cookie Hill combat.")
+			row("Gear & enchantments stay through upgrades and rebirth.")
+			row((showEnchant and "Hide enchantments" or "Enchant equipment").." • "..data.cards.crumbs.." Star Crumbs",function() showEnchant=not showEnchant; render() end,"enchant-section")
+			if showEnchant then
+				row("100 crumbs per roll. Equal or weaker rolls still cost crumbs; your best result stays.")
+				row("Odds: Common 50% • Uncommon 28% • Rare 15% • Legendary 6% • Mythical 1%")
+				for _,slot in ipairs({"Pin","Armor"}) do
+					local rank=data.enchants[slot]
+					local rarity=Enchant.Rarities[rank]
+					local effect=Enchant.effect(data,slot)
+					local bonus=slot=="Pin" and (" • +"..math.floor(effect.Mine*100).."% mining, +"..effect.Damage.." damage") or (" • +"..math.floor(effect.Defense*100).."% defense")
+					row(slot..": "..(rarity and rarity.Name or "Unenchanted")..bonus)
+					if rank<#Enchant.Rarities and (slot=="Pin" or data.armor>0) then
+						local target=slot
+						purchase("Enchant "..target.." • 100 Star Crumbs",Enchant.Cost,data.cards.crumbs,snapshot.nearBlacksmith,function() send("Enchant",target) end,"enchant-"..target)
+					end
+				end
+			end
 		elseif tab == "Bag" then
 			row(#data.inventory .. "/" .. Life.capacity(data) .. " cookies • Hold a conveyor cookie's pickup prompt to store it.")
 			if snapshot.held then row("Eat held cookie • recipe buff + cookie skin", function() send("Eat", snapshot.held) end) end
@@ -170,10 +188,10 @@ function Client.start(player, remotes, gui, hud, openButton, audio)
 				entry.Interactable = entry.Interactable and data.oven.id ~= item.id
 			end
 		elseif tab == "Mine" then
-			row("Dough: " .. data.dough .. " • " .. Life.PinNames[data.pin] .. " rolling pin (" .. data.pin .. "/5)")
+			row("Dough: " .. data.dough .. " • " .. Life.PinNames[data.pin] .. " rolling pin (" .. data.pin .. "/" .. #Life.PinNames .. ")")
 			for tier,zone in ipairs(Mine.Zones) do row((tier<=data.pin and "✓ " or "Locked • ")..zone.Name.." • "..Life.PinNames[tier].." pin") end
 			row("Deeper galleries have better ore pools. Ore rarity changes when a node respawns.")
-			row("Left-click with your pin near cave ore. Buy better pins and armor from Bruno beside spawn.")
+			row("Left-click with your pin near cave ore. Buy better pins and armor from Bruno in the side market.")
 			for _, key in ipairs({ "Mixing", "Flow", "Pockets" }) do
 				local level, definition = data.upgrades[key], Life.DoughUpgrades[key]
 				local bonus = ({ Mixing = "+10% cookie income", Flow = "+5% baking speed", Pockets = "+4 cookie slots" })[key]

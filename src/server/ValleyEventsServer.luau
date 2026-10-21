@@ -1,6 +1,7 @@
 local Players, Tween, Debris = game:GetService("Players"), game:GetService("TweenService"), game:GetService("Debris")
 local Shared = game:GetService("ReplicatedStorage").CookieTycoon
 local Rules, Cards, Polish, Life = require(Shared.ValleyEvents), require(Shared.CardEconomy), require(Shared.BakeryPolish), require(Shared.BakeryLife)
+local Enchant = require(Shared.Enchantments)
 local Town = require(Shared.TownCatalog)
 local W, Assets = require(script.Parent.WorldWidgets), require(script.Parent.AssetLibrary)
 local Events = {}
@@ -159,10 +160,10 @@ function Events:Swing(player, pinTool)
 	if not state then return true end
 	local meteor = self.meteor
 	if meteor and meteor.landed and meteor.hp > 0 and (meteor.core.Position - root.Position).Magnitude <= 16 then
-		local damage = math.min(20, Life.PinPower[state.data.life.pin] + Polish.active(state.data.life, os.time()).Mine + Cards.bonuses(state.data.life.cards, state.perks.ThirdCardSlot).Mine)
+		local damage = math.min(20, Life.miningPower(state.data.life) + Polish.active(state.data.life, os.time()).Mine + Cards.bonuses(state.data.life.cards, state.perks.ThirdCardSlot).Mine)
 		meteor.hp = math.max(0, meteor.hp - damage)
 		meteor.hits[player.UserId] = (meteor.hits[player.UserId] or 0) + 1
-		meteor.label.Text = "COOKIE METEOR • " .. meteor.hp .. "/180 HP\n3+ hits earns a personal crumb reward"
+		meteor.label.Text = "COOKIE METEOR • " .. math.ceil(meteor.hp) .. "/180 HP\n3+ hits earns a personal crumb reward"
 		if meteor.hp == 0 then meteor.expires = now + 45; meteor.label.Text = "Meteor cracked! Rewards are being saved." end
 		return true
 	end
@@ -175,7 +176,7 @@ function Events:Swing(player, pinTool)
 			if delta.Magnitude <= 9 and delta:Dot(root.CFrame.LookVector) > 0 then
 				local otherState = self.context.GetState(other)
 				local attack, defense = Polish.active(state.data.life, os.time()), Polish.active(otherState.data.life, os.time())
-				targetHum:TakeDamage(Rules.damage(state.data.life.pin, attack.Damage, defense.Defense + Town.defense(otherState.data.life)))
+				targetHum:TakeDamage(Rules.damage(state.data.life.pin, attack.Damage + Enchant.effect(state.data.life,"Pin").Damage, defense.Defense + Town.defense(otherState.data.life) + Enchant.effect(otherState.data.life,"Armor").Defense))
 				local flat = Vector3.new(delta.X, 0, delta.Z)
 				if flat.Magnitude > .1 then target:ApplyImpulse((flat.Unit * 18 + Vector3.yAxis * 4) * target.AssemblyMass) end
 				return true

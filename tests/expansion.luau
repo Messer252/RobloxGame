@@ -73,9 +73,9 @@ return function(test, equal, near, harness, fakeStore)
 			assert(accepted and not complete)
 		end
 		assert(not Obby.advance(run, course, course.Count, 103))
-		local accepted, complete = Obby.advance(run, course, course.Count, 105)
+		local accepted, complete = Obby.advance(run, course, course.Count, 100+course.MinSeconds)
 		assert(accepted and complete)
-		assert(not Obby.advance(run, course, course.Count, 106))
+		assert(not Obby.advance(run, course, course.Count, 101+course.MinSeconds))
 	end)
 
 	test("each obby bonus expires at exactly five minutes and weaker runs cannot refresh it", function()

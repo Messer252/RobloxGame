@@ -24,7 +24,7 @@ Terrain now stays six studs below the road, spawn plaza and all eight bakery flo
 
 ## Packs and collection
 
-Visit the **Crumbkin Pack House beside spawn** to buy/rip packs. View and equip cards in **Cookie Bag → Collection**. Five packs each award **one** cookie-animal card. The price is shown before opening; select **Show odds** for its exact rarity probabilities. All animals within a rarity have equal odds. The server rolls the result; the charge and ownership grant are committed together before the ripping/reveal animation.
+Visit the **Crumbkin Pack House in the side market** to buy/rip packs. View and equip cards in **Cookie Bag → Collection**. Five packs each award **one** cookie-animal card. The price is shown before opening; select **Show odds** for its exact rarity probabilities. All animals within a rarity have equal odds. The server rolls the result; the charge and ownership grant are committed together before the ripping/reveal animation.
 
 | Pack | Star Crumbs | Common | Uncommon | Rare | Legendary | Mythical |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -87,7 +87,7 @@ Rolling pins now have five distinct models and finishes. **Maple** has turned wo
 
 **PvP is restricted to Cookie Hill.** Equip a rolling pin and left-click to swing. Both attacker and target must be living characters inside the hill's horizontal/height bounds, close together and in front of the attacker. Swings have a server cooldown. Damage and knockback do not apply on roads, in bakeries, or elsewhere. New characters receive five seconds of event protection. Invisible/flying admins cannot contest, earn, or fight on the hill.
 
-Some cookies now add **pin damage or defense** alongside their existing effects. Examples: Double Chocolate +6 damage, Peanut Butter +8, S'mores +10, Maple Pecan +12, Golden Chocolate Chip +14; Oatmeal Raisin 10% defense, Red Velvet 20%, Toasted Marshmallow 25%, Diamond Vanilla 30%. The bag shows the effects before eating. Defense is capped at 45% in the damage rule. Food still lasts 90 seconds, replaces the previous food effect, and clears on rebirth.
+Some cookies now add **pin damage or defense** alongside their existing effects. Examples: Double Chocolate +6 damage, Peanut Butter +8, S'mores +10, Maple Pecan +12, Golden Chocolate Chip +14; Oatmeal Raisin 10% defense, Red Velvet 20%, Toasted Marshmallow 25%, Diamond Vanilla 30%. The bag shows the effects before eating. Combined food, armor, and enchantment defense is capped at 60% in the current damage rule. Food still lasts 90 seconds, replaces the previous food effect, and clears on rebirth.
 
 ## Signature toppings
 

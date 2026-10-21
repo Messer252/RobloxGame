@@ -1,12 +1,14 @@
 # Spawn market, bakery upgrades, and softer lighting
 
+**Later update:** Both shops now occupy a separate fast-road branch, equipment has 13 tiers, and Bruno offers Star Crumb enchantments. See [Obbys and forge](OBBYS-AND-FORGE.md) for current locations, prices, and save-version details.
+
 [Download the updated Studio ZIP](https://github.com/Messer252/RobloxGame/raw/refs/heads/main/CookieCorner_Studio.zip). Extract it and open `CookieCorner.rbxlx`. Before replacing a customized place, copy across your `AudioConfig` IDs (including Bubby's clips), `CardCatalog.ArtSheets` image IDs, `ShopCatalog` product/pass IDs, `AssetTextures` image IDs, and `AdminConfig` usernames. Publish into the same experience and restart outdated servers. No new audio or image uploads are required for these features.
 
 Both stalls have paved approaches with cleared terrain, keeping grass beneath their floors.
 
 ## Where to open packs
 
-Visit the **Crumbkin Pack House** beside the central spawn plaza, on the west side of the road. Use the counter's **Browse packs & claim daily crumbs** prompt. You can shop without claiming a bakery. Purchases only work while you are near the stall; walking away disables them.
+Visit the **Crumbkin Pack House** in the side market beyond the bakery rows; follow the marked fast-road branch. Use the counter's **Browse packs & claim daily crumbs** prompt. You can shop without claiming a bakery. Purchases only work while you are near the stall; walking away disables them.
 
 Claim the daily gift to afford a Bakery Friends pack immediately. The five pack prices and rarity probabilities are unchanged. Select **Show odds** for a pack to inspect its exact distribution before buying. Each pack still awards one card, and duplicates remain in your collection.
 
@@ -41,9 +43,9 @@ Multiple players on the hill pause payouts. Another player standing there alone 
 
 ## Bruno's blacksmith
 
-Visit **Bruno Crustforge**, at the stall east of spawn, for rolling-pin and cookie-armor upgrades. Use the counter or Bruno's prompt. Purchases use collected wallet cash and only work near the stall.
+Visit **Bruno Crustforge**, at the side-market stall next to the Pack House, for rolling-pin and cookie-armor upgrades. Use the counter or Bruno's prompt. Purchases use collected wallet cash and only work near the stall.
 
-The existing five rolling-pin tiers retain their distinct models, costs and mining power. Pin upgrades have moved out of the mine menu. The cave workshop still sells Mixing, Flow and Pockets upgrades for dough.
+The original five rolling-pin tiers retain their distinct models, costs and mining power. Eight further pin and armor tiers and enchantments are documented in [Obbys and forge](OBBYS-AND-FORGE.md). Pin upgrades have moved out of the mine menu. The cave workshop still sells Mixing, Flow and Pockets upgrades for dough.
 
 | Cookie armor | Price | Rolling-pin damage reduction |
 | --- | ---: | ---: |
@@ -53,7 +55,7 @@ The existing five rolling-pin tiers retain their distinct models, costs and mini
 | Golden Crust | $750,000 | 24% |
 | Star Cookie | $5,000,000 | 32% |
 
-Buy tiers in order; each purchase equips the new armor. Fitted breastplates, chocolate rivets, shoulder pieces, greaves and a helm band follow standard R6/R15 character parts. Higher tiers change materials and trim. Armor has no collision or weight and reappears after respawning. **Armor and rolling pins survive rebirth and rejoining.** Armor adds to food defense, with a combined 45% damage-reduction cap. Player combat remains restricted to Cookie Hill.
+Buy tiers in order; each purchase equips the new armor. Fitted breastplates, chocolate rivets, shoulder pieces, greaves and a helm band follow standard R6/R15 character parts. Higher tiers change materials and trim. Armor has no collision or weight and reappears after respawning. **Armor and rolling pins survive rebirth and rejoining.** Armor adds to food defense, with a combined 60% damage-reduction cap in the current forge update. Player combat remains restricted to Cookie Hill.
 
 ## Clearer controls and fitted decorations
 
@@ -75,7 +77,7 @@ Daytime brightness, exposure, ambient light, bloom and reflections are lower, an
 
 ## Saving, updating, and playtesting
 
-The **version-9 save envelope** accepts versions **1–8**, retaining receipts, currencies, cards, quest progress, audio choices, paid entitlements and gift recovery. New armor and reward fields receive safe defaults. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; do not switch to fresh stores or run older save code after this update.
+The current **version-10 save envelope** accepts versions **1–9**, retaining receipts, currencies, cards, quest progress, audio choices, paid entitlements and gift recovery. New armor and reward fields receive safe defaults. Keep `CookieCorner_PlayerData_v1` and `CookieCorner_CookieTrades_v1`; do not switch to fresh stores or run older save code after this update.
 
 Automated checks exercise hill transfer/logout, reward caps/cooldowns across receipts/rejoin/rebirth, armor purchases and migration, machine prerequisites, decoration progression, public pickup placement and responsive row geometry. Complete these checks in a separate published Roblox test experience:
 

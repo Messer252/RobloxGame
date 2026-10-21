@@ -12,4 +12,14 @@ function Progress.advance(run, course, stage, now)
 	return true, stage == course.Count
 end
 
+function Progress.canFinish(run,course,onFinish)
+	return run~=nil and run.course==course.Id and run.stage==course.Count and not run.awarded and onFinish==true
+end
+
+-- Coordinates are relative to the rotated hazard. Ignore hats, armor and held
+-- tools: only the character's body/feet should trip a restart zone.
+function Progress.hazardContact(x,y,z,width,height,depth,standingHeight)
+	return math.abs(x)<=width/2+.65 and math.abs(z)<=depth/2+.65 and math.abs(y)<=height/2+(standingHeight+2)/2
+end
+
 return Progress

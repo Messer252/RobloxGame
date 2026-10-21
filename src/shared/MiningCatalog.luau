@@ -1,4 +1,5 @@
 -- Shared geology and access rules. All rewards and pin checks run on the server.
+local Gear = if script then require(script.Parent.GearCatalog) else require("./GearCatalog")
 local Mine = { Floor = .5, Ceiling = 22, MinX = -382, MaxX = -250, MinZ = 35, MaxZ = 181 }
 Mine.Rarities = {
 	Common={171,158,132}, Uncommon={116,175,125}, Rare={106,165,210},
@@ -35,7 +36,7 @@ function Mine.roll(zoneId, roll)
 	return zone.Pool[#zone.Pool][1]
 end
 function Mine.allowed(pin,zoneId)
-	return type(pin)=="number" and pin%1==0 and pin>=1 and pin<=5 and Mine.Zones[zoneId]~=nil and pin>=Mine.Zones[zoneId].Pin
+	return type(pin)=="number" and pin%1==0 and pin>=1 and pin<=#Gear.Pins and Mine.Zones[zoneId]~=nil and pin>=Mine.Zones[zoneId].Pin
 end
 function Mine.canMine(pin,zoneId,oreId)
 	if not Mine.allowed(pin,zoneId) then return false end

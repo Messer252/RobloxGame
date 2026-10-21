@@ -65,7 +65,7 @@ function Cave.health(node)
 end
 function Cave.refreshLabel(node)
 	local ore=Mine.Ores[node.oreId]
-	node.label.Text=ore.Name.." • "..ore.Rarity.."\n"..node.hp.."/"..node.maximum.." HP • "..node.reward.." dough"
+	node.label.Text=ore.Name.." • "..ore.Rarity.."\n"..math.ceil(node.hp).."/"..node.maximum.." HP • "..node.reward.." dough"
 	node.bar.Size=UDim2.fromScale(node.hp/node.maximum,1)
 end
 function Cave.roll(node,roll)

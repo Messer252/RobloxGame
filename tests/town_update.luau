@@ -90,7 +90,7 @@ return function(test,equal,near,harness,fakeStore)
 		local p=Progression.newData()
 		equal(p.life.armor,0); equal(Town.defense(p.life),0)
 		assert(not Town.buyArmor(p)); equal(p.life.armor,0); equal(p.cash,0)
-		p.cash=1e8
+		p.cash=1e13
 		for tier,item in ipairs(Town.Armor) do
 			local before=p.cash
 			assert(Town.buyArmor(p)); equal(p.cash,before-item.Cost); equal(p.life.armor,tier)
@@ -99,9 +99,9 @@ return function(test,equal,near,harness,fakeStore)
 		local before=p.cash
 		assert(not Town.buyArmor(p)); equal(p.cash,before)
 		p.unlocked=30
-		assert(Progression.rebirth(p)); equal(p.life.armor,5)
-		equal(Progression.normalize(p).life.armor,5)
-		equal(Events.damage(5,14,Town.defense(p.life)+.3),Events.damage(5,14,.45))
+		assert(Progression.rebirth(p)); equal(p.life.armor,#Town.Armor)
+		equal(Progression.normalize(p).life.armor,#Town.Armor)
+		equal(Events.damage(5,14,Town.defense(p.life)+.3),Events.damage(5,14,.60))
 	end)
 	test("version-eight saves migrate to armor defaults while keeping cards, crumbs and receipts",function()
 		local store=fakeStore()
@@ -116,7 +116,7 @@ return function(test,equal,near,harness,fakeStore)
 		p.data.cash=Town.Armor[1].Cost
 		assert(Town.buyArmor(p.data)); assert(manager:Save(p,true))
 		p=assert(manager:Load(9401,"town-again"))
-		equal(store.records.Player_9401.Version,9); equal(p.data.life.armor,1)
+		equal(store.records.Player_9401.Version,require("../src/server/ProfileStore").CURRENT_VERSION); equal(p.data.life.armor,1)
 	end)
 	test("catalog decoration pads form three spaced upgrade paths with no dead ends",function()
 		local p=Progression.newData(); p.cash=1e9
@@ -163,7 +163,7 @@ return function(test,equal,near,harness,fakeStore)
 				end
 			end
 		end
-		for x=-78,78,2 do for z=Town.PathZ-Town.PathHalfWidth-4,Town.PathZ+Town.PathHalfWidth+4,2 do
+		for x=0,375,2 do for z=Town.PathZ-Town.PathHalfWidth-4,Town.PathZ+Town.PathHalfWidth+4,2 do
 			assert(Shape.height(x,z)<=-6 and not Shape.grassAllowed(x,z))
 		end end
 	end)

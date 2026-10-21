@@ -2,9 +2,9 @@
 -- All writes check the session token inside UpdateAsync; stale servers cannot overwrite.
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
--- Version 9 adds armor and daily/trail/obby crumb claim state. Versions 1-8
--- retain progression, paid receipts, gift recovery and owned cards.
-ProfileStore.CURRENT_VERSION = 9
+-- Version 10 preserves 13 gear tiers and permanent enchantments. Older servers
+-- reject this envelope instead of clamping tiers or stripping saved enchants.
+ProfileStore.CURRENT_VERSION = 10
 
 local function validRecord(current)
 	if type(current) ~= "table" or type(current.Version) ~= "number" or current.Version % 1 ~= 0

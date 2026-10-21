@@ -32,7 +32,7 @@ function Valley.create(parent)
 		local lake = x < -205 and z > -450 and z < -295
 		local mine = x < -210 and math.abs(z - 108) < 113
 		local obby = x > 215 and (math.abs(z) < 45 or math.abs(z - 180) < 45 or math.abs(z + 180) < 45)
-		if lake or mine or obby or math.abs(z) < 22 or (x + 285)^2 + (z - 400)^2 < 3600 then continue end
+		if not Shape.grassAllowed(x,z) or lake or mine or obby or math.abs(z) < 22 or (x + 285)^2 + (z - 400)^2 < 3600 then continue end
 		local height = random:NextNumber(12, 23)
 		local pos = Vector3.new(x, math.max(0, Shape.height(x, z)), z)
 		part(folder, "Cookie Tree Trunk", Vector3.new(2.2, height, 2.2), pos + Vector3.new(0, height / 2, 0), Color3.fromRGB(100, 68, 43), Enum.Material.Wood)
@@ -97,7 +97,7 @@ function Valley.create(parent)
 	for i = 1, 140 do
 		local x = (i % 2 == 0 and -1 or 1) * random:NextNumber(220, 410)
 		local z = random:NextNumber(-570, 570)
-		if Shape.lake(x, z) or (x < 0 and z > 0 and z < 215) or (x > 0 and (math.abs(z) < 50 or math.abs(z-180) < 50 or math.abs(z+180) < 50)) then continue end
+		if not Shape.grassAllowed(x,z) or Shape.lake(x, z) or (x < 0 and z > 0 and z < 215) or (x > 0 and (math.abs(z) < 50 or math.abs(z-180) < 50 or math.abs(z+180) < 50)) then continue end
 		local y = math.max(0, Shape.height(x, z))
 		local stem = part(folder, "Wildflower Stem", Vector3.new(0.09, 0.65, 0.09), Vector3.new(x, y + 0.35, z), Color3.fromRGB(81, 125, 63))
 		stem.CanCollide = false

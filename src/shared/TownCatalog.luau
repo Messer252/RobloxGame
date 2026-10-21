@@ -1,23 +1,36 @@
+local Gear = if script then require(script.Parent.GearCatalog) else require("./GearCatalog")
 -- Shared shop, exploration and equipment definitions; all awards are server-owned.
 local Town = {
-	PackStand = { x = -102, y = 1, z = 0 },
-	Blacksmith = { x = 102, y = 1, z = 0 },
-	ShopRadius = 22, MarketWidth = 44, MarketDepth = 34, PathZ = 12, PathHalfWidth = 4,
-	DailyCrumbs = 100, PickupCrumbs = 5, PickupCooldown = 180, PickupDailyCap = 600,
-	Armor = {
-		{ Name = "Oat Guard", Cost = 1500, Defense = .05, Color = {173,129,81}, Trim = {101,70,46} },
-		{ Name = "Cocoa Plate", Cost = 15000, Defense = .10, Color = {99,65,48}, Trim = {181,143,87} },
-		{ Name = "Sugarsteel", Cost = 100000, Defense = .17, Color = {148,174,184}, Trim = {82,111,129} },
-		{ Name = "Golden Crust", Cost = 750000, Defense = .24, Color = {205,154,67}, Trim = {110,77,43} },
-		{ Name = "Star Cookie", Cost = 5000000, Defense = .32, Color = {96,77,153}, Trim = {111,215,223} },
+	PackStand = { x = 275, y = 1, z = -315 },
+	Blacksmith = { x = 345, y = 1, z = -315 },
+	ShopRadius = 22, MarketWidth = 44, MarketDepth = 34, PathZ = -282, PathHalfWidth = 6,
+	Paths = {
+		{x1=0,z1=-282,x2=375,z2=-282},
+		{x1=275,z1=-282,x2=275,z2=-299},
+		{x1=345,z1=-282,x2=345,z2=-299},
 	},
+	DailyCrumbs = 100, PickupCrumbs = 5, PickupCooldown = 180, PickupDailyCap = 600,
+	Armor = Gear.Armor,
 	Pickups = {
-		{-32,0,12},{32,0,12},{-50,0,0},{50,0,0}, {-155,0,0},{155,0,0},
+		{-32,0,12},{32,0,12},{-50,0,0},{50,0,0}, {205,0,-282},{310,0,-282},
 		{-198,0,280},{198,0,280},{-198,0,-280},{198,0,-280},
 		{-198,0,560},{198,0,560},{-198,0,-560},{198,0,-560},
 		{-205,0,-15},{205,0,-15},
 	},
 }
+-- Distance to the paved branch and its two shop approaches.
+function Town.pathDistance(x,z)
+	local distance=math.huge
+	for _,path in ipairs(Town.Paths) do
+		local dx,dz=path.x2-path.x1,path.z2-path.z1
+		local t=math.clamp(((x-path.x1)*dx+(z-path.z1)*dz)/(dx*dx+dz*dz),0,1)
+		distance=math.min(distance,math.sqrt((x-path.x1-dx*t)^2+(z-path.z1-dz*t)^2))
+	end
+	return distance
+end
+function Town.onRoad(x,y,z)
+	return y>=-2 and y<8 and (math.abs(x)<13 and math.abs(z)<575 or Town.pathDistance(x,z)<=Town.PathHalfWidth)
+end
 function Town.near(point, x, y, z)
 	return type(x)=="number" and type(y)=="number" and type(z)=="number" and (x-point.x)^2+(z-point.z)^2<=Town.ShopRadius^2 and math.abs(y-point.y)<=12
 end
